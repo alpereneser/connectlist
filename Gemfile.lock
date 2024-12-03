@@ -76,7 +76,6 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.2)
     base64 (0.2.0)
-    bcrypt_pbkdf (1.1.1)
     bcrypt_pbkdf (1.1.1-x64-mingw-ucrt)
     benchmark (0.4.0)
     bigdecimal (3.1.8)
@@ -106,11 +105,6 @@ GEM
     drb (2.2.1)
     ed25519 (1.3.0)
     erubi (1.13.0)
-    et-orbi (1.2.11)
-      tzinfo
-    fugit (1.11.1)
-      et-orbi (~> 1, >= 1.2.11)
-      raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
     i18n (1.14.6)
@@ -170,14 +164,11 @@ GEM
     nio4r (2.7.4)
     nokogiri (1.16.8-x64-mingw-ucrt)
       racc (~> 1.4)
-    nokogiri (1.16.8-x86_64-linux)
-      racc (~> 1.4)
     ostruct (0.6.1)
     parallel (1.26.3)
     parser (3.3.6.0)
       ast (~> 2.4.1)
       racc
-    pg (1.5.9)
     pg (1.5.9-x64-mingw-ucrt)
     propshaft (1.1.0)
       actionpack (>= 7.0.0)
@@ -190,7 +181,6 @@ GEM
     public_suffix (6.0.1)
     puma (6.5.0)
       nio4r (~> 2.0)
-    raabro (1.4.0)
     racc (1.8.1)
     rack (3.1.8)
     rack-session (2.0.0)
@@ -232,6 +222,10 @@ GEM
     rake (13.2.1)
     rdoc (6.8.1)
       psych (>= 4.0.0)
+    redis (5.3.0)
+      redis-client (>= 0.22.0)
+    redis-client (0.22.2)
+      connection_pool
     regexp_parser (2.9.3)
     reline (0.5.12)
       io-console (~> 0.5)
@@ -273,22 +267,10 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    solid_cable (3.0.2)
-      actioncable (>= 7.2)
-      activejob (>= 7.2)
-      activerecord (>= 7.2)
-      railties (>= 7.2)
     solid_cache (1.0.6)
       activejob (>= 7.2)
       activerecord (>= 7.2)
       railties (>= 7.2)
-    solid_queue (1.0.2)
-      activejob (>= 7.1)
-      activerecord (>= 7.1)
-      concurrent-ruby (>= 1.3.1)
-      fugit (~> 1.11.0)
-      railties (>= 7.1)
-      thor (~> 1.3.1)
     sshkit (1.23.2)
       base64
       net-scp (>= 1.1.2)
@@ -302,10 +284,8 @@ GEM
       railties (>= 7.0.0)
       tailwindcss-ruby
     tailwindcss-ruby (3.4.15-x64-mingw-ucrt)
-    tailwindcss-ruby (3.4.15-x86_64-linux)
     thor (1.3.2)
     thruster (0.1.9)
-    thruster (0.1.9-x86_64-linux)
     timeout (0.4.2)
     turbo-rails (2.0.11)
       actionpack (>= 6.0.0)
@@ -334,7 +314,6 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
-  x86_64-linux
 
 DEPENDENCIES
   bootsnap
@@ -348,11 +327,10 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.0.0)
+  redis (~> 5.0)
   rubocop-rails-omakase
   selenium-webdriver
-  solid_cable
   solid_cache
-  solid_queue
   stimulus-rails
   tailwindcss-rails
   thruster
