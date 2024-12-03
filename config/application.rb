@@ -19,8 +19,5 @@ module Connectlist
     # Configuration for the application, engines, and railties goes here.
     config.time_zone = "UTC"
     config.eager_load_paths << Rails.root.join("lib")
-    
-    # Enable parameter wrapping for JSON
-    config.middleware.use ActionDispatch::ParamsParser
   end
 end
