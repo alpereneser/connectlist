@@ -12,6 +12,10 @@
     "vue-router": "^4.5.0"
   },
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "postinstall": "vite build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
