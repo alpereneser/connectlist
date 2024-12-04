@@ -19,7 +19,8 @@ WORKDIR /rails
 
 # Set production environment
 ENV RAILS_ENV="production" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_WITHOUT="development" \
+    NODE_ENV="production"
 
 # Builder stage for asset compilation
 FROM base as builder
@@ -43,7 +44,10 @@ RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
     sed -i 's/ruby\.exe$/ruby/' bin/*
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
+# Build Vite assets first
+RUN npm run build
+
+# Then precompile Rails assets
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 # Final stage
@@ -52,11 +56,13 @@ FROM base
 # Copy over artifacts from builder
 COPY --from=builder /usr/local/bundle /usr/local/bundle
 COPY --from=builder /rails /rails
+COPY --from=builder /rails/node_modules /rails/node_modules
+COPY --from=builder /rails/public/vite /rails/public/vite
 
 # Create and set non-root user
 RUN groupadd --system --gid 1000 rails && \
     useradd --system --gid rails --uid 1000 rails && \
-    chown -R rails:rails db log storage tmp
+    chown -R rails:rails db log storage tmp public
 USER rails:rails
 
 # Start the server by default, this can be overwritten at runtime
