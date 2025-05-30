@@ -1,0 +1,321 @@
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { registerSchema } from '../../lib/schemas';
+import { useTranslation } from 'react-i18next';
+import { TermsModal } from '../../components/TermsModal';
+import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
+import { AlertTriangle } from 'lucide-react';
+import { AuthLayout } from '../../components/AuthLayout';
+
+type RegisterForm = z.infer<typeof registerSchema>;
+
+async function checkUsernameAvailability(username: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('username')
+      .ilike('username', username)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking username:', error);
+      // Hata durumunda kullanıcı adının kullanılabilir olduğunu varsay
+      return true;
+    }
+
+    return data === null;
+  } catch (error) {
+    console.error('Error checking username:', error);
+    // Hata durumunda kullanıcı adının kullanılabilir olduğunu varsay
+    return true;
+  }
+}
+
+// Referans kodu kontrolü şu anda kullanılmıyor
+// Bu fonksiyon ileride referans kodu sistemi eklendiğinde kullanılabilir
+/* 
+async function checkReferralCode(code: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('referral_codes')
+      .select('is_used')
+      .eq('code', code.toUpperCase())
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking referral code:', error);
+      return false;
+    }
+
+    return data !== null && !data.is_used;
+  } catch (error) {
+    console.error('Error checking referral code:', error);
+    return false;
+  }
+}
+*/
+
+export function Register() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [error, setError] = useState<string | null>(null);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const username = watch('username');
+
+  useEffect(() => {
+    const checkUsername = async () => {
+      if (!username || username.length < 3) {
+        setUsernameAvailable(null);
+        return;
+      }
+
+      setIsCheckingUsername(true);
+      const isAvailable = await checkUsernameAvailability(username);
+      setUsernameAvailable(isAvailable);
+      setIsCheckingUsername(false);
+    };
+
+    const timer = setTimeout(checkUsername, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  const onSubmit = async (data: RegisterForm) => {
+    setError(null);
+
+    if (!acceptedTerms) {
+      setError(t('auth.acceptTerms'));
+      return;
+    }
+
+    try {
+      // Kullanıcı adı kontrolünü geçici olarak devre dışı bırakıyoruz
+      // if (!usernameAvailable) {
+      //   setError(t('auth.usernameTaken'));
+      //   return;
+      // }
+
+      // Konsola bilgi yazdır (hata ayıklama için)
+      console.log('Submitting registration with data:', { ...data, password: '***' });
+
+      let signUpData = null;
+      let signUpError = null;
+
+      try {
+        console.log('Kayıt deneniyor (Supabase istemcisi):', { email: data.email, password: '***' });
+        
+        // Supabase istemcisini kullanarak kayıt ol
+        const { data: authData, error } = await supabase.auth.signUp({
+          email: data.email,
+          password: data.password,
+          options: {
+            data: {
+              username: data.username,
+              full_name: data.fullName
+            }
+          }
+        });
+        
+        if (error) {
+          console.error('Kayıt hatası:', error);
+          throw error;
+        }
+        
+        console.log('Kayıt başarılı:', authData);
+        
+        // Supabase yanıtını signUpData ve signUpError değişkenlerine ata
+        signUpData = authData;
+        signUpError = null;
+      } catch (error) {
+        console.error('Kayıt hatası:', error);
+        throw error;
+      }
+      
+      // Konsola bilgi yazdır (hata ayıklama için)
+      console.log('Signup response:', signUpData);
+
+      if (signUpError) {
+        console.error('Signup error:', signUpError);
+        throw signUpError;
+      }
+      
+      console.log('Auth signup successful');
+
+      // Kayıt başarılı, e-posta doğrulama bilgisi göster
+      navigate('/auth/verify-email', { 
+        state: { 
+          email: data.email,
+          message: t('auth.verificationEmailSent')
+        } 
+      });
+    } catch (error: unknown) {
+      let errorMessage = t('auth.registrationError');
+      
+      // Hata detaylarını konsola yazdır
+      console.error('Registration error details:', error);
+
+      // Hata türünü kontrol et ve uygun şekilde işle
+      if (error && typeof error === 'object') {
+        // Supabase auth hatası için kontrol
+        if ('message' in error && typeof error.message === 'string') {
+          const message = error.message.toLowerCase();
+          
+          if (message.includes('user already registered')) {
+            errorMessage = t('auth.emailTaken');
+          } else if (message.includes('username is already taken')) {
+            errorMessage = t('auth.usernameTaken');
+          } else if (message.includes('username must be')) {
+            errorMessage = error.message;
+          } else if (message.includes('invalid or already used referral code')) {
+            errorMessage = t('auth.invalidReferralCode');
+          }
+        }
+        
+        // error_description için kontrol
+        if ('error_description' in error && typeof error.error_description === 'string') {
+          errorMessage = error.error_description;
+        }
+      }
+
+      setError(errorMessage);
+    }
+  };
+
+  return (
+    <AuthLayout>
+      <div className="bg-white md:p-8 p-4 md:rounded-lg md:shadow-sm md:border">
+        <h2 className="text-2xl font-bold mb-4 md:mb-8">{t('auth.welcome')}</h2>
+        <p className="text-gray-600 text-sm mb-8">{t('auth.welcomeMessage')}</p>
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+        
+        {/* Kullanıcı adı bilgilendirme mesajı */}
+        <div className="bg-blue-50 p-3 rounded-lg mb-6 flex items-start gap-2">
+          <AlertTriangle size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+          <p className="text-blue-700 text-sm">
+            {t('auth.usernameFormatInfo')}
+          </p>
+        </div>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div>
+            <input
+              {...register('username')}
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder:text-gray-400"
+              placeholder={t('auth.username')}
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+            )}
+            {username && username.length >= 3 && (
+              <div className="mt-1">
+                {isCheckingUsername ? (
+                  <p className="text-gray-500 text-sm">{t('auth.checkingUsername')}</p>
+                ) : (
+                  <div>
+                    {usernameAvailable === true && (
+                      <p className="text-green-600 text-xs mt-1">
+                        {t('auth.usernameAvailableCheck')}
+                      </p>
+                    )}
+                    {usernameAvailable === false && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {t('auth.usernameTakenCheck')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div>
+            <input
+              {...register('fullName')}
+              type="text"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder:text-gray-400"
+              placeholder={t('auth.fullName')}
+            />
+            {errors.fullName && (
+              <p className="text-red-500 text-sm mt-1">{errors.fullName.message}</p>
+            )}
+          </div>
+          <div>
+            <input
+              {...register('email')}
+              type="email"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder:text-gray-400"
+              placeholder={t('auth.email')}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            )}
+          </div>
+          <div>
+            <input
+              {...register('password')}
+              type="password"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder:text-gray-400"
+              placeholder={t('auth.password')}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+            />
+            <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-orange-500 hover:text-orange-600"
+              >
+                {t('auth.termsOfService')}
+              </button>
+              {t('auth.acceptTermsText')}
+            </label>
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting || !acceptedTerms}
+            className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 font-medium"
+          >
+            {isSubmitting ? t('auth.creatingAccount') : t('auth.register')}
+          </button>
+        </form>
+        <Link
+          to="/auth/login"
+          className="block mt-4 text-center text-sm text-gray-600 hover:text-gray-900"
+        >
+          {t('auth.login')}
+        </Link>
+      </div>
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => {
+          setAcceptedTerms(true);
+          setShowTermsModal(false);
+        }}
+      />
+    </AuthLayout>
+  );
+}

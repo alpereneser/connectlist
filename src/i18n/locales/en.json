@@ -1,0 +1,744 @@
+{
+  "languages": {
+    "turkish": "Türkçe",
+    "english": "English"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "country": "Country",
+    "city": "City",
+    "selectCountry": "Select a country",
+    "selectCity": "Select a city",
+    "locationSelection": "Location Selection",
+    "selectedLocation": "selected location",
+    "errors": {
+      "fileTooLarge": "File size must be less than 5MB",
+      "invalidFileType": "Only JPG, PNG and GIF files are allowed",
+      "selectCountryCity": "Please select a country and city first"
+    },
+    "form": {
+      "enterUsername": "Enter your username",
+      "checkingUsername": "Checking username...",
+      "usernameAvailable": "This username is available",
+      "usernameTaken": "This username is already taken",
+      "updating": "Updating...",
+      "updateUsername": "Update Username",
+      "aboutYourself": "Tell us about yourself...",
+      "websiteExample": "https://example.com",
+      "locationExample": "Istanbul, Turkey",
+      "enterEmail": "Enter your email address",
+      "enterNewPassword": "Enter your new password",
+      "confirmNewPassword": "Confirm your new password"
+    },
+    "auth": {
+      "login": "Sign In",
+      "register": "Sign Up"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "markAllRead": "Mark All as Read",
+      "noNotifications": "No notifications yet",
+      "deleteAll": "Delete All",
+      "processing": "Processing...",
+      "deleteConfirm": "Delete Notification",
+      "deleteMessage": "Are you sure you want to delete this notification? This action cannot be undone.",
+      "deleteAllConfirm": "Delete All Notifications",
+      "deleteAllMessage": "Are you sure you want to delete all notifications? This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "profile": {
+      "loading": "Loading...",
+      "guest": "Guest",
+      "myProfile": "My Profile",
+      "settings": "Settings",
+      "signOut": "Sign Out"
+    },
+    "addList": "Add List",
+    "roadmap": "Roadmap",
+    "search": "Search",
+    "searchPlaceholder": "Type what you want to search for",
+    "searchInCategory": "Search in category",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "discover": "Discover",
+    "edit": "Edit",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "processing": "Processing...",
+    "seeAll": "See All",
+    "categories": {
+      "all": "All",
+      "movies": "Movies",
+      "series": "TV Series",
+      "books": "Books",
+      "games": "Games",
+      "people": "People",
+      "videos": "Videos",
+      "places": "Places"
+    },
+    "categoryDescriptions": {
+      "movies": "You can list your favorite movies and create your watch list.",
+      "series": "You can list TV series you have watched or want to watch.",
+      "books": "You can list books you have read or want to read.",
+      "games": "You can list games you have played or want to play.",
+      "people": "You can list your favorite actors, directors or celebrities.",
+      "videos": "You can list YouTube videos and create your watch list.",
+      "places": "You can list places you have visited or want to visit."
+    },
+    "lists": {
+      "all": "All Lists",
+      "movies": "Movie Lists",
+      "series": "TV Series Lists",
+      "books": "Book Lists",
+      "games": "Game Lists",
+      "people": "People Lists",
+      "videos": "Video Lists",
+      "places": "Place Lists"
+    },
+    "messages": {
+      "title": "Messages",
+      "newMessage": "New Message",
+      "searchPlaceholder": "Search among people you follow...",
+      "noResults": "No results found",
+      "noConversations": "No conversations yet",
+      "startConversation": "Click the + button to start a new conversation",
+      "typeMessage": "Type your message...",
+      "send": "Send",
+      "deleteConversation": "Delete Conversation",
+      "deleteConfirmation": "Are you sure you want to delete this conversation? This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "mutualFollowRequired": "You need to follow each other to send messages",
+      "errorSending": "An error occurred while sending the message",
+      "sending": "Sending...",
+      "noMessages": "No messages yet",
+      "startMessaging": "Start messaging",
+      "selectConversation": "Select a conversation",
+      "errorDeletingConversation": "An error occurred while deleting the conversation."
+    },
+    "time": {
+      "now": "just now",
+      "minutesAgo": "{{count}} minutes ago",
+      "minutesAgo_one": "{{count}} minute ago",
+      "hoursAgo": "{{count}} hours ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "daysAgo": "{{count}} days ago",
+      "daysAgo_one": "{{count}} day ago",
+      "lastUpdate": "Last updated:"
+    }
+  },
+  "categories": {
+    "movie": "Movie",
+    "series": "Series",
+    "book": "Book",
+    "game": "Game",
+    "video": "Video",
+    "unknown": "Item"
+  },
+  "auth": {
+    "welcome": "Welcome",
+    "welcomeMessage": "You're just a few steps away from creating lists. Enter your information and join us.",
+    "login": "Log In",
+    "register": "Sign Up",
+    "requireAuthMessage": "You need to log in to perform this action: {{action}}",
+    "forgotPassword": "Forgot Password",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "fullName": "Full Name",
+    "rememberMe": "Remember me",
+    "invalidEmail": "Invalid email address",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "emailTaken": "This email is already in use",
+    "verifyEmail": "Verify Your Email",
+    "verifyEmailMessage": "We've sent you an email with a verification link. Please check your inbox.",
+    "loggingIn": "Logging in...",
+    "creatingAccount": "Creating account...",
+    "invalidCredentials": "Invalid email or password",
+    "acceptTerms": "You must accept the terms of service",
+    "invalidReferralCode": "Invalid or already used referral code",
+    "registrationError": "An error occurred during registration",
+    "usernameFormat": "Username can only contain English letters, numbers, and underscores",
+    "usernameLength": "Username must be between 3-30 characters",
+    "termsOfService": "Terms of Service",
+    "acceptTermsText": "I have read and accept the",
+    "resetPassword": "Reset Password",
+    "resetPasswordError": "An error occurred. Please try again.",
+    "resetPasswordInstructions": "We've sent password reset instructions to your email address.",
+    "passwordResetSent": "Password Reset Email Sent",
+    "resetEmailSent": "We've sent a password reset link to your email address.",
+    "checkSpamFolder": "If you don't see the email, please check your spam folder.",
+    "backToLogin": "Back to Login",
+    "sending": "Sending...",
+    "didntReceiveEmail": "Didn't receive the email? Check your spam folder or",
+    "didntReceive": "Didn't receive the email?",
+    "tryLoginAgain": "try logging in again",
+    "verificationEmailSent": "Verification email sent",
+    "sentTo": "Sent to",
+    "checkSpam": "Don't forget to check your spam folder",
+    "openEmailClient": "Open Email App",
+    "tryAgain": "Try again",
+    "verificationSuccess": "Email verification successful",
+    "accountVerified": "Your account has been successfully verified",
+    "redirecting": "Redirecting",
+    "verificationFailed": "Email verification failed",
+    "verificationError": "An error occurred during email verification",
+    "emailConfirmed": "Email Address Confirmed",
+    "emailConfirmedMessage": "Congratulations! Your account has been successfully verified. You can now log in.",
+    "goToLogin": "Go to Login Page",
+    "redirectingIn": "Redirecting in",
+    "seconds": "seconds",
+    "accept": "I Accept",
+    "readToEnd": "Please read the terms to the end",
+    "newEmail": "New Email Address",
+    "updateEmail": "Update Email",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "updatePassword": "Update Password",
+    "updateUsername": "Update Username",
+    "updatingUsername": "Updating username...",
+    "enterNewPassword": "Enter your new password below",
+    "invalidLink": "Invalid Reset Link",
+    "requestNewLink": "Request New Link",
+    "passwordResetSuccess": "Password Reset Successful",
+    "passwordChanged": "Your password has been successfully changed",
+    "redirectingToLogin": "Redirecting to login page",
+    "invalidResetLink": "The password reset link is invalid or has expired",
+    "resetting": "Resetting...",
+    "usernameFormatInfo": "Username can only contain English letters (a-z, A-Z), numbers (0-9) and underscore (_).",
+    "checkingUsername": "Checking username...",
+    "usernameAvailable": "This username is available"
+  },
+  "validation": {
+    "invalidEmail": "Invalid email address",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "usernameMinLength": "Username must be at least 3 characters",
+    "usernameMaxLength": "Username cannot exceed 30 characters",
+    "usernameFormat": "Username can only contain English letters, numbers, and underscores",
+    "fullNameMinLength": "Full name must be at least 2 characters",
+    "passwordMin8": "Password must be at least 8 characters",
+    "passwordLowercase": "Password must contain at least one lowercase letter",
+    "passwordUppercase": "Password must contain at least one uppercase letter",
+    "passwordNumber": "Password must contain at least one number",
+    "passwordsDoNotMatch": "Passwords do not match"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "email": "Email",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "language": "Language",
+    "support": "Support",
+    "deleteAccount": "Delete Account",
+    "profilePhoto": "Profile Photo",
+    "changePhoto": "Change Photo",
+    "photoRequirements": "JPG, PNG or GIF. Max 5MB.",
+    "profileInfo": "Profile Information",
+    "about": "About",
+    "website": "Website",
+    "location": "Location",
+    "username": "Username",
+    "usernameDescription": "Your username appears in your profile URL and can be changed.",
+    "fullName": "Full Name",
+    "changePassword": "Change Password",
+    "enterPassword": "Enter your password",
+    "deleteAccountConfirmation": "This action cannot be undone. Enter your password to delete your account.",
+    "notificationSettings": {
+      "listNotifications": "List Notifications",
+      "listNotificationsDesc": "Comments and likes on your lists",
+      "followerNotifications": "Follower Notifications",
+      "followerNotificationsDesc": "New followers",
+      "messageNotifications": "Message Notifications",
+      "messageNotificationsDesc": "New messages"
+    },
+    "privacySettings": {
+      "profile": "Profile Privacy",
+      "profileDesc": "Only your followers can see your profile",
+      "list": "List Privacy",
+      "listDesc": "Only your followers can see your lists",
+      "online": "Online Status",
+      "onlineDesc": "Other users can see your online status",
+      "legal": "Legal Documents",
+      "viewPrivacyPolicy": "View Privacy Policy",
+      "viewTerms": "View Terms of Service"
+    },
+    "languagePreference": "Preferred Language",
+    "languages": {
+      "tr": "Turkish",
+      "en": "English",
+      "de": "German",
+      "fr": "French",
+      "es": "Spanish"
+    },
+    "supportForm": {
+      "title": "Support Request",
+      "description": "Fill out the form below to send us your issues or suggestions.",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send",
+      "sending": "Sending...",
+      "success": "Your support request has been successfully sent. We will get back to you as soon as possible.",
+      "error": "An error occurred while sending your support request. Please try again later.",
+      "subjectPlaceholder": "Subject of your support request",
+      "messagePlaceholder": "Please describe your issue or suggestion in detail"
+    }
+  },
+  "footer": {
+    "madeWith": "made with passion",
+    "in": "in Istanbul",
+    "support": "Support"
+  },
+  "profile": {
+    "followers": "Followers",
+    "following": "Following",
+    "users": "Users",
+    "lists": "Lists",
+    "likes": "Likes",
+    "editProfile": "Edit Profile",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "message": "Message",
+    "noLists": "No lists created yet",
+    "noCategoryLists": "No lists in {{category}} category",
+    "noLikedLists": "No liked lists yet",
+    "likedLists": "Liked Lists"
+  },
+  "search": {
+    "noResults": "No results found",
+    "noCategoryResults": "No results found for {{category}}"
+  },
+  "listPreview": {
+    "createdAt": "Created at",
+    "timeAgo": {
+      "now": "just now",
+      "minutes": "{{count}} minutes ago",
+      "hours": "{{count}} hours ago",
+      "days": "{{count}} days ago"
+    },
+    "noLikes": "No likes yet",
+    "linkCopied": "Link copied!",
+    "createdList": "created a list",
+    "listDetails": {
+      "editList": "Edit List",
+      "deleteList": "Delete List",
+      "deleteConfirm": "Delete Confirmation",
+      "deleteMessage": "Are you sure you want to delete this list? This action cannot be undone.",
+      "deleting": "Deleting...",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "deleteItemConfirm": "Delete Item",
+      "deleteItemMessage": "Are you sure you want to remove this item from the list?",
+      "addContent": "Add Content",
+      "searchContent": "Search Content",
+      "searchContentPlaceholder": "Search for {{category}}",
+      "searchPlacesPlaceholder": "Search for places in {{city}}",
+      "youtubeLink": "YouTube Video Link",
+      "youtubeLinkPlaceholder": "Paste YouTube video link",
+      "youtubeLinkExample": "Example: https://www.youtube.com/watch?v=VIDEO_ID",
+      "creating": "Creating list...",
+      "create": "Create List",
+      "preview": "List Preview",
+      "noContentSelected": "No content selected yet",
+      "searchAndSelect": "Search and select content",
+      "noContentYet": "No content yet",
+      "selectCategory": "Select list category",
+      "selectCategoryDescription": "You can create a new list or search existing lists based on your selected category.",
+      "comments": {
+        "title": "Comments",
+        "placeholder": "Write a comment...",
+        "submit": "Submit",
+        "noComments": "No comments yet",
+        "deleteComment": "Delete Comment",
+        "deleteConfirm": "Are you sure you want to delete this comment?",
+        "deleteButton": "Delete"
+      },
+      "createNewList": "Create New {{category}} List",
+      "listTitle": "List Title",
+      "listTitlePlaceholder": "Give your list a title",
+      "listDescription": "List Description",
+      "listDescriptionPlaceholder": "Write a short description about your list",
+      "noContent": "No content added yet"
+    },
+    "listPreview": {
+      "items": "items",
+      "createdBy": "Created by",
+      "addToList": "Add to List",
+      "whoAdded": "Who Added",
+      "createdAt": "Created at",
+      "timeAgo": {
+        "now": "just now",
+        "minutes": "{{count}} minutes ago",
+        "hours": "{{count}} hours ago",
+        "days": "{{count}} days ago"
+      },
+      "noLikes": "No likes yet",
+      "linkCopied": "Link copied!",
+      "createdList": "created a list",
+      "listDetails": {
+        "searchContent": "Search Content",
+        "creating": "Creating...",
+        "create": "Create",
+        "searchPlaces": "Search Places...",
+        "searching": "Searching..."
+      }
+    },
+    "addToList": "Add to List",
+    "whoAdded": "Who Added?",
+    "noLists": "No lists created yet",
+    "noMoreLists": "No more lists",
+    "noCategoryLists": "No lists in {{category}} category",
+    "shareList": "Share List",
+    "deleteList": "Delete List",
+    "deleteConfirm": "Are you sure you want to delete this list? This action cannot be undone.",
+    "deleting": "Deleting...",
+    "clickToView": "Click to view list",
+    "listActions": "Like, comment and share lists",
+    "comments": "Comments",
+    "noComments": "No comments yet",
+    "commentSection": {
+      "title": "Comments",
+      "writeComment": "Write a comment...",
+      "send": "Send",
+      "deleteConfirm": "Delete Comment",
+      "deleteMessage": "Are you sure you want to delete this comment? This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "reply": "Reply",
+      "replyingTo": "Replying to",
+      "timeAgo": {
+        "now": "just now",
+        "minutes": "{{count}}m",
+        "hours": "{{count}}h",
+        "days": "{{count}}d"
+      }
+    }
+  },
+  "details": {
+    "about": "About",
+    "cast": "Cast",
+    "asActor": "As Actor",
+    "asCrewMember": "As Crew Member",
+    "crew": "Crew",
+    "seasons": "Seasons",
+    "season": "Season",
+    "noSeasonSummary": "No summary available for this season.",
+    "screenshots": "Screenshots",
+    "biography": "Biography",
+    "noBiography": "No biography available.",
+    "noDescription": "No description available.",
+    "preview": "Preview",
+    "metacritic": "Metacritic",
+    "votes": "votes",
+    "viewAll": "View All",
+    "info": {
+      "movie": {
+        "title": "Movie Information",
+        "originalTitle": "Original Title",
+        "releaseDate": "Release Date",
+        "runtime": "Runtime",
+        "rating": "Rating",
+        "votes": "votes"
+      },
+      "series": {
+        "title": "Series Information",
+        "originalTitle": "Original Title",
+        "firstAirDate": "First Air Date",
+        "lastAirDate": "Last Air Date",
+        "seasons": "Number of Seasons",
+        "episodes": "Number of Episodes",
+        "rating": "Rating"
+      },
+      "book": {
+        "title": "Book Information",
+        "publisher": "Publisher",
+        "publishDate": "Publication Date",
+        "pageCount": "Page Count",
+        "language": "Language"
+      },
+      "game": {
+        "title": "Game Information",
+        "platforms": "Platforms",
+        "genres": "Genres",
+        "developers": "Developers",
+        "publishers": "Publishers",
+        "releaseDate": "Release Date"
+      },
+      "person": {
+        "title": "Personal Information",
+        "knownFor": "Known For",
+        "birthday": "Birthday",
+        "deathday": "Death Date",
+        "placeOfBirth": "Place of Birth",
+        "otherNames": "Also Known As"
+      }
+    },
+    "addToListAuthAction": "adding items to a list"
+  },
+  "terms": {
+    "title": "Connectlist Terms of Service",
+    "lastUpdated": "Last Updated: March 28, 2025",
+    "welcome": "Welcome! By accessing or using Connectlist (\"Platform\"), you agree to...",
+    "generalTerms": {
+      "title": "1. General Terms",
+      "platformDefinition": {
+        "title": "1.1. Platform Definition",
+        "content": "Connectlist allows users to create lists..."
+      },
+      "acceptance": {
+        "title": "1.2. Acceptance of Terms",
+        "content": "By registering for and accessing the Platform..."
+      },
+      "changes": {
+        "title": "1.3. Changes",
+        "content": "Connectlist may modify this Agreement at any time..."
+      },
+      "ageRequirement": "You must be at least 13 years old to use the Platform. If you are under 18, you may register with the permission of a parent or legal guardian."
+    },
+    "registration": {
+      "title": "2. Registration and Account Management",
+      "conditions": {
+        "title": "2.1. Registration Requirements",
+        "content": "To use the Platform, you must be at least 13 years old..."
+      },
+      "security": {
+        "title": "2.2. Account Security",
+        "brief": "You are responsible for the security of your account, including your username and password.",
+        "content": "You are responsible for maintaining the security of your account..."
+      },
+      "accountData": {
+        "title": "2.3. Account Data",
+        "content": "Your registration information (e.g., email address, username)..."
+      }
+    },
+    "platformUsage": {
+      "title": "3. Platform Usage and Features",
+      "listCreation": {
+        "title": "3.1. List Creation",
+        "brief": "Users can create personal or community-focused lists on the Platform. These lists can be viewed and interacted with by other users.",
+        "content": "Users can create personal or community-focused lists..."
+      },
+      "likeComment": {
+        "title": "3.2. Liking and Commenting",
+        "content": "You can like and comment on content shared on the Platform..."
+      },
+      "followSystem": {
+        "title": "3.3. Follow System",
+        "content": "You can follow other users and be followed..."
+      },
+      "messaging": {
+        "title": "3.4. Messaging",
+        "brief": "The Platform provides end-to-end encrypted messaging between users. Your message content is encrypted and can only be read by the sender and recipient.",
+        "content": "The Platform provides end-to-end encrypted messaging..."
+      }
+    },
+    "dataPrivacy": {
+      "title": "4. Data Storage and Privacy",
+      "collection": {
+        "title": "4.1. Data Collection",
+        "brief": "When you register for and use the Platform, your personal data (e.g., email address, username) and activity data (list creation, likes, comments, follow relationships, messaging metadata) are collected.",
+        "content": "When you register for and use the Platform..."
+      },
+      "storage": {
+        "title": "4.2. Supabase Usage",
+        "brief": "All user data is stored in Supabase, a secure cloud database. Your data is protected according to Supabase's security standards.",
+        "content": "All user data is stored in Supabase, a secure cloud database..."
+      },
+      "commitment": {
+        "title": "4.3. Privacy Commitment",
+        "brief": "Your data is processed in accordance with the Connectlist Privacy Policy and shared with third parties only in accordance with legal requirements or with your explicit consent.",
+        "content": "Your data is processed in accordance with the Connectlist Privacy Policy..."
+      }
+    },
+    "userObligations": {
+      "title": "5. User Obligations",
+      "appropriate": {
+        "title": "5.1. Appropriate Use",
+        "brief": "When using the Platform, you agree not to:",
+        "item1": "Share illegal, harmful, threatening, harassing, or discriminatory content",
+        "item2": "Violate other users' privacy or attempt unauthorized access",
+        "item3": "Spread malware or spam that would disrupt the Platform's operation",
+        "content": "When using the Platform, you agree not to..."
+      },
+      "contentResponsibility": {
+        "title": "5.2. Content Responsibility",
+        "content": "All content you create on the Platform..."
+      },
+      "copyright": {
+        "title": "5.3. Non-Copyrighted Content",
+        "content": "You represent that you own the copyright to the content you share..."
+      }
+    },
+    "platformRights": {
+      "title": "6. Connectlist's Rights and Responsibilities",
+      "serviceChanges": {
+        "title": "6.1. Service Changes",
+        "content": "Connectlist may modify the Platform's features, design..."
+      },
+      "contentModeration": {
+        "title": "6.2. Content Moderation",
+        "content": "When inappropriate content or behavior is detected..."
+      },
+      "liability": {
+        "title": "6.3. Limitation of Liability",
+        "content": "The Platform is provided \"as is\"..."
+      }
+    },
+    "intellectualProperty": {
+      "title": "7. Intellectual Property",
+      "platformRights": {
+        "title": "7.1. Platform Rights",
+        "content": "Connectlist's logo, design, software..."
+      },
+      "userContent": {
+        "title": "7.2. User Content",
+        "content": "Ownership of content you share on the Platform..."
+      }
+    },
+    "termination": {
+      "title": "Termination of Agreement",
+      "accountClosure": {
+        "title": "8.1. Account Closure",
+        "brief": "You can close your account at any time. When your account is closed, your data will be deleted within the timeframes specified in the Privacy Policy.",
+        "content": "You can close your account at any time..."
+      },
+      "description": "We reserve the right to suspend or terminate your account for violations of these Terms or for any other reason at our discretion."
+    },
+    "applicableLaw": {
+      "title": "9. Applicable Law and Dispute Resolution",
+      "law": {
+        "title": "9.1. Law",
+        "content": "This Agreement is subject to the laws of the Republic of Turkey."
+      },
+      "disputes": {
+        "title": "9.2. Disputes",
+        "content": "Disputes that may arise between the parties..."
+      }
+    },
+    "contact": {
+      "title": "Contact",
+      "questions": "For questions or concerns, you can reach us at:",
+      "email": "Email:",
+      "address": "Address: [Your company address]",
+      "description": "If you have any questions about these Terms, please contact us through the support form in the app."
+    },
+    "acceptanceStatement": {
+      "title": "Acceptance Statement",
+      "content": "By registering for or using Connectlist, you declare that you have read, understood, and accepted this User Agreement and its supplementary documents (including the Privacy Policy)."
+    },
+    "introduction": {
+      "title": "Introduction",
+      "description": "Welcome to Connectlist. By using our platform, you agree to these Terms of Service. Please read them carefully."
+    },
+    "eligibility": {
+      "title": "Eligibility",
+      "description": "You must be at least 13 years old to use Connectlist. If you are under 18, you must have parental consent."
+    },
+    "account": {
+      "title": "Your Account",
+      "description": "You are responsible for maintaining the security of your account and password. Please notify us immediately of any unauthorized use.",
+      "item1": "You are responsible for all content posted under your account",
+      "item2": "You must provide accurate and complete information when creating an account",
+      "item3": "We reserve the right to suspend or terminate accounts that violate our terms"
+    },
+    "userContent": {
+      "title": "User Content",
+      "description": "You retain ownership of the content you create, but grant us a license to use it on our platform.",
+      "item1": "You are solely responsible for the content you post",
+      "item2": "You must have the right to share any content you post",
+      "item3": "We may remove content that violates these terms",
+      "item4": "We do not endorse or guarantee the accuracy of user content"
+    },
+    "prohibited": {
+      "title": "Prohibited Activities",
+      "description": "The following activities are prohibited on Connectlist:",
+      "item1": "Posting illegal, harmful, or offensive content",
+      "item2": "Harassing, threatening, or intimidating other users",
+      "item3": "Impersonating others or misrepresenting your identity",
+      "item4": "Using the platform for spam or unauthorized commercial purposes",
+      "item5": "Attempting to access other users' accounts or private information",
+      "item6": "Interfering with the proper functioning of the platform"
+    },
+    "intellectual": {
+      "title": "Intellectual Property",
+      "description": "Connectlist and its content are protected by copyright, trademark, and other laws. You may not use our trademarks or branding without permission."
+    },
+    "disclaimer": {
+      "title": "Disclaimer of Warranties",
+      "description": "Connectlist is provided 'as is' without any warranties, express or implied. We do not guarantee that the service will be uninterrupted or error-free."
+    },
+    "limitation": {
+      "title": "Limitation of Liability",
+      "description": "To the maximum extent permitted by law, Connectlist shall not be liable for any indirect, incidental, special, consequential, or punitive damages."
+    },
+    "governing": {
+      "title": "Governing Law",
+      "description": "These Terms shall be governed by the laws of Turkey, without regard to its conflict of law provisions."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "description": "We may modify these Terms at any time. Continued use of the platform after changes constitutes acceptance of the modified Terms."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "introduction": {
+      "title": "Introduction",
+      "description": "At Connectlist, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and safeguard your data when you use our platform."
+    },
+    "dataCollection": {
+      "title": "Information We Collect",
+      "description": "We collect the following types of information:",
+      "item1": "Personal information you provide when creating an account (name, email, username)",
+      "item2": "Profile information you choose to share (bio, avatar, location)",
+      "item3": "Content you create, such as lists and comments",
+      "item4": "Usage data and interaction with the platform",
+      "item5": "Device information and cookies"
+    },
+    "dataUse": {
+      "title": "How We Use Your Information",
+      "description": "We use your information for the following purposes:",
+      "item1": "To provide and maintain our services",
+      "item2": "To personalize your experience",
+      "item3": "To communicate with you about updates and features",
+      "item4": "To improve our platform and develop new features"
+    },
+    "dataSharing": {
+      "title": "Information Sharing",
+      "description": "We may share your information in the following circumstances:",
+      "item1": "With other users according to your privacy settings",
+      "item2": "With service providers who help us operate our platform",
+      "item3": "When required by law or to protect our rights"
+    },
+    "cookies": {
+      "title": "Cookies and Tracking",
+      "description": "We use cookies and similar technologies to enhance your experience, analyze usage patterns, and deliver personalized content."
+    },
+    "security": {
+      "title": "Data Security",
+      "description": "We implement appropriate security measures to protect your personal information from unauthorized access, alteration, or disclosure."
+    },
+    "userRights": {
+      "title": "Your Rights",
+      "description": "You have the following rights regarding your personal information:",
+      "item1": "Access and view your personal data",
+      "item2": "Correct inaccurate or incomplete information",
+      "item3": "Delete your account and associated data",
+      "item4": "Control your privacy settings"
+    },
+    "changes": {
+      "title": "Changes to This Policy",
+      "description": "We may update this Privacy Policy from time to time. We will notify you of any significant changes through the platform or via email."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "If you have any questions about this Privacy Policy, please contact us through the support form in the app."
+    }
+  }
+}
