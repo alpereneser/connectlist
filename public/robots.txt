@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Disallow admin, auth, and search pages
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /search/
+
+# Dynamic Sitemap
+Sitemap: https://connectlist.me/sitemap.xml

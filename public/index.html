@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Connectlist</title>
+    <meta name="description" content="ConnectList - Film, dizi, kitap ve oyun listelerini kolayca oluştur, paylaş!" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Instagram ve iOS WebView tespiti ve uyarı/yönlendirme
+      function isInstagramBrowser() {
+        const ua = navigator.userAgent || navigator.vendor || '';
+        return ua.includes('Instagram');
+      }
+      function isIOS() {
+        return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      }
+      if (isInstagramBrowser() && isIOS()) {
+        // Kullanıcıya uyarı göster
+        document.body.innerHTML = '<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;text-align:center;padding:32px;font-family:sans-serif"><img src="/apple-touch-icon.png" width="80" style="margin-bottom:16px;"/><h2>Bağlantı Açılmadı</h2><p>Instagram uygulamasında iOS cihazlarda bağlantılar düzgün çalışmayabilir.<br><b>Sağ üstteki ... menüsünden "Safari\'de Aç" seçeneğini kullanın.</b></p></div>';
+      }
+    </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/serviceWorker.js') // src/serviceWorker.ts'in derlenmiş hali
+            .then(registration => {
+              console.log('ServiceWorker registered successfully: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('ServiceWorker registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

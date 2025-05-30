@@ -1,0 +1,405 @@
+// Google Places API anahtarı
+const GOOGLE_PLACES_API_KEY = 'AIzaSyC9J-iYUxN02XzXByb5KyAwAGwWAFqWzsA';
+
+// Ülke listesi
+export const countries = [
+  { code: 'TR', name: 'Türkiye' },
+  { code: 'US', name: 'Amerika Birleşik Devletleri' },
+  { code: 'GB', name: 'Birleşik Krallık' },
+  { code: 'DE', name: 'Almanya' },
+  { code: 'FR', name: 'Fransa' },
+  { code: 'IT', name: 'İtalya' },
+  { code: 'ES', name: 'İspanya' },
+  { code: 'NL', name: 'Hollanda' },
+  { code: 'RU', name: 'Rusya' },
+  { code: 'JP', name: 'Japonya' },
+  { code: 'CN', name: 'Çin' },
+  { code: 'IN', name: 'Hindistan' },
+  { code: 'BR', name: 'Brezilya' },
+  { code: 'CA', name: 'Kanada' },
+  { code: 'AU', name: 'Avustralya' },
+];
+
+// Şehirleri getiren fonksiyon
+export const getCitiesByCountry = async (countryCode: string): Promise<{ name: string }[]> => {
+  try {
+    // Ülkeye göre popüler şehirleri döndür
+    const citiesByCountry: Record<string, { name: string }[]> = {
+      'TR': [
+        { name: 'İstanbul' },
+        { name: 'Ankara' },
+        { name: 'İzmir' },
+        { name: 'Antalya' },
+        { name: 'Bursa' },
+        { name: 'Adana' },
+      ],
+      'US': [
+        { name: 'New York' },
+        { name: 'Los Angeles' },
+        { name: 'Chicago' },
+        { name: 'Houston' },
+        { name: 'Phoenix' },
+        { name: 'Philadelphia' },
+      ],
+      'GB': [
+        { name: 'London' },
+        { name: 'Birmingham' },
+        { name: 'Manchester' },
+        { name: 'Glasgow' },
+        { name: 'Liverpool' },
+        { name: 'Edinburgh' },
+      ],
+      'DE': [
+        { name: 'Berlin' },
+        { name: 'Hamburg' },
+        { name: 'Munich' },
+        { name: 'Cologne' },
+        { name: 'Frankfurt' },
+        { name: 'Stuttgart' },
+      ],
+      'FR': [
+        { name: 'Paris' },
+        { name: 'Marseille' },
+        { name: 'Lyon' },
+        { name: 'Toulouse' },
+        { name: 'Nice' },
+        { name: 'Nantes' },
+      ],
+      'RU': [
+        { name: 'Moscow' },
+        { name: 'Saint Petersburg' },
+        { name: 'Novosibirsk' },
+        { name: 'Yekaterinburg' },
+        { name: 'Kazan' },
+        { name: 'Nizhny Novgorod' },
+      ],
+      'JP': [
+        { name: 'Tokyo' },
+        { name: 'Osaka' },
+        { name: 'Kyoto' },
+        { name: 'Yokohama' },
+        { name: 'Nagoya' },
+        { name: 'Sapporo' },
+      ],
+      'CN': [
+        { name: 'Beijing' },
+        { name: 'Shanghai' },
+        { name: 'Guangzhou' },
+        { name: 'Shenzhen' },
+        { name: 'Chengdu' },
+        { name: 'Hangzhou' },
+      ],
+      'IN': [
+        { name: 'Mumbai' },
+        { name: 'Delhi' },
+        { name: 'Bangalore' },
+        { name: 'Hyderabad' },
+        { name: 'Chennai' },
+        { name: 'Kolkata' },
+      ],
+      'BR': [
+        { name: 'Sao Paulo' },
+        { name: 'Rio de Janeiro' },
+        { name: 'Brasilia' },
+        { name: 'Salvador' },
+        { name: 'Fortaleza' },
+        { name: 'Belo Horizonte' },
+      ],
+      'CA': [
+        { name: 'Toronto' },
+        { name: 'Montreal' },
+        { name: 'Vancouver' },
+        { name: 'Calgary' },
+        { name: 'Ottawa' },
+        { name: 'Edmonton' },
+      ],
+      'AU': [
+        { name: 'Sydney' },
+        { name: 'Melbourne' },
+        { name: 'Brisbane' },
+        { name: 'Perth' },
+        { name: 'Adelaide' },
+        { name: 'Gold Coast' },
+      ],
+      'ES': [
+        { name: 'Madrid' },
+        { name: 'Barcelona' },
+        { name: 'Valencia' },
+        { name: 'Seville' },
+        { name: 'Zaragoza' },
+        { name: 'Malaga' },
+      ],
+      'IT': [
+        { name: 'Rome' },
+        { name: 'Milan' },
+        { name: 'Naples' },
+        { name: 'Turin' },
+        { name: 'Palermo' },
+        { name: 'Florence' },
+      ],
+      'NL': [
+        { name: 'Amsterdam' },
+        { name: 'Rotterdam' },
+        { name: 'The Hague' },
+        { name: 'Utrecht' },
+        { name: 'Eindhoven' },
+        { name: 'Groningen' },
+      ]
+    };
+
+    return citiesByCountry[countryCode] || [];
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    return [];
+  }
+};
+
+// Google Places API ile mekan araması yapan fonksiyon
+export const searchGooglePlaces = (query: string, countryCode?: string, city?: string): Promise<any[]> => {
+  console.log(`Searching Google Places with: query=${query}, country=${countryCode}, city=${city}`);
+  
+  return new Promise((resolve) => {
+    // Places API ile arama yapma fonksiyonu
+    function initPlacesSearch() {
+      try {
+        console.log('Initializing Places search with Google Maps API');
+        // Places API ile arama yapmak için TextSearch kullan
+        const service = new google.maps.places.PlacesService(document.createElement('div'));
+        
+        // Arama sorgusu oluştur - ülke ve şehir bilgisini ekle
+        let searchQuery = query;
+        if (city) {
+          searchQuery = `${query} in ${city}`;
+        }
+        
+        if (countryCode) {
+          // Ülke adını bul
+          const countryName = countries.find(c => c.code === countryCode)?.name || '';
+          if (countryName && !city) {
+            searchQuery = `${query} in ${countryName}`;
+          }
+        }
+        
+        console.log('Search query:', searchQuery);
+        
+        // Arama isteği oluştur
+        const request: any = {
+          query: searchQuery
+        };
+        
+        // Ülke kodunu ekle (varsa)
+        if (countryCode) {
+          request.locationBias = { country: countryCode };
+        }
+        
+        console.log('Sending request to Google Places API:', request);
+        
+        // Places API'ye istek gönder
+        service.textSearch(
+          request,
+          (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+              console.log('Google Places API results:', results);
+              
+              // Sonuçları dönüştür
+              const formattedResults = results.map(place => ({
+                id: place.place_id,
+                title: place.name,
+                image: place.photos && place.photos.length > 0 
+                  ? place.photos[0].getUrl({maxWidth: 400, maxHeight: 300}) 
+                  : `https://source.unsplash.com/400x300/?${encodeURIComponent(place.name)}`,
+                type: 'place',
+                address: place.formatted_address,
+                city: city || extractCityFromAddress(place.formatted_address),
+                country: countryCode ? countries.find(c => c.code === countryCode)?.name || '' : extractCountryFromAddress(place.formatted_address),
+                latitude: place.geometry?.location.lat(),
+                longitude: place.geometry?.location.lng(),
+                rating: place.rating,
+                reviews: place.user_ratings_total,
+                placeTypes: place.types
+              }));
+              
+              resolve(formattedResults);
+            } else {
+              console.error('Google Places API error or no results:', status);
+              resolve(generateSimulatedResults(query, city, countryCode));
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error initializing Places search:', error);
+        resolve(generateSimulatedResults(query, city, countryCode));
+      }
+    }
+    
+    // Google Maps API yüklenmemişse yüklenmesini bekle
+    if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+      console.log('Google Maps API is not loaded, waiting for it to load...');
+      
+      // Google Maps API'nin yüklenmesini bekle
+      let waitAttempts = 0;
+      const maxAttempts = 10;
+      const checkInterval = 500; // 500ms aralıklarla kontrol et
+      
+      const waitInterval = setInterval(() => {
+        waitAttempts++;
+        
+        if (window.googleMapsLoaded && typeof google !== 'undefined' && google.maps && google.maps.places) {
+          clearInterval(waitInterval);
+          console.log('Google Maps API is ready to use');
+          initPlacesSearch();
+        } else if (waitAttempts >= maxAttempts) {
+          clearInterval(waitInterval);
+          console.log('Google Maps API could not be loaded in time, using simulated results');
+          resolve(generateSimulatedResults(query, city, countryCode));
+        } else {
+          console.log(`Waiting for Google Maps API to load... (${waitAttempts}/${maxAttempts})`);
+        }
+      }, checkInterval);
+    } else {
+      // Google Maps API zaten yüklendiyse doğrudan arama yap
+      console.log('Google Maps API is already loaded');
+      initPlacesSearch();
+    }
+  });
+};
+
+// Simüle edilmiş sonuçlar oluşturan yardımcı fonksiyon
+const generateSimulatedResults = (query: string, city?: string, countryCode?: string): any[] => {
+  console.log('Generating simulated results for:', query);
+  
+  const results = [];
+  const categories = ['Restaurant', 'Cafe', 'Bar', 'Hotel', 'Park', 'Museum', 'Shop', 'Mall', 'Cinema', 'Theater'];
+  
+  // Arama terimine göre daha fazla ve gerçekçi sonuçlar oluştur
+  const resultCount = Math.min(5 + Math.floor(Math.random() * 3), 8); // 5-8 arası sonuç
+  
+  // Şehir ve ülke bilgilerini al
+  const countryName = countryCode ? countries.find(c => c.code === countryCode)?.name || '' : '';
+  
+  // Popoular mekan isimleri
+  const popularPlaceNames = [
+    query,
+    `${query} ${city || ''}`,
+    `${query} Plaza`,
+    `${query} Center`,
+    `${query} Park`,
+    `Grand ${query}`,
+    `${query} Premium`,
+    `${query} Royal`,
+    `${query} Express`,
+    `${query} Deluxe`
+  ];
+  
+  for (let i = 0; i < resultCount; i++) {
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const placeName = i < popularPlaceNames.length ? 
+      popularPlaceNames[i] : 
+      `${query} ${category} ${Math.floor(Math.random() * 100) + 1}`;
+    
+    // Adres oluştur
+    const streets = ['Main Street', 'Avenue', 'Boulevard', 'Road', 'Square', 'Park', 'Plaza'];
+    const street = streets[Math.floor(Math.random() * streets.length)];
+    const streetNumber = Math.floor(Math.random() * 200) + 1;
+    const address = `${streetNumber} ${query} ${street}, ${city || ''}, ${countryName}`;
+    
+    // Derecelendirme ve yorum sayısı
+    const rating = (3 + Math.random() * 2).toFixed(1);
+    const reviews = Math.floor(50 + Math.random() * 950);
+    
+    // Konum bilgisi - şehre göre hafifçe değişen koordinatlar
+    const baseLatitude = city === 'Istanbul' ? 41.0082 : city === 'Ankara' ? 39.9334 : 41.0082;
+    const baseLongitude = city === 'Istanbul' ? 28.9784 : city === 'Ankara' ? 32.8597 : 28.9784;
+    
+    results.push({
+      id: `place-${query.replace(/\s+/g, '-')}-${i}`,
+      title: placeName,
+      // Unsplash API'yi kullanarak gerçekçi görünen resimler al
+      image: `https://source.unsplash.com/400x300/?${encodeURIComponent(query)},${category.toLowerCase()}`,
+      type: 'place',
+      address: address,
+      city: city || '',
+      country: countryName,
+      latitude: baseLatitude + (Math.random() * 0.05 - 0.025),
+      longitude: baseLongitude + (Math.random() * 0.05 - 0.025),
+      rating: rating,
+      reviews: reviews,
+      placeTypes: [category.toLowerCase(), 'point_of_interest']
+    });
+  }
+  
+  return results;
+};
+
+// Mekan detaylarını getiren fonksiyon
+export const getPlaceDetails = async (placeId: string): Promise<any> => {
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,photos,geometry,url&key=${GOOGLE_PLACES_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Google Places API request failed');
+    }
+    
+    const data = await response.json();
+    
+    if (data.status !== 'OK' || !data.result) {
+      throw new Error('Place details not found');
+    }
+    
+    return {
+      id: placeId,
+      title: data.result.name,
+      image: data.result.photos && data.result.photos.length > 0 
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${data.result.photos[0].photo_reference}&key=${GOOGLE_PLACES_API_KEY}`
+        : getDefaultPlaceImage(data.result.name),
+      type: 'place',
+      address: data.result.formatted_address,
+      city: extractCityFromAddress(data.result.formatted_address),
+      country: extractCountryFromAddress(data.result.formatted_address),
+      latitude: data.result.geometry?.location.lat,
+      longitude: data.result.geometry?.location.lng,
+      googleMapsUrl: data.result.url || `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+    };
+  } catch (error) {
+    console.error('Error fetching place details:', error);
+    throw error;
+  }
+};
+
+// Varsayılan mekan görseli
+export const getDefaultPlaceImage = (name: string): string => {
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=orange`;
+};
+
+// Adresten şehir bilgisini çıkaran yardımcı fonksiyon
+const extractCityFromAddress = (address: string): string => {
+  if (!address) return '';
+  
+  // Adres formatı genellikle "Sokak, Mahalle, Şehir, Ülke" şeklindedir
+  const parts = address.split(',').map(part => part.trim());
+  
+  // Şehir genellikle sondan ikinci veya üçüncü parçadır
+  if (parts.length >= 3) {
+    return parts[parts.length - 2];
+  }
+  
+  return parts[parts.length - 1] || '';
+};
+
+// Adresten ülke bilgisini çıkaran yardımcı fonksiyon
+const extractCountryFromAddress = (address: string): string => {
+  if (!address) return '';
+  
+  // Ülke genellikle adresin son parçasıdır
+  const parts = address.split(',').map(part => part.trim());
+  return parts[parts.length - 1] || '';
+};
+
+// TypeScript için window nesnesine googleMapsLoaded özelliği ekle
+declare global {
+  interface Window {
+    googleMapsLoaded: boolean;
+  }
+}

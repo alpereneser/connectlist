@@ -1,0 +1,718 @@
+{
+  "languages": {
+    "turkish": "Türkçe",
+    "english": "English"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu",
+    "country": "Ülke",
+    "city": "Şehir",
+    "selectCountry": "Ülke seçin",
+    "selectCity": "Şehir seçin",
+    "locationSelection": "Konum Seçimi",
+    "selectedLocation": "seçilen konum",
+    "errors": {
+      "fileTooLarge": "Dosya boyutu 5MB'dan küçük olmalıdır",
+      "invalidFileType": "Sadece JPG, PNG ve GIF dosyaları yükleyebilirsiniz",
+      "selectCountryCity": "Lütfen önce bir ülke ve şehir seçin"
+    },
+    "form": {
+      "enterUsername": "Kullanıcı adınızı girin",
+      "checkingUsername": "Kullanıcı adı kontrol ediliyor...",
+      "updating": "Güncelleniyor...",
+      "updateUsername": "Kullanıcı Adını Güncelle",
+      "aboutYourself": "Kendinizden bahsedin...",
+      "websiteExample": "https://example.com",
+      "locationExample": "İstanbul, Türkiye",
+      "enterEmail": "E-posta adresinizi girin",
+      "enterNewPassword": "Yeni şifrenizi girin",
+      "confirmNewPassword": "Yeni şifrenizi tekrar girin"
+    },
+    "auth": {
+      "login": "Giriş Yap",
+      "register": "Üye Ol"
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "markAllRead": "Tümünü Okundu İşaretle",
+      "noNotifications": "Henüz bildirim yok",
+      "deleteAll": "Tümünü Sil",
+      "processing": "İşleniyor...",
+      "deleteConfirm": "Bildirimi Sil",
+      "deleteMessage": "Bu bildirimi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleteAllConfirm": "Tüm Bildirimleri Sil",
+      "deleteAllMessage": "Tüm bildirimleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "delete": "Sil"
+    },
+    "profile": {
+      "loading": "Yükleniyor...",
+      "guest": "Misafir",
+      "myProfile": "Profilim",
+      "settings": "Ayarlar",
+      "signOut": "Çıkış Yap"
+    },
+    "addList": "Liste Ekle",
+    "roadmap": "Yol Haritası",
+    "search": "Ara",
+    "searchPlaceholder": "Aramak istediğiniz içeriği yazın",
+    "searchInCategory": "Kategori içinde ara",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "discover": "Keşfet",
+    "edit": "Düzenle",
+    "follow": "Takip Et",
+    "unfollow": "Takibi Bırak",
+    "processing": "İşleniyor...",
+    "seeAll": "Tümünü Gör",
+    "categories": {
+      "all": "Tümü",
+      "movies": "Filmler",
+      "series": "Diziler",
+      "books": "Kitaplar",
+      "games": "Oyunlar",
+      "people": "Kişiler",
+      "videos": "Videolar",
+      "places": "Mekanlar"
+    },
+    "categoryDescriptions": {
+      "movies": "En sevdiğiniz filmleri listeleyebilir, izleme listenizi oluşturabilirsiniz.",
+      "series": "İzlediğiniz veya izlemek istediğiniz dizileri listeleyebilirsiniz.",
+      "books": "Okuduğunuz veya okumak istediğiniz kitapları listeleyebilirsiniz.",
+      "games": "Oynadığınız veya oynamak istediğiniz oyunları listeleyebilirsiniz.",
+      "people": "Sevdiğiniz aktör, yönetmen veya ünlüleri listeleyebilirsiniz.",
+      "videos": "YouTube videolarını listeleyebilir, izleme listenizi oluşturabilirsiniz.",
+      "places": "Ziyaret ettiğiniz veya gitmek istediğiniz mekanları listeleyebilirsiniz."
+    },
+    "lists": {
+      "all": "Tüm Listeler",
+      "movies": "Film Listeleri",
+      "series": "Dizi Listeleri",
+      "books": "Kitap Listeleri",
+      "games": "Oyun Listeleri",
+      "people": "Kişi Listeleri",
+      "videos": "Video Listeleri",
+      "places": "Mekan Listeleri"
+    },
+    "messages": {
+      "title": "Mesajlar",
+      "newMessage": "Yeni Mesaj",
+      "searchPlaceholder": "Takip ettikleriniz arasında arayın...",
+      "noResults": "Sonuç bulunamadı",
+      "noConversations": "Henüz mesajlaşma yok",
+      "startConversation": "Yeni bir mesaj başlatmak için + butonuna tıklayın",
+      "typeMessage": "Mesajınızı yazın...",
+      "send": "Gönder",
+      "deleteConversation": "Konuşmayı Sil",
+      "deleteConfirmation": "Bu konuşmayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "delete": "Sil",
+      "today": "Bugün",
+      "yesterday": "Dün",
+      "mutualFollowRequired": "Mesajlaşmak için karşılıklı takipleşmeniz gerekiyor",
+      "errorSending": "Mesaj gönderilirken bir hata oluştu",
+      "sending": "Gönderiliyor...",
+      "noMessages": "Henüz mesaj yok",
+      "startMessaging": "Mesajlaşmaya başla",
+      "selectConversation": "Bir sohbet seçin",
+      "errorDeletingConversation": "Konuşma silinirken bir hata oluştu."
+    },
+    "time": {
+      "now": "şimdi",
+      "minutesAgo": "{{count}} dakika önce",
+      "hoursAgo": "{{count}} saat önce",
+      "daysAgo": "{{count}} gün önce",
+      "lastUpdate": "Son güncelleme:"
+    }
+  },
+  "categories": {
+    "movie": "Film",
+    "series": "Dizi",
+    "book": "Kitap",
+    "game": "Oyun",
+    "video": "Video",
+    "unknown": "Öğe"
+  },
+  "auth": {
+    "welcome": "Hoş Geldiniz",
+    "welcomeMessage": "Birkaç adımdan sonra liste oluşturmaya hazırsınız. Bilgilerinizi girin ve bize katılın.",
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol",
+    "requireAuthMessage": "Bu işlemi yapabilmek için giriş yapmalısınız: {{action}}",
+    "forgotPassword": "Şifremi Unuttum",
+    "email": "E-posta",
+    "password": "Şifre",
+    "username": "Kullanıcı adı",
+    "fullName": "Ad Soyad",
+    "rememberMe": "Beni hatırla",
+    "invalidEmail": "Geçersiz e-posta adresi",
+    "passwordTooShort": "Şifre en az 6 karakter olmalıdır",
+    "usernameTaken": "Bu kullanıcı adı zaten alınmış",
+    "emailTaken": "Bu e-posta adresi zaten kullanılıyor",
+    "verifyEmail": "E-posta Adresinizi Doğrulayın",
+    "verifyEmailMessage": "Size bir doğrulama bağlantısı içeren e-posta gönderdik. Lütfen gelen kutunuzu kontrol edin.",
+    "loggingIn": "Giriş yapılıyor...",
+    "creatingAccount": "Hesap oluşturuluyor...",
+    "invalidCredentials": "Geçersiz e-posta veya şifre",
+    "acceptTerms": "Kullanıcı sözleşmesini kabul etmelisiniz",
+    "invalidReferralCode": "Referans kodu geçersiz veya kullanılmış",
+    "registrationError": "Kayıt sırasında bir hata oluştu",
+    "checkingUsername": "Kullanıcı adı kontrol ediliyor...",
+    "usernameLength": "Kullanıcı adı 3-30 karakter arasında olmalıdır",
+    "termsOfService": "Kullanıcı Sözleşmesi",
+    "acceptTermsText": "'ni okudum ve kabul ediyorum",
+    "resetPassword": "Şifremi Sıfırla",
+    "resetPasswordError": "Bir hata oluştu. Lütfen tekrar deneyin.",
+    "resetPasswordInstructions": "Şifrenizi sıfırlamak için gereken talimatları e-posta adresinize gönderdik.",
+    "passwordResetSent": "Şifre Sıfırlama E-postası Gönderildi",
+    "resetEmailSent": "E-posta adresinize şifre sıfırlama bağlantısı gönderdik.",
+    "checkSpamFolder": "E-postayı göremiyorsanız lütfen spam klasörünüzü kontrol edin.",
+    "backToLogin": "Giriş Sayfasına Dön",
+    "sending": "Gönderiliyor...",
+    "didntReceiveEmail": "E-postayı almadınız mı? Spam klasörünüzü kontrol edin veya",
+    "didntReceive": "E-postayı almadınız mı?",
+    "tryLoginAgain": "tekrar giriş yapmayı deneyin",
+    "verificationEmailSent": "Doğrulama e-postası gönderildi",
+    "sentTo": "Gönderildi",
+    "checkSpam": "Spam klasörünüzü kontrol etmeyi unutmayın",
+    "openEmailClient": "E-posta Uygulamasını Aç",
+    "tryAgain": "Tekrar deneyin",
+    "verificationSuccess": "E-posta doğrulama başarılı",
+    "accountVerified": "Hesabınız başarıyla doğrulandı",
+    "redirecting": "Yönlendiriliyor",
+    "verificationFailed": "E-posta doğrulama başarısız",
+    "verificationError": "E-posta doğrulama sırasında bir hata oluştu",
+    "emailConfirmed": "E-posta Adresiniz Doğrulandı",
+    "emailConfirmedMessage": "Tebrikler! Hesabınız başarıyla doğrulandı. Şimdi giriş yapabilirsiniz.",
+    "goToLogin": "Giriş Sayfasına Git",
+    "redirectingIn": "Yönlendiriliyor",
+    "seconds": "saniye",
+    "accept": "Kabul Ediyorum",
+    "readToEnd": "Sözleşmeyi sonuna kadar okuyunuz",
+    "newEmail": "Yeni Email Adresi",
+    "updateEmail": "Email'i Güncelle",
+    "currentPassword": "Mevcut Şifre",
+    "newPassword": "Yeni Şifre",
+    "confirmPassword": "Yeni Şifre Tekrar",
+    "updatePassword": "Şifreyi Güncelle",
+    "updateUsername": "Kullanıcı Adını Güncelle",
+    "updatingUsername": "Kullanıcı adı güncelleniyor...",
+    "enterNewPassword": "Yeni şifrenizi aşağıya girin",
+    "invalidLink": "Geçersiz Sıfırlama Bağlantısı",
+    "requestNewLink": "Yeni Bağlantı İste",
+    "passwordResetSuccess": "Şifre Sıfırlama Başarılı",
+    "passwordChanged": "Şifreniz başarıyla değiştirildi",
+    "redirectingToLogin": "Giriş sayfasına yönlendiriliyor",
+    "invalidResetLink": "Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş",
+    "resetting": "Sıfırlanıyor...",
+    "usernameFormatInfo": "Kullanıcı adı Türkçe ve İngilizce karakterler (a-z, A-Z, ç, ğ, ı, ö, ş, ü, Ç, Ğ, İ, Ö, Ş, Ü), rakamlar (0-9) ve alt çizgi (_) içerebilir.",
+    "usernameAvailableCheck": "✓ Bu kullanıcı adı kullanılabilir",
+    "usernameTakenCheck": "✗ Bu kullanıcı adı zaten alınmış"
+  },
+  "validation": {
+    "invalidEmail": "Geçersiz e-posta adresi",
+    "passwordMinLength": "Şifre en az 6 karakter olmalıdır",
+    "usernameMinLength": "Kullanıcı adı en az 3 karakter olmalıdır",
+    "usernameMaxLength": "Kullanıcı adı en fazla 30 karakter olabilir",
+    "usernameFormat": "Kullanıcı adı sadece İngilizce harfler, rakamlar ve alt çizgi içerebilir",
+    "fullNameMinLength": "Ad soyad en az 2 karakter olmalıdır",
+    "passwordMin8": "Şifre en az 8 karakter olmalıdır",
+    "passwordLowercase": "Şifre en az bir küçük harf içermelidir",
+    "passwordUppercase": "Şifre en az bir büyük harf içermelidir",
+    "passwordNumber": "Şifre en az bir rakam içermelidir",
+    "passwordsDoNotMatch": "Şifreler eşleşmiyor"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "account": "Hesap",
+    "email": "E-posta",
+    "notifications": "Bildirimler",
+    "theme": "Tema",
+    "language": "Dil",
+    "general": "Genel",
+    "profile": "Profil",
+    "security": "Güvenlik",
+    "connectedAccounts": "Bağlı Hesaplar",
+    "changePassword": "Şifre Değiştir",
+    "changeEmail": "E-posta Değiştir",
+    "updateProfile": "Profili Güncelle",
+    "uploadAvatar": "Profil Resmi Yükle",
+    "removeAvatar": "Resmi Kaldır",
+    "selectImage": "Resim Seç",
+    "uploading": "Yükleniyor...",
+    "saving": "Kaydediliyor...",
+    "success": "Başarılı",
+    "error": "Hata",
+    "profileUpdated": "Profil bilgileri güncellendi",
+    "usernameUpdated": "Kullanıcı adı güncellendi",
+    "emailUpdated": "E-posta adresi güncellendi",
+    "passwordUpdated": "Şifre güncellendi",
+    "avatarUpdated": "Profil resmi güncellendi",
+    "avatarRemoved": "Profil resmi kaldırıldı",
+    "updateFailed": "Güncelleme başarısız",
+    "selectTheme": "Tema Seçin",
+    "light": "Açık",
+    "dark": "Koyu",
+    "system": "Sistem",
+    "selectLanguage": "Dil Seçin",
+    "turkish": "Türkçe",
+    "english": "İngilizce",
+    "emailNotifications": "E-posta Bildirimleri",
+    "newFollowers": "Yeni takipçiler",
+    "listUpdates": "Liste güncellemeleri",
+    "commentsAndMentions": "Yorumlar ve bahsetmeler",
+    "siteUpdates": "Site güncellemeleri",
+    "deleteAccount": "Hesabı Sil",
+    "deleteAccountConfirm": "Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "enterPasswordToDelete": "Devam etmek için şifrenizi girin",
+    "deleteAccountButton": "Hesabımı Kalıcı Olarak Sil",
+    "deletingAccount": "Hesap siliniyor...",
+    "accountDeleted": "Hesap başarıyla silindi",
+    "invalidPassword": "Geçersiz şifre",
+    "deleteAccountError": "Hesap silinirken hata oluştu"
+  },
+  "discover": {
+    "title": "Keşfet",
+    "popularLists": "Popüler Listeler",
+    "newLists": "Yeni Listeler",
+    "popularUsers": "Popüler Kullanıcılar",
+    "list": "Liste",
+    "items": "öğe",
+    "createdBy": "Oluşturan",
+    "loadMore": "Daha Fazla Yükle",
+    "noListsFound": "Liste bulunamadı",
+    "noUsersFound": "Kullanıcı bulunamadı"
+  },
+  "profile": {
+    "joined": "Katıldı",
+    "followers": "Takipçi",
+    "following": "Takip Edilen",
+    "lists": "Listeler",
+    "editProfile": "Profili Düzenle",
+    "noListsYet": "Henüz liste oluşturmadı",
+    "userNotFound": "Kullanıcı bulunamadı"
+  },
+  "list": {
+    "createList": "Liste Oluştur",
+    "editList": "Listeyi Düzenle",
+    "listName": "Liste Adı",
+    "description": "Açıklama (isteğe bağlı)",
+    "category": "Kategori",
+    "privacy": "Gizlilik",
+    "public": "Herkese Açık",
+    "private": "Gizli (Sadece siz görebilirsiniz)",
+    "create": "Oluştur",
+    "update": "Güncelle",
+    "creating": "Oluşturuluyor...",
+    "updating": "Güncelleniyor...",
+    "deleteList": "Listeyi Sil",
+    "deleteListConfirm": "Bu listeyi silmek istediğinizden emin misiniz?",
+    "addItem": "Öğe Ekle",
+    "searchToAdd": "Eklemek için ara...",
+    "searchMovies": "Film Ara...",
+    "searchSeries": "Dizi Ara...",
+    "searchBooks": "Kitap Ara...",
+    "searchGames": "Oyun Ara...",
+    "searchPeople": "Kişi Ara...",
+    "searching": "Aranıyor...",
+    "noResults": "Sonuç bulunamadı",
+    "add": "Ekle",
+    "added": "Eklendi",
+    "removeItem": "Öğeyi Kaldır",
+    "moveUp": "Yukarı Taşı",
+    "moveDown": "Aşağı Taşı",
+    "reorder": "Sıralama Modu",
+    "doneReordering": "Sıralamayı Bitir",
+    "listEmpty": "Bu liste henüz boş",
+    "addItemsPrompt": "Öğe eklemek için yukarıdaki arama çubuğunu kullanın.",
+    "createdBy": "Oluşturan",
+    "lastUpdated": "Son Güncelleme",
+    "itemCount": "Öğe Sayısı",
+    "selectCategory": "Kategori Seçin",
+    "listNotFound": "Liste bulunamadı",
+    "listDeleted": "Liste başarıyla silindi",
+    "errorDeletingList": "Liste silinirken hata oluştu",
+    "errorUpdatingList": "Liste güncellenirken hata oluştu",
+    "errorCreatingList": "Liste oluşturulurken hata oluştu",
+    "errorAddingItem": "Öğe eklenirken hata oluştu",
+    "errorRemovingItem": "Öğe kaldırılırken hata oluştu",
+    "errorReorderingItems": "Öğeler sıralanırken hata oluştu",
+    "addItemSuccess": "Öğe başarıyla eklendi",
+    "removeItemSuccess": "Öğe başarıyla kaldırıldı",
+    "shareList": "Listeyi Paylaş",
+    "linkCopied": "Bağlantısı kopyalandı!"
+  },
+  "listPreview": {
+    "items": "öğe",
+    "createdBy": "Oluşturan",
+    "addToList": "Listeye Ekle",
+    "whoAdded": "Ekleyen",
+    "createdAt": "Oluşturulma tarihi",
+    "timeAgo": {
+      "now": "şimdi",
+      "minutes": "{{count}} dakika önce",
+      "hours": "{{count}} saat önce",
+      "days": "{{count}} gün önce"
+    },
+    "listDetails": {
+      "createNewList": "Yeni {{category}} Listesi Oluştur",
+      "listTitle": "Liste Başlığı",
+      "listTitlePlaceholder": "Listeye bir başlık verin",
+      "listDescription": "Liste Açıklaması",
+      "listDescriptionPlaceholder": "Listeniz hakkında kısa bir açıklama yazın",
+      "noContent": "Henüz içerik eklenmedi",
+      "searchAndSelect": "Arama yapın ve öğeleri seçin",
+      "preview": "Önizleme",
+      "create": "Liste Oluştur",
+      "creating": "Oluşturuluyor...",
+      "editList": "Listeyi Düzenle",
+      "deleteList": "Listeyi Sil",
+      "deleteConfirm": "Silme Onayı",
+      "deleteMessage": "Bu listeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "deleting": "Siliniyor...",
+      "delete": "Sil",
+      "cancel": "İptal",
+      "deleteItemConfirm": "Öğeyi Sil",
+      "deleteItemMessage": "Bu öğeyi listeden kaldırmak istediğinizden emin misiniz?",
+      "addContent": "İçerik Ekle",
+      "searchContent": "İçerik Ara",
+      "searchContentPlaceholder": "{{category}} ara",
+      "searchPlacesPlaceholder": "{{city}} için mekan ara",
+      "youtubeLink": "YouTube Video Linki",
+      "youtubeLinkPlaceholder": "YouTube video linkini yapıştır",
+      "searching": "Aranıyor...",
+      "comments": {
+        "title": "Yorumlar",
+        "placeholder": "Yorum yaz...",
+        "submit": "Gönder",
+        "noComments": "Henüz yorum yok",
+        "deleteComment": "Yorumu Sil",
+        "deleteConfirm": "Bu yorumu silmek istediğinizden emin misiniz?",
+        "deleteButton": "Sil"
+      }
+    },
+    "noLikes": "Henüz beğeni yok",
+    "linkCopied": "Bağlantısı kopyalandı!",
+    "createdList": "liste oluşturdu",
+    "noLists": "Henüz liste oluşturulmamış",
+    "noMoreLists": "Başka liste yok",
+    "noCategoryLists": "{{category}} kategorisinde liste bulunamadı"
+  },
+  "details": {
+    "overview": "Genel Bakış",
+    "seasons": "Sezonlar",
+    "episodes": "Bölümler",
+    "cast": "Oyuncular",
+    "crew": "Ekip",
+    "recommendations": "Öneriler",
+    "similar": "Benzer",
+    "addToList": "Add to List",
+    "whoAdded": "Who Added",
+    "listsContainingItem": "Bu Öğeyi İçeren Listeler",
+    "unknownAuthor": "Yazar Bilinmiyor",
+    "unknownPublisher": "Yayıncı Bilinmiyor",
+    "unknownReleaseDate": "Yayın Tarihi Bilinmiyor",
+    "pageCount": "{{count}} sayfa",
+    "playtime": "{{hours}}s {{minutes}}d oynama süresi",
+    "developer": "Geliştirici",
+    "platforms": "Platformlar",
+    "genres": "Türler",
+    "metacriticScore": "Metacritic Puanı",
+    "releaseDate": "Yayın Tarihi",
+    "director": "Yönetmen",
+    "firstAirDate": "İlk Yayın Tarihi",
+    "lastAirDate": "Son Yayın Tarihi",
+    "episodeCount": "{{count}} bölüm",
+    "seasonCount": "{{count}} sezon",
+    "runtime": "{{minutes}} dk",
+    "addToListAuthAction": "listeye öğe eklemek için",
+    "info": {
+      "movie": {
+        "title": "Film Bilgileri",
+        "originalTitle": "Orijinal Başlık",
+        "releaseDate": "Çıkış Tarihi",
+        "runtime": "Süre",
+        "rating": "Puan",
+        "votes": "oy"
+      },
+      "series": {
+        "title": "Dizi Bilgileri",
+        "originalTitle": "Orijinal Başlık",
+        "firstAirDate": "İlk Yayın Tarihi",
+        "lastAirDate": "Son Yayın Tarihi",
+        "seasons": "Sezon Sayısı",
+        "episodes": "Bölüm Sayısı",
+        "rating": "Puan"
+      },
+      "book": {
+        "title": "Kitap Bilgileri",
+        "publisher": "Yayınevi",
+        "publishDate": "Yayın Tarihi",
+        "pageCount": "Sayfa Sayısı",
+        "language": "Dil"
+      },
+      "game": {
+        "title": "Oyun Bilgileri",
+        "platforms": "Platformlar",
+        "genres": "Türler",
+        "developers": "Geliştiriciler",
+        "publishers": "Yayıncılar",
+        "releaseDate": "Çıkış Tarihi"
+      },
+      "person": {
+        "title": "Kişisel Bilgiler",
+        "knownFor": "Meslek",
+        "birthday": "Doğum Günü",
+        "deathday": "Vefat Tarihi",
+        "placeOfBirth": "Doğum Yeri",
+        "otherNames": "Diğer İsimleri"
+      }
+    }
+  },
+  "terms": {
+    "title": "Connectlist Kullanıcı Sözleşmesi",
+    "lastUpdated": "Son Güncelleme: 28 Mart 2025",
+    "welcome": "Hoş geldiniz! Connectlist'i (\"Platform\") kullanarak veya erişerek...",
+    "acceptanceStatement": {
+      "title": "Kabul ve Taahhüt",
+      "content": "Bu Kullanım Koşullarını okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz. Ayrıca, yürürlükteki tüm yasa ve düzenlemelere uyacağınızı taahhüt edersiniz."
+    },
+    "contactInfo": {
+      "title": "İletişim Bilgileri",
+      "questions": "Sorularınız mı var?",
+      "email": "support@connectlist.com",
+      "address": "İstanbul, Türkiye"
+    },
+    "applicableLaw": {
+      "title": "Uygulanabilir Hukuk ve Yetki",
+      "law": {
+        "title": "Uygulanabilir Hukuk",
+        "content": "Bu Sözleşme, Türkiye Cumhuriyeti yasalarına tabidir ve bu yasalar uyarınca yorumlanır."
+      },
+      "disputes": {
+        "title": "Uyuşmazlık Çözümü",
+        "content": "Bu Sözleşmeden doğan veya bu Sözleşmeyle ilgili herhangi bir uyuşmazlık, öncelikle dostane çözüm yoluyla çözülmeye çalışılacaktır. Çözülemeyen uyuşmazlıklar için İstanbul Mahkemeleri ve İcra Daireleri yetkilidir."
+      }
+    },
+    "generalTerms": {
+      "title": "Genel Şartlar",
+      "platformDefinition": {
+        "title": "1. Platform Tanımı",
+        "content": "Connectlist, kullanıcıların içerik listeleri oluşturmasına, paylaşmasına ve keşfetmesine olanak tanıyan çevrimiçi bir platformdur."
+      },
+      "acceptance": {
+        "title": "2. Kullanım Koşullarının Kabulü",
+        "content": "Platformu kullanarak, bu Kullanım Koşullarını kabul etmiş sayılırsınız. Eğer bu koşulları kabul etmiyorsanız, lütfen Platformu kullanmayın."
+      },
+      "changes": {
+        "title": "3. Değişiklikler",
+        "content": "Connectlist, herhangi bir zamanda bu Kullanım Koşullarını değiştirme hakkını saklı tutar. Değişiklikler yapıldığında, güncellenmiş şartlar bu sayfada yayınlanacaktır."
+      },
+      "ageRequirement": "Platformu kullanarak, 13 yaşında veya daha büyük olduğunuzu ve yürürlükteki yasalara uygun şekilde bağlayıcı bir sözleşmeye girebileceğinizi onaylıyorsunuz."
+    },
+    "registration": {
+      "title": "Kayıt ve Hesap Güvenliği",
+      "conditions": {
+        "title": "4.1. Kayıt Koşulları",
+        "content": "Hesap oluşturmak için güncel, eksiksiz ve doğru bilgiler sağlamalısınız. Başka birinin adına hesap oluşturamaz veya yanıltıcı bilgi veremezsiniz."
+      },
+      "security": {
+        "title": "4.2. Hesap Güvenliği",
+        "content": "Hesap bilgilerinizin gizliliğinden siz sorumlusunuz. Şifrenizi güvende tutmalı ve hesabınız üzerindeki tüm faaliyetlerden sorumlu olduğunuzu kabul edersiniz.",
+        "brief": "Hesabınızın güvenliği önemlidir."
+      },
+      "accountData": {
+        "title": "4.3. Hesap Verileri",
+        "content": "Hesap bilgilerinizin doğru ve güncel olduğundan emin olmak sizin sorumluluğunuzdadır. Yanlış veya güncel olmayan bilgilerin kullanımından doğabilecek sorunlardan Connectlist sorumlu değildir."
+      }
+    },
+    "platformUsage": {
+      "title": "Platform Kullanımı",
+      "listCreation": {
+        "title": "5.1. Liste Oluşturma ve İçerik",
+        "content": "Kullanıcılar, telif hakkı yasalarına ve bu Kullanım Koşullarına uygun olarak içerik oluşturabilir ve paylaşabilir. Yasa dışı, nefret söylemi içeren veya başkalarının haklarını ihlal eden içerikler yasaktır.",
+        "brief": "Liste oluşturma kurallarına uymalısınız."
+      },
+      "likeComment": {
+        "title": "5.2. Beğenme ve Yorum Yapma",
+        "content": "Kullanıcılar, diğer kullanıcıların listelerini beğenebilir ve yorum yapabilir. Ancak, nefret söylemi, tehdit veya taciz içeren yorumlar yasaktır."
+      },
+      "followSystem": {
+        "title": "5.3. Takip Sistemi",
+        "content": "Kullanıcılar, ilgi alanlarına göre diğer kullanıcıları takip edebilir ve takipçi toplayabilir. Ancak, istenmeyen takip istekleri veya spam içerik göndermek yasaktır."
+      },
+      "messaging": {
+        "title": "5.4. Mesajlaşma Sistemi",
+        "content": "Kullanıcılar, platform üzerinden birbirlerine özel mesaj gönderebilir. Ancak, istenmeyen mesajlar, spam veya uygunsuz içerik göndermek yasaktır."
+      },
+      "contentStandards": {
+        "title": "5.5. İçerik Standartları",
+        "content": "Tüm kullanıcı içeriği, yasalara ve topluluk kurallarına uygun olmalıdır. Uygunsuz içerik bildirilebilir ve kaldırılabilir."
+      }
+    },
+    "platformRights": {
+      "title": "6. Connectlist'in Hak ve Sorumlulukları",
+      "serviceChanges": {
+        "title": "6.1. Hizmet Değişiklikleri",
+        "content": "Connectlist, Platform'un özelliklerini, tasarımını veya işlevselliğini önceden haber vermeksizin değiştirme hakkını saklı tutar."
+      },
+      "contentModeration": {
+        "title": "6.2. İçerik Denetimi",
+        "content": "Connectlist, kullanıcı içeriğini denetleme ve uygunsuz veya yasa dışı olduğunu düşündüğü içerikleri kaldırma hakkını saklı tutar."
+      },
+      "termination": {
+        "title": "6.3. Hesap Sonlandırma",
+        "content": "Connectlist, bu Kullanım Koşullarını ihlal ettiğini düşündüğü hesapları uyarı vermeden askıya alma veya sonlandırma hakkını saklı tutar."
+      },
+      "platformIntellectualProperty": {
+        "title": "6.4. Fikri Mülkiyet Hakları",
+        "content": "Platform ve orijinal içeriği, telif hakkı, ticari marka ve diğer fikri mülkiyet yasalarıyla korunmaktadır."
+      },
+      "liability": {
+        "title": "6.5. Sorumluluk Sınırlaması",
+        "content": "Connectlist, platform üzerinden yapılan işlemlerden veya içeriklerden doğabilecek herhangi bir zarardan sorumlu değildir. Platformu kendi sorumluluğunuzda kullanırsınız."
+      },
+      "contact": {
+        "title": "6.6. İletişim",
+        "questions": "Sorularınız mı var?",
+        "email": "support@connectlist.com",
+        "address": "İstanbul, Türkiye"
+      },
+      "messaging": {
+        "title": "6.7. Mesajlaşma Sistemi",
+        "brief": "5.4. Mesajlaşma Sistemi",
+        "content": "Kullanıcılar, platform üzerinden birbirlerine özel mesaj gönderebilir. Ancak, istenmeyen mesajlar, spam veya uygunsuz içerik göndermek yasaktır."
+      },
+      "disclaimer": {
+        "title": "6.8. Sorumluluk Reddi",
+        "content": "Platform \"olduğu gibi\" ve \"mümkün olduğunca\" sunulmaktadır. Connectlist, Platform'un kesintisiz, güvenli veya hatasız olacağını garanti etmez."
+      },
+      "limitation": {
+        "title": "6.9. Sorumluluk Sınırlaması",
+        "content": "Yürürlükteki yasaların izin verdiği ölçüde, Connectlist, herhangi bir dolaylı, arızi, özel, sonuçsal veya cezai zararlardan sorumlu tutulamaz."
+      },
+      "indemnification": {
+        "title": "6.10. Tazminat",
+        "content": "Bu Kullanım Koşullarını ihlal etmeniz veya Platformu kullanmanızdan kaynaklanan her türlü talep, sorumluluk, zarar ve masraf için Connectlist'i tazmin etmeyi kabul edersiniz."
+      }
+    },
+    "privacy": {
+      "title": "7. Gizlilik",
+      "content": "Kişisel verilerinizin işlenmesi, Gizlilik Politikamızda açıklandığı şekilde yönetilir. Platformu kullanarak, verilerinizin bu politikaya uygun olarak işlenmesini kabul etmiş olursunuz."
+    },
+    "acknowledgment": {
+      "title": "10. Kabul ve Beyan",
+      "content": "Bu Kullanım Koşullarını okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz. Ayrıca, yürürlükteki tüm yasa ve düzenlemelere uyacağınızı taahhüt edersiniz."
+    },
+    "entireAgreement": {
+      "title": "Tam Anlaşma",
+      "description": "Bu Sözleşme, taraflar arasında konuya ilişkin tüm anlaşmaları içerir ve önceki tüm yazılı ve sözlü anlaşmaların yerine geçer."
+    },
+    "severability": {
+      "title": "Ayrılabilirlik",
+      "description": "Bu Sözleşmenin herhangi bir hükmünün yürürlükten kaldırılması veya geçersiz kılınması, Sözleşme'nin geri kalan hükümlerinin geçerliliğini etkilemeyecektir."
+    },
+    "waiver": {
+      "title": "Feragat",
+      "description": "Connectlist'in bu Sözleşmenin herhangi bir hükmünü uygulamaması veya geciktirmesi, bu tür hükümlerden vazgeçtiği anlamına gelmez."
+    },
+    "limitation": {
+      "title": "Sorumluluk Sınırlaması",
+      "description": "Yürürlükteki yasaların izin verdiği ölçüde, Connectlist herhangi bir dolaylı, arızi, özel, sonuçsal veya cezai zararlardan sorumlu tutulamaz."
+    },
+    "dataPrivacy": {
+      "title": "Veri Gizliliği",
+      "collection": {
+        "title": "Veri Toplama",
+        "content": "Kullanıcı deneyiminizi iyileştirmek için bazı kişisel verilerinizi topluyoruz. Bu veriler, hesap bilgileriniz, kullanım alışkanlıklarınız ve etkileşimlerinizi içerebilir."
+      },
+      "storage": {
+        "brief": "Verileriniz güvende",
+        "title": "Veri Saklama",
+        "content": "Topladığımız verileri güvenli sunucularımızda saklıyor ve üçüncü taraflarla paylaşmıyoruz. Verileriniz yalnızca hizmetlerimizi iyileştirmek ve size daha iyi bir deneyim sunmak için kullanılır."
+      },
+      "commitment": {
+        "brief": "Gizlilik taahhüdümüz",
+        "title": "Gizlilik Taahhüdü",
+        "content": "Veri gizliliğinize büyük önem veriyoruz. Kişisel verilerinizi korumak için gerekli tüm teknik ve idari önlemleri alıyoruz."
+      }
+    },
+    "userObligations": {
+      "title": "Kullanıcı Yükümlülükleri",
+      "appropriate": {
+        "brief": "Uygun kullanım kuralları",
+        "title": "Uygun Kullanım",
+        "content": "Platformu kullanırken aşağıdaki kurallara uymalısınız:",
+        "item1": "Başkalarının haklarını ihlal etmemek",
+        "item2": "Yasa dışı veya zararlı içerik paylaşmamak",
+        "item3": "Diğer kullanıcıları rahatsız veya taciz etmemek"
+      },
+      "contentResponsibility": {
+        "title": "İçerik Sorumluluğu",
+        "content": "Paylaştığınız tüm içeriklerden siz sorumlusunuz. Yayınladığınız içeriklerin telif hakkı yasalarına ve bu Kullanım Koşullarına uygun olduğundan emin olmalısınız."
+      },
+      "copyright": {
+        "title": "Telif Hakkı",
+        "content": "Başkalarına ait telifli içerikleri izinsiz paylaşamazsınız. Telif hakkı ihlali tespit edilmesi durumunda, ilgili içerik kaldırılacak ve hesabınız askıya alınabilir."
+      }
+    },
+
+    "intellectualProperty": {
+      "title": "Fikri Mülkiyet Hakları",
+      "platformRights": {
+        "title": "Platform Hakları",
+        "content": "Connectlist platformu ve tüm içeriği, Connectlist'in mülkiyetindedir ve telif hakkı, ticari marka ve diğer fikri mülkiyet yasalarıyla korunmaktadır."
+      },
+      "userContent": {
+        "title": "Kullanıcı İçeriği",
+        "content": "Kullanıcılar tarafından oluşturulan içeriklerin tüm hakları ilgili kullanıcıya aittir. Ancak, Connectlist'e bu içerikleri platformda gösterme, çoğaltma ve dağıtma hakkını verirsiniz."
+      }
+    },
+    "termination": {
+      "title": "Hesap Sonlandırma",
+      "accountClosure": {
+        "brief": "Hesap kapatma işlemi",
+        "title": "Hesap Kapatma",
+        "content": "Hesabınızı istediğiniz zaman kapatabilirsiniz. Hesap kapatma işlemi geri alınamaz ve tüm verileriniz silinir."
+      }
+    }
+  },
+  "search": {
+    "title": "Arama Sonuçları",
+    "categories": {
+      "all": "Tümü",
+      "lists": "Listeler",
+      "users": "Kullanıcılar",
+      "movies": "Filmler",
+      "series": "Diziler",
+      "books": "Kitaplar",
+      "games": "Oyunlar"
+    },
+    "filters": {
+      "sortBy": "Sırala",
+      "relevance": "İlgiye Göre",
+      "newest": "En Yeni",
+      "oldest": "En Eski",
+      "category": "Kategori"
+    },
+    "users": "Kullanıcılar",
+    "lists": "Listeler",
+    "movies": "Filmler",
+    "series": "Diziler",
+    "books": "Kitaplar",
+    "games": "Oyunlar",
+    "people": "Kişiler",
+    "noResults": "'{{query}}' için sonuç bulunamadı"
+  },
+  "listDetails": {
+    "comments": {
+      "title": "Yorumlar",
+      "placeholder": "Yorum yaz...",
+      "deleteConfirm": "Bu yorumu silmek istediğinize emin misiniz?",
+      "deleteButton": "Sil",
+      "noComments": "Henüz yorum yok"
+    }
+  }
+}
