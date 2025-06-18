@@ -317,6 +317,7 @@
     "searchGames": "Oyun Ara...",
     "searchPeople": "Kişi Ara...",
     "searching": "Aranıyor...",
+    "pasteYouTubeLink": "YouTube video linkini yapıştırın",
     "noResults": "Sonuç bulunamadı",
     "add": "Ekle",
     "added": "Eklendi",
@@ -704,7 +705,20 @@
     "books": "Kitaplar",
     "games": "Oyunlar",
     "people": "Kişiler",
-    "noResults": "'{{query}}' için sonuç bulunamadı"
+    "noResults": "'{{query}}' için sonuç bulunamadı",
+    "result": "Sonuç",
+    "itemCount": "{{count}} öğe",
+    "tabs": {
+      "all": "Tümü",
+      "users": "Kullanıcılar",
+      "lists": "Listeler",
+      "movies": "Filmler",
+      "shows": "Diziler",
+      "people": "Kişiler",
+      "games": "Oyunlar",
+      "books": "Kitaplar",
+      "places": "Mekanlar"
+    }
   },
   "listDetails": {
     "comments": {

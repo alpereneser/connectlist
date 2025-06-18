@@ -3,7 +3,8 @@ import {
   sendFollowerNotification, 
   sendListItemAddedNotification, 
   sendCommentNotification, 
-  sendMessageNotification 
+  sendMessageNotification,
+  sendNewListNotification
 } from './email-service';
 
 // Kullanıcı e-posta tercihlerini kontrol et
@@ -332,6 +333,59 @@ export async function triggerMessageNotification(messageId: string) {
     return result;
   } catch (error) {
     console.error('Mesaj bildirimi gönderilirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Takip edilen biri yeni bir liste oluşturduğunda takipçilerine mail bildirimi
+export async function triggerNewListNotification(listId: string) {
+  try {
+    // 1. Liste bilgilerini al
+    const { data: listData, error: listError } = await supabase
+      .from('lists')
+      .select('id, title, slug, user_id, description, created_at, profiles(full_name, username)')
+      .eq('id', listId)
+      .single();
+
+    if (listError || !listData) {
+      console.error('Liste bilgileri alınamadı:', listError);
+      return { success: false, reason: 'list_not_found' };
+    }
+
+    // 2. Listeyi paylaşan kullanıcının takipçilerini bul
+    const { data: followersData, error: followersError } = await supabase
+      .from('followers')
+      .select('follower_id, profiles(email, full_name)')
+      .eq('followed_id', listData.user_id);
+
+    if (followersError) {
+      console.error('Takipçiler alınamadı:', followersError);
+      return { success: false, reason: 'followers_error' };
+    }
+
+    // 3. Her takipçiye mail gönder
+    let sentCount = 0;
+    for (const follower of followersData) {
+      const email = follower.profiles?.email;
+      const name = follower.profiles?.full_name;
+      if (!email) continue;
+
+      await sendNewListNotification(
+        email,
+        name,
+        listData.title,
+        listData.slug,
+        listData.profiles.full_name,
+        listData.profiles.username,
+        listData.description,
+        listData.created_at
+      );
+      sentCount++;
+    }
+
+    return { success: true, sent: sentCount };
+  } catch (error) {
+    console.error('Yeni liste bildirimi gönderilirken hata:', error);
     return { success: false, error };
   }
 }

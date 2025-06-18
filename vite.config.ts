@@ -86,6 +86,7 @@ export default defineConfig(async ({ mode }) => {
   return {
     plugins: [
       react(),
+      // VitePWA plugin'i devre dışı - manual setup kullanıyoruz
       /* // YORUM SATIRINA ALINDI BAŞLANGICI
       sitemap({
         hostname: 'https://connectlist.me',

@@ -8,11 +8,31 @@
   port = 3000
   targetPort = 5173
 
+# Dynamic sitemap routes
+[[redirects]]
+  from = "/sitemap-*.xml"
+  to = "/.netlify/functions/dynamic-sitemap/:splat"
+  status = 200
+
+# Main sitemap index
+[[redirects]]
+  from = "/sitemap_index.xml"
+  to = "/.netlify/functions/dynamic-sitemap"
+  status = 200
+
+# API routes
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# Category landing pages
+[[redirects]]
+  from = "/lists/:category"
+  to = "/search?category=:category"
+  status = 200
+
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"

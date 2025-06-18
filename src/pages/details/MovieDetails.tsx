@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Users, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +15,7 @@ import { ErrorDisplay } from '../../components/ErrorDisplay';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
+import SEOContentOptimizer from '../../lib/seo-content-optimizer';
 
 interface MovieDetails {
   id: string;
@@ -42,9 +43,9 @@ interface MovieDetails {
 }
 
 export function MovieDetails() {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id: string; slug?: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { requireAuth, showAuthPopup, setShowAuthPopup, authMessage } = useRequireAuth();
   const [showAllCast, setShowAllCast] = useState(false);
   const [showAddToListModal, setShowAddToListModal] = useState(false);
@@ -62,22 +63,37 @@ export function MovieDetails() {
     setShowListUsers(true);
   };
 
-  const metaDescription = movie?.overview ? movie.overview.substring(0, 160) + (movie.overview.length > 160 ? '...' : '') : t('app.description');
+  // SEO optimization using the new optimizer
+  const seoContent = useMemo(() => {
+    if (!movie) return null;
+    return SEOContentOptimizer.optimizeMovieSEO(movie, i18n.language);
+  }, [movie, i18n.language]);
 
-  const movieSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Movie',
-    'name': movie?.title || movie?.original_title,
-    'description': movie?.overview,
-    'image': movie?.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : '',
-    'datePublished': movie?.release_date,
-    'genre': movie?.genres?.map((g: any) => g.name),
-    'director': movie?.crew_members?.find((person: any) => person.job === 'Director')?.name,
-    'actor': movie?.cast_members?.slice(0, 10).map((actor: any) => ({ // İlk 10 oyuncu
-      '@type': 'Person',
-      'name': actor.name,
-    })),
-  };
+  // Check and redirect if slug is missing or incorrect
+  useEffect(() => {
+    if (movie && movie.title) {
+      const correctSlug = movie.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+        
+      if (!slug || slug !== correctSlug) {
+        const newUrl = `/movie/${id}/${correctSlug}`;
+        navigate(newUrl, { replace: true });
+      }
+    }
+  }, [movie, slug, id, navigate]);
+
+  // FAQ Schema for the movie
+  const faqSchema = useMemo(() => {
+    if (!movie) return null;
+    return SEOContentOptimizer.generateContentFAQ('movie', movie, i18n.language);
+  }, [movie, i18n.language]);
+
+  // Mobil check
+  const isMobile = window.innerWidth < 768;
 
   const handleAttemptAddToList = async () => {
     try {
@@ -130,21 +146,229 @@ export function MovieDetails() {
   return (
     <>
       <Helmet>
-        <title>{`${movie.title} (${new Date(movie.release_date).getFullYear()}) - ConnectList`}</title>
-        <meta name="description" content={metaDescription} />
-        <meta property="og:title" content={`${movie.title} (${new Date(movie.release_date).getFullYear()})`} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
+        <title>{seoContent?.title || `${movie.title} - ConnectList`}</title>
+        <meta name="description" content={seoContent?.description || movie.overview?.substring(0, 160) || t('app.description')} />
+        <meta name="keywords" content={seoContent?.keywords.join(', ') || ''} />
+        <link rel="canonical" href={seoContent?.canonicalUrl || `https://connectlist.me/movie/${id}`} />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content={seoContent?.title || movie.title} />
+        <meta property="og:description" content={seoContent?.description || movie.overview?.substring(0, 160)} />
+        <meta property="og:image" content={seoContent?.ogImage || `https://image.tmdb.org/t/p/w500${movie.poster_path}`} />
         <meta property="og:type" content="video.movie" />
-        {movieSchema && (
+        <meta property="og:url" content={seoContent?.canonicalUrl} />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoContent?.title || movie.title} />
+        <meta name="twitter:description" content={seoContent?.description} />
+        <meta name="twitter:image" content={seoContent?.ogImage} />
+        
+        {/* Hreflang */}
+        {seoContent?.hreflang?.map(lang => (
+          <link key={lang.lang} rel="alternate" hrefLang={lang.lang} href={lang.url} />
+        ))}
+        
+        {/* Structured Data */}
+        {seoContent?.structuredData && (
           <script type="application/ld+json">
-            {JSON.stringify(movieSchema)}
+            {JSON.stringify(seoContent.structuredData)}
+          </script>
+        )}
+        
+        {/* FAQ Schema */}
+        {faqSchema && (
+          <script type="application/ld+json">
+            {JSON.stringify(faqSchema)}
+          </script>
+        )}
+        
+        {/* Breadcrumb Schema */}
+        {seoContent?.breadcrumbs && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": seoContent.breadcrumbs.map((breadcrumb, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "name": breadcrumb.name,
+                "item": breadcrumb.url
+              }))
+            })}
           </script>
         )}
       </Helmet>
 
       <Header />
-      <div className="min-h-screen bg-white md:bg-gray-100 pb-16 md:pb-0 pt-[95px]">
+      <div className={`min-h-screen bg-white md:bg-gray-100 pb-16 md:pb-0 ${isMobile ? 'pt-0' : 'pt-[95px]'}`}>
+        {isMobile ? (
+          // Mobile Tam Ekran Layout
+          <div className="relative">
+            {/* Mobil Hero Section - Tam Ekran */}
+            <div className="relative h-screen flex flex-col">
+              {/* Background Image */}
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path || movie.poster_path})`
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
+              </div>
+              
+              {/* Content Over Image */}
+              <div className="relative z-10 flex-1 flex flex-col">
+                {/* Safe Area Padding Top */}
+                <div className="pt-16" />
+                
+                {/* Ana İçerik */}
+                <div className="flex-1 flex flex-col justify-end p-6 pb-32">
+                  {/* Kim Listesine Eklemiş + Listene Ekle Butonları */}
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center bg-black/50 backdrop-blur-sm rounded-full px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                          alt={movie.title}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                        <span className="text-white text-sm font-medium">
+                          {movie.title}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={handleAttemptAddToList}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+                      >
+                        <Plus size={16} />
+                        Listeme Ekle
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Film Posteri */}
+                  <div className="flex justify-center mb-6">
+                    <img
+                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                      alt={movie.title}
+                      className="w-48 aspect-[2/3] object-cover rounded-xl shadow-2xl"
+                    />
+                  </div>
+                  
+                  {/* Film Bilgileri */}
+                  <div className="text-center text-white">
+                    <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
+                    <div className="flex justify-center items-center gap-2 text-sm text-white/80 mb-3">
+                      <span>{new Date(movie.release_date).getFullYear()}</span>
+                      <span>•</span>
+                      <span>{Math.floor(movie.runtime / 60)}s {movie.runtime % 60}d</span>
+                      <span>•</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-400">★</span>
+                        <span>{movie.vote_average?.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Türler */}
+                    <div className="flex justify-center flex-wrap gap-2 mb-4">
+                      {movie.genres.map((genre: { id: number; name: string }) => (
+                        <span
+                          key={genre.id + '-' + genre.name}
+                          className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-center gap-3">
+                      <button
+                        onClick={fetchListUsers}
+                        className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+                      >
+                        <Users size={16} />
+                        Kim Eklemiş
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobil İçerik - Kaydırılabilir */}
+            <div className="bg-white">
+              {/* Film Açıklaması */}
+              <div className="p-6">
+                <h2 className="text-lg font-bold mb-3">{t('details.about')}</h2>
+                <p className="text-gray-700 leading-relaxed">{movie.overview}</p>
+              </div>
+
+              {/* Oyuncular */}
+              <div className="p-6 pt-0">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold">{t('details.cast')}</h2>
+                  {movie.cast_members.length > 6 && !showAllCast && (
+                    <button
+                      onClick={() => setShowAllCast(true)}
+                      className="text-orange-500 hover:text-orange-600 text-sm font-medium flex items-center gap-1"
+                    >
+                      <Eye size={16} />
+                      <span>Tümünü Gör ({movie.cast_members.length})</span>
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {(showAllCast ? movie.cast_members : movie.cast_members.slice(0, 6)).map((person: { id: number; name: string; character: string; profile_path: string }) => (
+                    <div
+                      key={person.id + '-' + person.name}
+                      onClick={() => navigate(`/person/${person.id}`)}
+                      className="bg-gray-50 rounded-lg overflow-hidden cursor-pointer"
+                    >
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                        alt={person.name}
+                        className="w-full aspect-square object-cover"
+                      />
+                      <div className="p-2">
+                        <h3 className="font-medium text-xs line-clamp-1">{person.name}</h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">{person.character}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Yapım Ekibi */}
+              <div className="p-6 pt-0 pb-20">
+                <h2 className="text-lg font-bold mb-4">{t('details.crew')}</h2>
+                <div className="space-y-3">
+                  {movie.crew_members
+                    .filter((person: { job: string }) => ['Director', 'Screenplay', 'Story'].includes(person.job))
+                    .map((person: { id: number; name: string; job: string; profile_path: string }) => (
+                      <div
+                        key={person.id + '-' + person.name}
+                        onClick={() => navigate(`/person/${person.id}`)}
+                        className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg cursor-pointer"
+                      >
+                        <img
+                          src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
+                          alt={person.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                        <div>
+                          <h3 className="font-medium text-sm">{person.name}</h3>
+                          <p className="text-xs text-gray-500">{person.job}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Desktop Layout (Mevcut)
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
           <div className="mb-6">
             <Breadcrumb
@@ -351,6 +575,7 @@ export function MovieDetails() {
             </div>
           </div>
         </div>
+        )}
       </div>
       <BottomMenu />
 

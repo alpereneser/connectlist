@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Ana Sayfa -->
+  <url>
+    <loc>https://connectlist.me/</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Kategori Landing Sayfaları - SEO Optimized -->
+  <url>
+    <loc>https://connectlist.me/lists/movies</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/lists/series</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/lists/books</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/lists/games</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/lists/people</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/lists/places</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Önemli Statik Sayfalar -->
+  <url>
+    <loc>https://connectlist.me/search</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://connectlist.me/blog</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Auth Sayfaları -->
+  <url>
+    <loc>https://connectlist.me/auth/login</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/auth/register</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Legal Sayfalar -->
+  <url>
+    <loc>https://connectlist.me/privacy-policy</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://connectlist.me/terms-of-service</loc>
+    <lastmod>2025-01-18T12:00:00+00:00</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset> 

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthPopup } from '../components/AuthPopup';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../hooks/useRequireAuth';
-import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X } from '@phosphor-icons/react';
+import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, GridFour, List, Heart, Eye } from '@phosphor-icons/react';
 import { FollowModal } from '../components/FollowModal';
 import { ListPreview } from '../components/ListPreview';
 import { ProfileCategories } from '../components/ProfileCategories';
@@ -91,6 +91,7 @@ export function Profile() {
   const likedListsContainerRef = useRef<HTMLDivElement>(null);
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [currentSessionUserId, setCurrentSessionUserId] = useState<string | null>(null);
+  const [mobileViewMode, setMobileViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -550,55 +551,103 @@ export function Profile() {
 
       <Header />
       {/* ANA DIV BURADA BAŞLIYOR */}
-      <div className="min-h-screen bg-white md:bg-gray-100 pt-[40px] pb-[100px] md:pb-0" data-component-name="Profile"> 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="min-h-screen bg-white md:bg-gray-100 pt-[45px] pb-[100px] md:pb-0" data-component-name="Profile"> 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 md:py-8">
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
               {error}
             </div>
           )}
 
-          <div className="bg-white mb-4">
-            <div className="pt-[16px] md:pt-[21px] px-6 pb-6">
-              {/* Mobile Layout */}
-              <div className="md:hidden">
-                <div>
-                  <div className="flex items-center gap-3 mt-[-5px]">
+          <div className="bg-white">
+            <div className="md:pt-[21px] px-6 md:pb-6">
+              {/* Mobile Layout - Instagram Style */}
+              <div className="md:hidden px-4 py-2">
+                {/* Header Row */}
+                <div className="flex items-center justify-between mb-4">
+                  {/* Avatar */}
+                  <div className="relative">
                     <img
                       src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${Date.now()}` : "https://api.dicebear.com/7.x/avataaars/svg"}
                       alt={profile?.full_name}
-                      className="w-24 h-24 rounded-full object-cover"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                       onError={(e) => {
                         e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}`;
                       }}
                     />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h1 className="text-base font-bold">{profile?.full_name}</h1>
-                        {isCurrentUser && (
-                          <div className="flex items-center gap-2 w-full">
-                            <div className="flex-1"></div>
-                            <button
-                              onClick={() => navigate('/settings')}
-                              className="p-2 text-gray-600 hover:text-gray-900 bg-gray-100 rounded-full md:p-3 md:absolute md:static md:right-0"
-                              style={{ minWidth: 0 }}
-                            >
-                              <Pencil size={18} className="md:w-6 md:h-6" />
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="flex-1 flex justify-around px-6">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{filteredLists.length}</div>
+                      <div className="text-sm text-gray-500">{t('profile.lists')}</div>
+                    </div>
+                    <button onClick={handleShowFollowers} className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{profile?.followers_count}</div>
+                      <div className="text-sm text-gray-500">{t('profile.followers')}</div>
+                    </button>
+                    <button onClick={handleShowFollowing} className="text-center">
+                      <div className="text-lg font-bold text-gray-900">{profile?.following_count}</div>
+                      <div className="text-sm text-gray-500">{t('profile.following')}</div>
                             </button>
                           </div>
+                </div>
+
+                {/* Name & Username */}
+                <div className="mb-3">
+                  <h1 className="text-base font-semibold text-gray-900">{profile?.full_name}</h1>
+                  <p className="text-sm text-gray-500">@{profile?.username}</p>
+                </div>
+
+                {/* Bio */}
+                {profile?.bio && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-900 leading-relaxed">{profile.bio}</p>
+                          </div>
                         )}
+
+                {/* Location & Website */}
+                {(profile?.location || profile?.website) && (
+                  <div className="mb-4 space-y-1">
+                    {profile?.location && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin size={14} />
+                        <span>{profile.location}</span>
                       </div>
-                      <p className="text-xs text-gray-600 mb-2">@{profile?.username}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        {!isCurrentUser && (
+                    )}
+                    {profile?.website && (
+                      <a
+                        href={profile.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                      >
+                        <LinkIcon size={14} />
+                        <span>{profile.website}</span>
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {isCurrentUser ? (
+                    <button
+                      onClick={() => navigate('/settings')}
+                      className="flex-1 py-2 px-4 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      {t('profile.editProfile')}
+                    </button>
+                  ) : (
                           <>
                             <button
                               onClick={handleFollowClick}
                               disabled={isLoadingFollow}
-                              className={`px-4 py-2 rounded-lg text-xs font-medium ${
+                        className={`flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${
                                 isFollowing
                                   ? 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                                  : 'bg-orange-500 hover:bg-orange-600 text-white'
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
                               }`}
                             >
                               {isLoadingFollow
@@ -607,41 +656,17 @@ export function Profile() {
                                 ? t('profile.unfollow')
                                 : t('profile.follow')}
                             </button>
-                            {/* Mesaj Gönder Butonu: Mobilde her zaman göster */}
                             {isFollowing && (
                               <button
                                 onClick={() => navigate(`/messages?to=${profile?.username}`)}
-                                className="ml-2 px-4 py-2 rounded-lg text-xs font-medium bg-gray-100 hover:bg-gray-200 text-gray-900 h-[38px]"
+                          className="px-4 py-2 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
                               >
-                                <ChatCircle size={18} className="inline mr-1" />
-                                {t('profile.message')}
+                          <ChatCircle size={16} />
                               </button>
                             )}
                           </>
                         )}
                       </div>
-                      <div className="flex gap-4 mt-2">
-                        <button onClick={handleShowFollowers} className="text-left">
-                          <div className="text-xs font-bold">{profile?.followers_count}</div>
-                          <div className="text-[10px] text-gray-500">{t('profile.followers')}</div>
-                        </button>
-                        <button onClick={handleShowFollowing} className="text-left">
-                          <div className="text-xs font-bold">{profile?.following_count}</div>
-                          <div className="text-[10px] text-gray-500">{t('profile.following')}</div>
-                        </button>
-                        <div className="text-left">
-                          <div className="text-xs font-bold">{filteredLists.length}</div>
-                          <div className="text-[10px] text-gray-500">{t('profile.lists')}</div>
-                        </div>
-                        <button onClick={() => setShowLikedListsModal(true)} className="text-left">
-                          <div className="text-xs font-bold">{likedLists.length}</div>
-                          <div className="text-[10px] text-gray-500">{t('profile.likes')}</div>
-                        </button>
-                      </div>
-                    </div>                    
-                  </div>
-                </div>
-                <div className="my-4"></div>
               </div>
 
               {/* Desktop Layout */}
@@ -723,30 +748,30 @@ export function Profile() {
                 </div>
               </div>
 
-              {/* Bio ve Diğer Bilgiler */} 
-              <div className="mt-6">
+              {/* Bio ve Diğer Bilgiler - Sadece Desktop */} 
+              <div className="mt-6 hidden md:block">
                 <div>
                   {/* Bio */}
                   {profile?.bio && (
-                    <p className="text-sm md:text-base text-gray-900 whitespace-pre-wrap mb-2">
+                    <p className="text-base text-gray-900 whitespace-pre-wrap mb-2">
                       {profile.bio}
                     </p>
                   )}
                   {/* Website ve Location */}
-                  <div className="flex flex-col md:flex-row md:items-center md:gap-4">
+                  <div className="flex flex-row items-center gap-4">
                     {profile?.website && (
                       <a
                         href={profile.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm md:text-base text-blue-600 hover:underline flex items-center gap-1"
+                        className="text-base text-blue-600 hover:underline flex items-center gap-1"
                       >
                         <LinkIcon size={16} />
                         {profile.website}
                       </a>
                     )}
                     {profile?.location && (
-                      <p className="text-sm md:text-base text-gray-600 flex items-center gap-1">
+                      <p className="text-base text-gray-600 flex items-center gap-1">
                         <MapPin size={16} />
                         {profile.location}
                       </p>
@@ -758,67 +783,249 @@ export function Profile() {
           </div>
 
           {/* Kategori Menüsü */}
-          <div className="mb-4">
+          <div className="mb-1" style={{ marginBottom: '5px' }}>
             <ProfileCategories
               activeCategory={activeCategory}
               onCategoryChange={setActiveCategory}
             />
           </div>
 
-          {/* Kullanıcının Listeleri - Normal Akış */}
-          <div ref={mobileListContainerRef} className="space-y-6 md:hidden">
+          {/* Mobile View Toggle */}
+          <div className="md:hidden px-4 mb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {activeCategory === 'all' ? 'Tüm Listeler' : 
+                 activeCategory === 'movies' ? 'Filmler' :
+                 activeCategory === 'series' ? 'Diziler' :
+                 activeCategory === 'books' ? 'Kitaplar' :
+                 activeCategory === 'games' ? 'Oyunlar' :
+                 activeCategory === 'people' ? 'Kişiler' :
+                 activeCategory === 'videos' ? 'Videolar' :
+                 activeCategory === 'places' ? 'Yerler' : 'Listeler'}
+                <span className="text-sm text-gray-500 ml-2">({filteredLists.length})</span>
+              </h2>
+              
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setMobileViewMode('list')}
+                  className={`p-2 rounded-md transition-all ${
+                    mobileViewMode === 'list'
+                      ? 'bg-white text-orange-500 shadow-sm'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  <List size={18} />
+                </button>
+                <button
+                  onClick={() => setMobileViewMode('grid')}
+                  className={`p-2 rounded-md transition-all ${
+                    mobileViewMode === 'grid'
+                      ? 'bg-white text-orange-500 shadow-sm'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  <GridFour size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Kullanıcının Listeleri - Mobile */}
+          <div ref={mobileListContainerRef} className="md:hidden bg-gray-50 min-h-screen">
             {isLoadingLists ? (
-              <div className="animate-pulse space-y-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-white md:rounded-lg md:shadow-sm p-6">
-                    <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
-                    <div className="flex space-x-4 overflow-x-auto">
-                      {[...Array(4)].map((_, j) => (
-                        <div key={j} className="w-[140px] flex-shrink-0">
-                          <div className="aspect-[2/3] bg-gray-200 rounded-lg mb-2"></div>
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="p-4">
+                <div className={`animate-pulse ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-4'}`}>
+                  {[...Array(mobileViewMode === 'grid' ? 4 : 3)].map((_, i) => (
+                    <div key={i} className={`bg-white rounded-2xl shadow-sm ${mobileViewMode === 'grid' ? 'p-4' : 'p-6'}`}>
+                      {mobileViewMode === 'grid' ? (
+                        <>
+                          <div className="w-full h-32 bg-gray-200 rounded-xl mb-3"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                            <div className="flex-1">
+                              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                         </div>
+                          </div>
+                          <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                          <div className="flex space-x-3">
+                            {[...Array(3)].map((_, j) => (
+                              <div key={j} className="w-24 h-32 bg-gray-200 rounded-xl"></div>
                       ))}
                     </div>
+                        </>
+                      )}
+                  </div>
+                ))}
+                </div>
+              </div>
+            ) : filteredLists.length > 0 ? (
+              <div className={`p-4 ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-4'}`}>
+                {filteredLists.map((list) => (
+                  <div 
+                    key={list.id}
+                    id={`list-${list.id}`}
+                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer"
+                    onClick={() => {
+                      setLastViewedListId(list.id);
+                      navigate(`/${list.profiles.username}/list/${list.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
+                    }}
+                  >
+                    {mobileViewMode === 'grid' ? (
+                      /* Grid View - Compact */
+                      <div className="p-4">
+                        {/* Main Preview */}
+                        {list.items.length > 0 && (
+                          <div className="w-full h-32 rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
+                            {list.items[0]?.image_url ? (
+                              <img 
+                                src={list.items[0].image_url} 
+                                alt={list.items[0].title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                <span className="text-3xl">
+                                  {list.category === 'movies' ? '🎬' : 
+                                   list.category === 'series' ? '📺' : 
+                                   list.category === 'books' ? '📚' : 
+                                   list.category === 'games' ? '🎮' : 
+                                   list.category === 'people' ? '👤' : 
+                                   list.category === 'places' ? '📍' : '📋'}
+                                </span>
+                </div>
+                            )}
+                            {list.items.length > 1 && (
+                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                                +{list.items.length - 1}
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2 flex items-center space-x-1 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                              <Heart size={12} />
+                              <span>{list.likes_count || 0}</span>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Title & Info */}
+                        <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 leading-tight">
+                          {list.title}
+                        </h3>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{list.items.length} öğe</span>
+                          <span>{new Date(list.created_at).toLocaleDateString('tr-TR', { 
+                            day: 'numeric', 
+                            month: 'short' 
+                          })}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      /* List View - Detailed */
+                      <div className="p-6">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                              <span className="text-xl">
+                                {list.category === 'movies' ? '🎬' : 
+                                 list.category === 'series' ? '📺' : 
+                                 list.category === 'books' ? '📚' : 
+                                 list.category === 'games' ? '🎮' : 
+                                 list.category === 'people' ? '👤' : 
+                                 list.category === 'places' ? '📍' : '📋'}
+                              </span>
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">
+                                {list.title}
+                              </h3>
+                              <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                <span>{list.items.length} öğe</span>
+                                <span>•</span>
+                                <span>{new Date(list.created_at).toLocaleDateString('tr-TR', { 
+                                  day: 'numeric', 
+                                  month: 'short' 
+                                })}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-1 text-gray-400">
+                            <Heart size={18} />
+                            <span className="text-sm">{list.likes_count || 0}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Description */}
+                        {list.description && (
+                          <p className="text-sm text-gray-600 mb-5 line-clamp-2 leading-relaxed">
+                            {list.description}
+                          </p>
+                        )}
+                        
+                        {/* Preview Items - Büyük ve kaydırılabilir */}
+                        {list.items.length > 0 && (
+                          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
+                            {list.items.map((item, index) => (
+                              <div key={index} className="flex-shrink-0">
+                                <div className="w-28 h-36 rounded-xl overflow-hidden bg-gray-100 mb-3 shadow-sm">
+                                  {item.image_url ? (
+                                    <img 
+                                      src={item.image_url} 
+                                      alt={item.title}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                      <span className="text-2xl text-gray-400">?</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-700 text-center line-clamp-2 w-28 leading-tight font-medium">
+                                  {item.title}
+                                </p>
+                              </div>
+                            ))}
+              </div>
+            )}
+            
+                        {/* Footer */}
+                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
+                          <div className="flex items-center space-x-2">
+                            <img
+                              src={list.profiles.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${list.profiles.full_name}`}
+                              alt={list.profiles.full_name}
+                              className="w-7 h-7 rounded-full"
+                            />
+                            <span className="text-sm text-gray-600 font-medium">@{list.profiles.username}</span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2 text-orange-500">
+                            <Eye size={16} />
+                            <span className="text-sm font-semibold">Görüntüle</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            ) : filteredLists.length > 0 ? (
-              filteredLists.map((list) => (
-                <div key={list.id} id={`list-${list.id}`}>
-                  <ListPreview 
-                    key={list.id}
-                    list={{
-                      id: list.id,
-                      title: list.title,
-                      description: list.description, 
-                      category: list.category,
-                      created_at: list.created_at,
-                      likes_count: list.likes_count ?? 0, // Default to 0
-                      items_count: list.items_count ?? 0, // Default to 0
-                      user_id: list.user_id,
-                      profiles: list.profiles
-                    }} 
-                    items={list.items} 
-                    onListClick={() => setLastViewedListId(list.id)} 
-                  />
-                </div>
-              ))
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
+              <div className="text-center py-16 px-4">
+                <div className="text-8xl mb-6">📝</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  {activeCategory === 'all' ? 'Henüz liste yok' : 'Bu kategoride liste yok'}
+                </h3>
+                <p className="text-gray-500 text-base">
                   {activeCategory === 'all'
                     ? 'Henüz liste oluşturmamışsınız'
                     : `${activeCategory} kategorisinde listeniz bulunmuyor`}
                 </p>
-              </div>
-            )}
-            
-            {/* Profil sayfasında reklam alanı */}
-            {filteredLists.length > 0 && (
-              <div className="mt-8">
-                {/* Reklam alanı kaldırıldı */}
               </div>
             )}
           </div>

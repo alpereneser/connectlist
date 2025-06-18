@@ -6,6 +6,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { searchTMDB, searchGames, searchBooks, getVideoDetails, searchLists } from '../lib/api';
 import { searchPlaces, getDefaultPlaceImage } from '../lib/api-places';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // API sonuç tipleri
 interface TMDBItem {
@@ -56,6 +57,55 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const debouncedSearch = useDebounce(searchQuery, 300);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  
+  // Mobile UX improvements
+  const [isMobile, setIsMobile] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // Auto-focus on mobile
+  useEffect(() => {
+    if (isOpen && isMobile && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen, isMobile]);
+  
+  // Touch handling for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touchEnd = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY
+    };
+    
+    const deltaY = touchStart.y - touchEnd.y;
+    
+    // Swipe down to close on mobile
+    if (deltaY < -100 && isMobile) {
+      onClose();
+    }
+  };
   
   // Kategori değerini normalize et
   const normalizedCategory = useMemo(() => {
@@ -88,13 +138,13 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
   const getCategoryTitle = () => {
     switch (normalizedCategory) {
-      case 'movies': return 'Filmler';
-      case 'series': return 'Diziler';
-      case 'books': return 'Kitaplar';
-      case 'games': return 'Oyunlar';
-      case 'people': return 'Kişiler';
-      case 'videos': return 'Videolar';
-      case 'lists': return 'Listeler';
+      case 'movies': return t('common.categories.movies');
+      case 'series': return t('common.categories.series');
+      case 'books': return t('common.categories.books');
+      case 'games': return t('common.categories.games');
+      case 'people': return t('common.categories.people');
+      case 'videos': return t('common.categories.videos');
+      case 'lists': return t('search.categories.lists');
       default: return '';
     }
   };
@@ -626,93 +676,197 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div ref={popupRef} className="bg-white rounded-lg w-full max-w-2xl">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">İçerik Ara</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+    <>
+      {/* Mobile overlay */}
+      {isMobile && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 md:hidden">
+          <div 
+            ref={popupRef} 
+            className="absolute inset-x-0 bottom-0 bg-white rounded-t-3xl max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            <X size={20} />
-          </button>
-        </div>
-        {/* Arama Sonuçları -- üstteki grid kaldırıldı */}
-
-        <div className="p-4">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
-              <p>{error}</p>
+            {/* Mobile handle */}
+            <div className="flex justify-center py-3 border-b border-gray-200">
+              <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
-          )}
-          
-          <div className="relative mb-4">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              placeholder={normalizedCategory === 'videos' ? 'YouTube video linkini yapıştırın' : 'Ara...'}
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          </div>
+            
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">{t('common.searchContent')}</h2>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-          <div className="max-h-[60vh] overflow-y-auto">
-            {isSearching ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
+            <div className="p-4 flex-1 overflow-y-auto">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                  <p>{error}</p>
+                </div>
+              )}
+              
+              <div className="relative mb-4">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-4 text-lg border-2 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={normalizedCategory === 'videos' ? t('createList.pasteYouTubeLink') : t('common.search')}
+                />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
               </div>
-            ) : searchResults.length > 0 ? (
-              <div className="grid grid-cols-2 gap-4">
-                {searchResults.map((result) => {
-                  // Eğer zaten formatlanmışsa tekrar formatResult çağırma
-                  const item = result.image && result.title ? result : formatResult(result);
-                  if (!item) return null;
-                  const isAlreadyAdded = alreadyAddedItemIds.includes(item.id);
-                  
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => {
-                        if (isAlreadyAdded) return;
-                        if (item.type === 'list' && item.username) {
-                          navigate(`/profile/${item.username}/list/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
-                          onClose();
-                        } else {
-                          onSelect(item);
-                          onClose();
-                        }
-                      }}
-                      className={`flex gap-3 p-2 bg-gray-50 rounded-lg ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'}`}
-                      style={isAlreadyAdded ? { pointerEvents: 'none' } : {}}
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-20 h-28 object-cover rounded"
-                        onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title)}`; }}
-                      />
-                      <div>
-                        <h3 className="font-medium">{item.title}</h3>
-                        {item.year && (
-                          <p className="text-sm text-gray-500">{item.year}</p>
-                        )}
-                      </div>
-                      {isAlreadyAdded && (
-                        <span className="absolute top-2 right-2 bg-gray-200 text-gray-500 text-[10px] px-2 py-0.5 rounded">Eklendi</span>
-                      )}
-                    </div>
-                  );
-                })}
+
+              <div className="max-h-[50vh] overflow-y-auto">
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-2 border-orange-500 border-t-transparent" />
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="space-y-3">
+                    {searchResults.map((result) => {
+                      const item = result.image && result.title ? result : formatResult(result);
+                      if (!item) return null;
+                      const isAlreadyAdded = alreadyAddedItemIds.includes(item.id);
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            if (isAlreadyAdded) return;
+                            if (item.type === 'list' && item.username) {
+                              navigate(`/profile/${item.username}/list/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                              onClose();
+                            } else {
+                              onSelect(item);
+                              onClose();
+                            }
+                          }}
+                          className={`flex gap-4 p-4 bg-gray-50 rounded-xl ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer active:scale-95'} transition-all`}
+                          style={isAlreadyAdded ? { pointerEvents: 'none' } : {}}
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-16 h-20 object-cover rounded-lg"
+                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title)}`; }}
+                          />
+                          <div className="flex-1">
+                            <h3 className="font-medium text-lg mb-1">{item.title}</h3>
+                            {item.year && (
+                              <p className="text-sm text-gray-500">{item.year}</p>
+                            )}
+                          </div>
+                          {isAlreadyAdded && (
+                            <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">Eklendi</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-12">
+                    {searchQuery ? t('search.noResults', { query: searchQuery }) : t('common.searchPlaceholder')}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-center text-gray-500 py-8">
-                {searchQuery ? `${getCategoryTitle()} için sonuç bulunamadı` : 'Aramak istediğiniz içeriği yazın'}
-              </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+      
+      {/* Desktop modal */}
+      {!isMobile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div ref={popupRef} className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">{t('common.searchContent')}</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                  <p>{error}</p>
+                </div>
+              )}
+              
+              <div className="relative mb-4">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder={normalizedCategory === 'videos' ? t('createList.pasteYouTubeLink') : t('common.search')}
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto">
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {searchResults.map((result) => {
+                      const item = result.image && result.title ? result : formatResult(result);
+                      if (!item) return null;
+                      const isAlreadyAdded = alreadyAddedItemIds.includes(item.id);
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            if (isAlreadyAdded) return;
+                            if (item.type === 'list' && item.username) {
+                              navigate(`/profile/${item.username}/list/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                              onClose();
+                            } else {
+                              onSelect(item);
+                              onClose();
+                            }
+                          }}
+                          className={`flex gap-3 p-2 bg-gray-50 rounded-lg ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'}`}
+                          style={isAlreadyAdded ? { pointerEvents: 'none' } : {}}
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-20 h-28 object-cover rounded"
+                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title)}`; }}
+                          />
+                          <div>
+                            <h3 className="font-medium">{item.title}</h3>
+                            {item.year && (
+                              <p className="text-sm text-gray-500">{item.year}</p>
+                            )}
+                          </div>
+                          {isAlreadyAdded && (
+                            <span className="absolute top-2 right-2 bg-gray-200 text-gray-500 text-[10px] px-2 py-0.5 rounded">Eklendi</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    {searchQuery ? t('search.noResults', { query: searchQuery }) : t('common.searchPlaceholder')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -311,8 +311,30 @@
     "likedLists": "Liked Lists"
   },
   "search": {
-    "noResults": "No results found",
-    "noCategoryResults": "No results found for {{category}}"
+    "noResults": "No results found for '{{query}}'",
+    "noCategoryResults": "No results found for {{category}}",
+    "result": "Result",
+    "itemCount": "{{count}} items",
+    "categories": {
+      "all": "All",
+      "users": "Users",
+      "lists": "Lists",
+      "movies": "Movies",
+      "series": "TV Series",
+      "books": "Books",
+      "games": "Games"
+    },
+    "tabs": {
+      "all": "All",
+      "users": "Users",
+      "lists": "Lists",
+      "movies": "Movies",
+      "shows": "TV Shows",
+      "people": "People",
+      "games": "Games",
+      "books": "Books",
+      "places": "Places"
+    }
   },
   "listPreview": {
     "createdAt": "Created at",
@@ -385,8 +407,9 @@
         "searchContent": "Search Content",
         "creating": "Creating...",
         "create": "Create",
-        "searchPlaces": "Search Places...",
-        "searching": "Searching..."
+              "searchPlaces": "Search Places...",
+      "searching": "Searching...",
+      "pasteYouTubeLink": "Paste YouTube video link"
       }
     },
     "addToList": "Add to List",

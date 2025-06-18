@@ -1,10 +1,62 @@
+# ConnectList.me - Robots.txt
+# Social List Creation Platform
+
 User-agent: *
 Allow: /
 
-# Disallow admin, auth, and search pages
+# High-priority pages for crawling
+Allow: /lists/
+Allow: /list/
+Allow: /profile/
+Allow: /discover/
+Allow: /trending
+Allow: /popular-lists
+
+# Disallow admin, auth, and internal pages
 Disallow: /admin/
 Disallow: /auth/
-Disallow: /search/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /messages
+Disallow: /notifications
+Disallow: /settings
+
+# Disallow search with query parameters to prevent duplicate content
+Disallow: /search?*
+Disallow: /*?q=*
+Disallow: /*?search=*
+
+# Disallow private/temporary pages
+Disallow: /temp/
+Disallow: /test/
+Disallow: /draft/
+
+# Allow specific search engine bots
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+# Block aggressive crawlers
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
 
 # Dynamic Sitemap
 Sitemap: https://connectlist.me/sitemap.xml
+Sitemap: https://connectlist.me/api/sitemap-dynamic.xml
+
+# Host directive
+Host: https://connectlist.me
