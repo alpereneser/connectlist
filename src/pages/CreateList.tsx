@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Film, Tv, BookOpen, Users2, Youtube, Gamepad2, MapPin, Search, X, AlertCircle } from 'lucide-react';
 import { Header } from '../components/Header';
-import { SubHeader } from '../components/SubHeader';
 import { useDebounce } from '../hooks/useDebounce';
 import { searchTMDB, searchGames, searchBooks, createList, getVideoDetails, searchPlaces } from '../lib/api';
 import { countries, getCitiesByCountry, getDefaultPlaceImage } from '../lib/api-google-places';
@@ -532,6 +531,11 @@ export function CreateList() {
         throw new Error('Liste oluşturuldu ancak ID alınamadı');
       }
 
+      // Takipçilere mail bildirimi gönder
+      import('../lib/email-triggers').then(({ triggerNewListNotification }) => {
+        triggerNewListNotification(list.id);
+      });
+
       // Liste oluşturulduktan sonra doğrudan ListDetails sayfasına yönlendir
       // Oluşturulan listenin ID'sini state olarak gönderiyoruz
       navigate(`/list-details`, { 
@@ -593,8 +597,7 @@ export function CreateList() {
           </div>
         </div>
       )}
-      <SubHeader />
-      <div className="min-h-screen bg-[rgb(250,250,250)] pt-[119px]">
+      <div className="min-h-screen bg-[rgb(250,250,250)] pt-[64px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center gap-3 mb-8 mt-[25px]">
             <Icon size={32} className="text-orange-500" />

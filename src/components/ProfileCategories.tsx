@@ -24,28 +24,67 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
   ], [t]);
 
   return (
-    <div className="bg-white border-t border-b border-gray-200 h-[40px] md:h-[75px]">
+    <div className="bg-white md:h-[75px]">
+      {/* Mobile Categories - Modern chip design */}
+      <div className="md:hidden bg-gray-50 px-4 py-1">
       <div
         ref={scrollContainerRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-center md:gap-3 px-2 h-full"
-      >
+          className="flex gap-2 overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {categories.map((category) => {
+            const categoryEmojis = {
+              all: '📋',
+              movies: '🎬',
+              series: '📺',
+              books: '📚',
+              games: '🎮',
+              people: '👤',
+              videos: '📹',
+              places: '📍'
+            };
+            
+            return (
+              <button
+                key={category.id}
+                onClick={() => onCategoryChange(category.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 border ${
+                  activeCategory === category.id
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-200'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">
+                  {categoryEmojis[category.id as keyof typeof categoryEmojis]}
+                </span>
+                <span className="font-semibold">{category.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop Categories - Original design */}
+      <div className="hidden md:block h-full border-t border-b border-gray-200">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-center px-2 h-full">
         {categories.map((category) => {
           const Icon = category.icon;
           return (
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
-              className={`flex h-full items-center gap-2 px-3 text-xs md:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`flex h-full items-center gap-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeCategory === category.id
                   ? 'text-orange-500 border-b-2 border-orange-500'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Icon size={14} className="md:w-4 md:h-4" />
+                <Icon size={16} />
               <span>{category.label}</span>
             </button>
           );
         })}
+        </div>
       </div>
     </div>
   );

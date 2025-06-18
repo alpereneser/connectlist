@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
-import { SubHeader } from '../components/SubHeader';
 
 export function SelectCategory() {
   const navigate = useNavigate();
@@ -61,8 +60,7 @@ export function SelectCategory() {
   return (
     <>
       <Header />
-      <SubHeader />
-      <div className="min-h-screen bg-white pt-[119px]">
+      <div className="min-h-screen bg-white pt-[15px]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="p-4 md:p-8">
             <h1 className="text-2xl font-bold text-center mb-2">

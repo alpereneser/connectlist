@@ -24,6 +24,22 @@ interface TMDBPerson extends Person {
   media_type: 'person';
 }
 
+// Kategori ikonu döndüren fonksiyon
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'movie':
+      return <Film className="w-3 h-3 text-white" />;
+    case 'series':
+      return <Tv className="w-3 h-3 text-white" />;
+    case 'book':
+      return <Book className="w-3 h-3 text-white" />;
+    case 'game':
+      return <Gamepad2 className="w-3 h-3 text-white" />;
+    default:
+      return <Home className="w-3 h-3 text-white" />;
+  }
+};
+
 export function Search() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -499,15 +515,15 @@ export function Search() {
           <div key={book.id} className="cursor-pointer" onClick={() => navigate(`/book/${book.id}`)}>
             <div className="aspect-[2/3] relative group">
               <img
-                src={book.image_url}
-                alt={book.title}
+                src={book.volumeInfo.imageLinks?.thumbnail}
+                alt={book.volumeInfo.title}
                 className="w-full h-full object-cover rounded-lg"
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg" />
             </div>
             <div className="mt-2">
-              <h3 className="font-medium text-sm truncate">{book.title}</h3>
-              <p className="text-xs text-gray-500">{book.authors?.join(', ')}</p>
+              <h3 className="font-medium text-sm truncate">{book.volumeInfo.title}</h3>
+              <p className="text-xs text-gray-500">{book.volumeInfo.authors?.join(', ')}</p>
             </div>
           </div>
         ))}
@@ -551,7 +567,7 @@ export function Search() {
     { id: 'series', label: t('common.categories.series'), icon: Tv, count: results.shows.length },
     { id: 'books', label: t('common.categories.books'), icon: Book, count: results.books.length },
     { id: 'games', label: t('common.categories.games'), icon: Gamepad2, count: results.games.length },
-    { id: 'places', label: t('common.categories.place') || 'Mekanlar', icon: MapPin, count: results.places.length },
+    { id: 'places', label: t('common.categories.places'), icon: MapPin, count: results.places.length },
   ], [t, results]);
 
   const renderResults = () => {
@@ -934,7 +950,7 @@ export function Search() {
               <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
                 <div className="p-3 bg-orange-100 border-b border-orange-200 flex items-center">
                   <MapPin size={16} className="text-orange-500 mr-2" />
-                  <h2 className="text-sm font-medium text-orange-800">{t('common.categories.place') || 'Mekanlar'}</h2>
+                  <h2 className="text-sm font-medium text-orange-800">{t('common.categories.places')}</h2>
                 </div>
                 <div className="p-4 md:p-6">
                   {renderPlaces(8)}
@@ -1093,7 +1109,7 @@ export function Search() {
                       onClick={() => setSelectedCategory('place')}
                     >
                       <MapPin className="w-4 h-4" />
-                      <span>{t('common.categories.place') || 'Mekanlar'}</span>
+                      <span>{t('common.categories.places')}</span>
                     </button>
                   </div>
                 </div>
@@ -1110,12 +1126,15 @@ export function Search() {
             ) : query ? (
               renderResults()
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-4 pb-[80px] overflow-y-auto">
+              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-4 pb-[80px] overflow-y-auto">
                 {visibleContent.map((item, index) => (
                   <div 
                     key={`${item.type}-${item.id}-${index}`} 
                     className="cursor-pointer" 
-                    onClick={() => navigate(`/${item.type}/${item.id}`)}
+                    onClick={() => {
+                      const route = item.type === 'series' ? `/series/${item.id}` : `/${item.type}/${item.id}`;
+                      navigate(route);
+                    }}
                     ref={visibleContent.length === index + 1 ? lastItemRef : undefined}
                   >
                     <div className="aspect-[2/3] relative group">
@@ -1126,6 +1145,11 @@ export function Search() {
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg" />
+                      
+                      {/* Kategori ikonu */}
+                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 rounded-full p-1.5">
+                        {getCategoryIcon(item.category || item.type)}
+                      </div>
                     </div>
                     <div className="mt-2">
                       <h3 className="font-medium text-sm truncate">{item.title}</h3>

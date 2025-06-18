@@ -233,7 +233,6 @@ export function Messages() {
 
       if (error) {
         console.error('Error fetching messages:', error);
-        // setError('Mesajlar yüklenirken bir hata oluştu.'); // Varsa setError state'ini kullanın
         setIsLoadingMessages(false);
         return;
       }
@@ -249,7 +248,7 @@ export function Messages() {
 
       if (unreadMessageIds.length > 0) {
         try {
-          await markMessagesAsRead(selectedConversation.id); // API'nin konuşma ID'si aldığını varsayıyoruz
+          await markMessagesAsRead(selectedConversation.id);
           if (isMounted) {
             setMessages(prevMessages =>
               prevMessages.map(msg =>
@@ -258,6 +257,15 @@ export function Messages() {
                   : msg
               )
             );
+            
+            // Header'a mesajların okunduğunu bildir
+            await supabase
+              .channel('public:messages_read')
+              .send({
+                type: 'broadcast',
+                event: 'messages_read',
+                payload: { conversationId: selectedConversation.id, userId: currentUserId }
+              });
           }
         } catch (readError) {
           console.error('Error marking messages as read:', readError);
@@ -267,111 +275,97 @@ export function Messages() {
 
     fetchInitialMessages();
 
-    // Benzersiz kanal adı oluştur - Date.now() kaldırıldı
-    const subscriptionChannel = `messages-${selectedConversation.id}`;
-    
-    // Önce mevcut tüm kanalları temizle (eski bağlantıları kapat) - BU SATIR KALDIRILACAK
-    // supabase.removeAllChannels(); // <--- BU SATIRI SİLİN
-    
-    // Gerçek zamanlı mesaj aboneliği oluştur
+    // Basitleştirilmiş realtime subscription
     const messagesChannel = supabase
-      .channel(subscriptionChannel, {
-        config: {
-          broadcast: { self: true }, // Kendi gönderdiğimiz mesajları da al
-          presence: { key: currentUserId || 'anonymous' } // Kullanıcı varlığını izle
-        }
-      })
+      .channel(`messages:${selectedConversation.id}`)
       .on('postgres_changes', {
-        event: '*', // Tüm olayları dinle (INSERT, UPDATE, DELETE)
+        event: 'INSERT',
         schema: 'public',
         table: 'decrypted_messages',
         filter: `conversation_id=eq.${selectedConversation.id}`
       }, (payload) => {
-        console.log('Mesaj olayı algılandı:', payload);
+        console.log('Yeni mesaj geldi:', payload);
         if (!isMounted) return;
         
-        // Yeni mesaj eklendiğinde
-        if (payload.eventType === 'INSERT') {
           const newMessage = payload.new as Message;
           
-          // Mesaj karşı taraftan geliyorsa veya kendi gönderdiğimiz mesaj ise (broadcast self: true sayesinde)
-          // listeye ekle ve en alta kaydır.
-          // Kendi gönderdiğimiz mesajlar zaten handleSendMessage içinde optimistic olarak ekleniyor,
-          // bu yüzden burada sadece karşıdan gelenleri veya Realtime'dan gelen tüm yeni mesajları ekleyebiliriz.
-          // Ancak, kendi gönderdiğimiz mesajın Realtime üzerinden tekrar gelmesi durumunda çift kayıt olmaması için kontrol gerekebilir.
-          // Şimdilik, eğer mesaj zaten listede yoksa ekleyelim.
-
+        // Mesajı listeye ekle
           setMessages(prevMessages => {
-            // Eğer mesaj zaten optimistic update ile eklenmişse (is_sending ile işaretlenmiş olabilir)
-            // veya ID'si zaten listede varsa, tekrar ekleme.
-            const existingMessage = prevMessages.find(msg => msg.id === newMessage.id || (msg.is_sending && msg.text === newMessage.text && msg.sender_id === newMessage.sender_id));
-            if (existingMessage) {
-              // Eğer optimistic olarak eklenen mesajın Realtime'dan gelen versiyonu ise, is_sending ve has_error'ı kaldır.
-              if (existingMessage.is_sending) {
-                return prevMessages.map(msg => 
-                  msg.text === newMessage.text && msg.sender_id === newMessage.sender_id && msg.is_sending 
-                  ? { ...newMessage, is_sending: false, has_error: false } 
-                  : msg
-                );
+          // Aynı mesajın tekrar eklenmesini önle
+          const exists = prevMessages.some(msg => msg.id === newMessage.id);
+          if (exists) return prevMessages;
+          
+          const updatedMessages = [...prevMessages, newMessage];
+
+          // Eğer mesaj karşı taraftan geldiyse otomatik olarak okundu işaretle
+          if (newMessage.sender_id !== currentUserId) {
+            setTimeout(async () => {
+              try {
+                await markMessagesAsRead(selectedConversation.id);
+                setMessages(prev => prev.map(msg => 
+                  msg.id === newMessage.id ? { ...msg, is_read: true } : msg
+                ));
+                
+                // Header'a mesajların okunduğunu bildir
+                await supabase
+                  .channel('public:messages_read')
+                  .send({
+                    type: 'broadcast',
+                    event: 'messages_read',
+                    payload: { conversationId: selectedConversation.id, userId: currentUserId }
+                  });
+              } catch (error) {
+                console.error('Error marking message as read:', error);
               }
-              return prevMessages; // Zaten var, listeyi değiştirme
-            }
-            return [...prevMessages, { ...newMessage, is_sending: false, has_error: false }];
-          });
-          scrollToBottom();
-
-          // Eğer mesaj karşı taraftan geldiyse ve henüz okunmadıysa okundu olarak işaretle
-          // Bu, fetchInitialMessages içindeki mantığa benzer şekilde yapılabilir veya ayrı bir fonksiyona taşınabilir.
-          if (newMessage.sender_id !== currentUserId && !newMessage.is_read) {
-            // Anlık olarak client'ta okundu yap, sonra backend'e gönder.
-            setMessages(prev => prev.map(m => m.id === newMessage.id ? {...m, is_read: true} : m));
-            supabase
-              .from('decrypted_messages')
-              .update({ is_read: true })
-              .eq('id', newMessage.id)
-              .then(({ error: updateError }) => {
-                if (updateError) {
-                  console.error('Error marking new message as read in DB:', updateError);
-                  // Hata durumunda client'taki değişikliği geri alabiliriz, ama genellikle kullanıcı deneyimi için client'ta bırakılır.
-                }
-              });
+            }, 100);
           }
-
-        } else if (payload.eventType === 'UPDATE') {
+          
+          return updatedMessages;
+        });
+        
+        scrollToBottom();
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'decrypted_messages',
+        filter: `conversation_id=eq.${selectedConversation.id}`
+      }, (payload) => {
+        if (!isMounted) return;
+        
           const updatedMessage = payload.new as Message;
           setMessages(prevMessages => 
             prevMessages.map(msg => 
               msg.id === updatedMessage.id ? { ...msg, ...updatedMessage } : msg
             )
           );
-          // Okunma durumu gibi güncellemeler için scroll gerekmeyebilir.
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'decrypted_messages',
+        filter: `conversation_id=eq.${selectedConversation.id}`
+      }, (payload) => {
+        if (!isMounted) return;
         
-        } else if (payload.eventType === 'DELETE') {
-          const deletedMessage = payload.old as Partial<Message>; // id alanı kesin olmalı
+        const deletedMessage = payload.old as Partial<Message>;
           if (deletedMessage.id) {
             setMessages(prevMessages => 
               prevMessages.filter(msg => msg.id !== deletedMessage.id)
             );
-          }
         }
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`Subscribed to messages channel: ${subscriptionChannel}`);
-        } else {
-          console.log(`Messages subscription status (${subscriptionChannel}):`, status);
-        }
+        console.log(`Messages subscription status: ${status}`);
       });
 
     return () => {
       if (messagesChannel) {
-        supabase.removeChannel(messagesChannel)
-          .then(status => console.log(`Unsubscribed from ${subscriptionChannel}:`, status))
-          .catch(error => console.error(`Error unsubscribing from ${subscriptionChannel}:`, error));
+        supabase.removeChannel(messagesChannel);
       }
       isMounted = false;
     };
-  }, [selectedConversation, currentUserId]); // currentUserId bağımlılıklara eklendi, presence key için önemli olabilir
+  }, [selectedConversation, currentUserId]);
 
   // Mesajların en altına kaydırma fonksiyonu
   const scrollToBottom = () => {
@@ -406,6 +400,15 @@ export function Messages() {
 
         if (unreadMessageIds.length > 0) {
           await markMessagesAsRead(selectedConversation.id);
+          
+          // Header'a mesajların okunduğunu bildir
+          await supabase
+            .channel('public:messages_read')
+            .send({
+              type: 'broadcast',
+              event: 'messages_read',
+              payload: { conversationId: selectedConversation.id, userId: currentUserId }
+            });
         }
         
         // Mesajlar yüklendikten sonra aşağı kaydır
@@ -506,12 +509,11 @@ export function Messages() {
     e.preventDefault();
     if (!selectedConversation || !newMessage.trim() || !currentUserId) return;
 
-    // Mesaj alanını hemen temizle (daha iyi kullanıcı deneyimi için)
     const messageText = newMessage.trim();
     setNewMessage('');
     
     try {
-      // Mesaj gönderilmeden önce optimistik olarak UI'a ekle
+      // Optimistic update - geçici mesaj ekle
       const tempId = `temp-${Date.now()}`;
       const optimisticMessage: Message = {
         id: tempId,
@@ -520,12 +522,10 @@ export function Messages() {
         created_at: new Date().toISOString(),
         sender_id: currentUserId,
         is_read: false,
-        is_sending: true // Gönderilme durumunu izlemek için ek alan
+        is_sending: true
       };
       
       setMessages(prev => [...prev, optimisticMessage]);
-      
-      // Mesajı gönderdikten sonra aşağı kaydır
       scrollToBottom();
       
       // Yazma durumunu sıfırla
@@ -534,46 +534,28 @@ export function Messages() {
         setIsTyping(false);
       }
       
-      // API fonksiyonunu kullanarak mesaj gönder
+      // Mesaj gönder
       const message = await sendMessage(selectedConversation.id, messageText);
       
       if (message) {
-        // Geçici mesajı gerçek mesajla değiştir
-        setMessages(prev => {
-          // Mesaj zaten varsa ve gönderilme durumundaysa güncelle
-          const existingMessageIndex = prev.findIndex(msg => 
-            msg.is_sending && msg.text === message.text
-          );
-          
-          if (existingMessageIndex >= 0) {
-            const updatedMessages = [...prev];
-            updatedMessages[existingMessageIndex] = {
-              ...message,
-              is_sending: false
-            };
-            return updatedMessages;
-          }
-          
-          // Mesaj bulunamadıysa ekle
-          if (!prev.some(msg => msg.id === message.id)) {
-            return [...prev, message];
-          }
-          
-          return prev;
-        });
+        // Optimistic update'i gerçek mesajla değiştir
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { ...message, is_sending: false }
+            : msg
+        ));
         
-        // Mesaj gönderildikten sonra karşı taraf için görünür olması için kısa bir süre bekle ve tüm mesajları yenile
-        setTimeout(() => {
-          refreshMessages();
-        }, 500);
+        scrollToBottom();
+      } else {
+        // Hata durumunda geçici mesajı kaldır
+        setMessages(prev => prev.filter(msg => msg.id !== tempId));
+        throw new Error('Mesaj gönderilemedi');
       }
       
-      // Mesaj gönderildikten sonra tekrar aşağı kaydır
-      scrollToBottom();
     } catch (error) {
       console.error('Mesaj gönderilirken hata:', error);
       
-      // Hata durumunda mesajı hatalı olarak işaretle
+      // Hata durumunda optimistic update'i temizle
       setMessages(prev => prev.map(msg => 
         msg.is_sending ? { ...msg, is_sending: false, has_error: true } : msg
       ));
@@ -612,7 +594,7 @@ export function Messages() {
           <span>{error}</span>
         </div>
       )}
-      <div className="h-[calc(100vh-95px)] bg-gray-100 pt-0 pb-0 md:pt-[95px] md:pb-8">
+      <div className="h-[calc(100vh-10px)] bg-gray-100 pt-0 pb-0 md:pt-[10px] md:pb-8">
         <div className="h-full max-w-7xl mx-auto md:px-4">
           <div className="bg-white h-full md:rounded-lg md:shadow-sm overflow-hidden">
             <div className="h-full grid md:grid-cols-12 md:divide-x">
@@ -810,6 +792,15 @@ export function Messages() {
                                         try {
                                           await deleteMessage(message.id);
                                           setMessages(messages.filter(m => m.id !== message.id));
+                                          
+                                          // Header'a mesajların güncellendiğini bildir
+                                          await supabase
+                                            .channel('public:messages_read')
+                                            .send({
+                                              type: 'broadcast',
+                                              event: 'messages_read',
+                                              payload: { conversationId: selectedConversation.id, userId: currentUserId }
+                                            });
                                         } catch (error) {
                                           console.error('Error deleting message:', error);
                                           alert('Mesaj silinirken bir hata oluştu');

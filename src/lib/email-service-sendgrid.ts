@@ -281,3 +281,55 @@ export async function sendTestEmail(to: string, subject: string, text: string) {
     return { success: false, error };
   }
 }
+
+// Takip edilen biri yeni bir liste oluşturduğunda takipçilerine mail bildirimi
+export async function sendNewListNotification(
+  recipientEmail: string,
+  recipientName: string,
+  listTitle: string,
+  listSlug: string,
+  ownerName: string,
+  ownerUsername: string,
+  listDescription?: string,
+  listCreatedAt?: string
+) {
+  try {
+    const msg = {
+      from: `ConnectList <${FROM_EMAIL}>`,
+      to: recipientEmail,
+      subject: `${ownerName} yeni bir liste oluşturdu: "${listTitle}"`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; color: #222; background: #f5f6fa;">
+          <div style="background: #fff; border-radius: 16px; margin: 32px 0; box-shadow: 0 4px 24px rgba(0,0,0,0.07); overflow: hidden;">
+            <div style="text-align: center; background: linear-gradient(90deg, #FF5722 0%, #FF9800 100%); padding: 32px 0 16px 0;">
+              <img src="https://connectlist.me/logo.png" alt="ConnectList Logo" style="max-width: 120px; margin-bottom: 12px;">
+            </div>
+            <div style="padding: 32px 24px 24px 24px;">
+              <h2 style="color: #FF5722; margin-top: 0; margin-bottom: 16px; font-size: 22px;">Merhaba ${recipientName},</h2>
+              <p style="font-size: 16px; margin-bottom: 24px;">Takip ettiğin <b>${ownerName}</b> (@${ownerUsername}) yeni bir liste oluşturdu!</p>
+              <div style="background: #f9f9f9; border-radius: 10px; padding: 20px 18px; margin-bottom: 24px; border: 1px solid #f0f0f0;">
+                <h3 style="margin: 0 0 8px 0; color: #222; font-size: 20px;">${listTitle}</h3>
+                ${listDescription ? `<p style='margin: 0 0 8px 0; color: #555; font-size: 15px;'>${listDescription}</p>` : ''}
+                ${listCreatedAt ? `<p style='margin: 0; color: #888; font-size: 13px;'>Oluşturulma: ${new Date(listCreatedAt).toLocaleString('tr-TR')}</p>` : ''}
+              </div>
+              <div style="text-align: center; margin-top: 24px;">
+                <a href="https://connectlist.me/${ownerUsername}/list/${listSlug}" 
+                   style="background: linear-gradient(90deg, #FF5722 0%, #FF9800 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 2px 8px rgba(255,87,34,0.10);">
+                  Listeyi İncele
+                </a>
+              </div>
+            </div>
+            <div style="background: #f5f6fa; text-align: center; padding: 18px 0 10px 0; font-size: 12px; color: #888; border-top: 1px solid #eee;">
+              <p style="margin: 0;">Bu e-postayı ConnectList'ten aldınız. Bildirim tercihlerinizi <a href="https://connectlist.me/settings" style="color: #FF5722; text-decoration: underline;">ayarlar</a> sayfasından yönetebilirsiniz.</p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+    const data = await sgMail.send(msg);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Yeni liste bildirimi gönderilemedi:', error);
+    return { success: false, error };
+  }
+}

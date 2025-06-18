@@ -225,7 +225,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
 
   return (
     <>
-      <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden h-[84px] ${hidden ? 'hidden' : ''}`}>
+      <div className={`fixed-bottom-safe bg-white border-t border-gray-200 z-50 md:hidden h-[84px] bottom-with-indicator safe-x ${hidden ? 'hidden' : ''}`}>
         {isLoadingAuth ? (
           // Yükleniyor durumu veya boşluk
           <div className="flex justify-around items-center h-full">

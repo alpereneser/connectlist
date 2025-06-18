@@ -97,6 +97,10 @@ export async function followUser(userId: string) {
     // Eğer zaten takip ediyorsa, başarılı olarak dön
     if (existingFollow) {
       console.log("Kullanıcı zaten takip ediliyor:", userId);
+      // Bildirim yine de gönderilsin
+      import('../lib/email-triggers').then(({ triggerFollowerNotification }) => {
+        triggerFollowerNotification(userId, session.user.id);
+      });
       return true;
     }
 
@@ -114,16 +118,26 @@ export async function followUser(userId: string) {
       // Duplicate kayıt hatası (23505) olabilir, bu durumda zaten takip ediyoruz demektir
       if (error.code === '23505') {
         console.log("Kullanıcı zaten takip ediliyor (duplicate key):", userId);
+        // Bildirim yine de gönderilsin
+        import('../lib/email-triggers').then(({ triggerFollowerNotification }) => {
+          triggerFollowerNotification(userId, session.user.id);
+        });
         return true;
       }
       console.error("Takip edilirken hata:", error.message, error.details, error.hint);
-      
       // Hata durumunda yine de UI'ı güncelle
       console.log("Hata olmasına rağmen takip başarılı kabul ediliyor (UI için)");
+      import('../lib/email-triggers').then(({ triggerFollowerNotification }) => {
+        triggerFollowerNotification(userId, session.user.id);
+      });
       return true;
     }
     
     console.log("Takip işlemi başarılı!");
+    // Takip başarılıysa bildirim gönder
+    import('../lib/email-triggers').then(({ triggerFollowerNotification }) => {
+      triggerFollowerNotification(userId, session.user.id);
+    });
     return true;
   } catch (error) {
     console.error("Takip işlemi sırasında beklenmeyen hata:", error);
@@ -1517,6 +1531,10 @@ export async function sendMessage(conversationId: string, text: string) {
     }
 
     // Mesajı döndür
+    // Bildirim gönder
+    import('../lib/email-triggers').then(({ triggerMessageNotification }) => {
+      triggerMessageNotification(insertedMessage.id);
+    });
     return {
       id: insertedMessage.id,
       conversation_id: conversationId,

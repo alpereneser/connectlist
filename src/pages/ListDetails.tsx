@@ -9,7 +9,6 @@ import { turkishToEnglish } from '../lib/utils';
 import { AuthPopup } from '../components/AuthPopup';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 import { Header } from '../components/Header';
-import { SubHeader } from '../components/SubHeader';
 import { BottomMenu } from '../components/BottomMenu';
 import { SearchPopup } from '../components/SearchPopup';
 import { CommentModal } from '../components/CommentModal';
@@ -88,7 +87,7 @@ const getNormalizedCategory = (category?: string): string => {
 };
 
 export default function ListDetails() {
-  const { username, slug } = useParams();
+  const { username, slug, id } = useParams();
   const [listId, setListId] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -219,7 +218,13 @@ export default function ListDetails() {
   }, []);
 
   useEffect(() => {
-    // CreateList, Bildirimler veya Search sayfasından gelen listId parametresini kontrol et
+    // 1. Önce URL parametresinden ID'yi kontrol et (/list/:id route'u için)
+    if (id) {
+      setListId(id);
+      return;
+    }
+    
+    // 2. CreateList, Bildirimler veya Search sayfasından gelen listId parametresini kontrol et
     if (location.state?.listId) {
       setListId(location.state.listId);
       
@@ -242,6 +247,7 @@ export default function ListDetails() {
       return;
     }
     
+    // 3. Son olarak username/slug kombinasyonunu kontrol et (/:username/list/:slug route'u için)
     const fetchListId = async () => {
       if (!username || !slug) return;
 
@@ -280,7 +286,7 @@ export default function ListDetails() {
     };
 
     fetchListId();
-  }, [listId, location.state, navigate, username, slug]);
+  }, [id, listId, location.state, navigate, username, slug]);
 
   useEffect(() => {
     // Liste verisi yüklendiğinde, state'leri güncelle
@@ -779,8 +785,7 @@ export default function ListDetails() {
     return (
       <>
         <Header />
-        <SubHeader />
-        <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[105px]">
+        <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[64px]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="animate-pulse">
@@ -893,8 +898,7 @@ export default function ListDetails() {
         </script>
       </Helmet>
       <Header />
-      <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[105px]">
-        <SubHeader />
+      <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[64px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Liste Başlığı ve Bilgileri */}

@@ -1,87 +1,105 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from './lib/supabase-browser';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useAndroidBackButtonHandler } from './hooks/useAndroidBackButtonHandler';
-import { Login } from './pages/auth/Login';
-import { Register } from './pages/auth/Register';
-import { ForgotPassword } from './pages/auth/ForgotPassword';
-import { VerifyEmail } from './pages/auth/VerifyEmail';
-import { EmailConfirmed } from './pages/auth/EmailConfirmed';
-import { ResetPassword } from './pages/auth/ResetPassword';
-import MobileSearch from './pages/MobileSearch';
-import { Settings } from './pages/Settings';
-import { Search } from './pages/Search';
-import { RoadMap } from './pages/RoadMap';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Profile } from './pages/Profile';
 import { Header } from './components/Header';
 import { SubHeader } from './components/SubHeader';
-import { Notifications } from './pages/Notifications';
-import { SelectCategory } from './pages/SelectCategory';
-import { CreateList } from './pages/CreateList';
-import { ListDetails } from './pages/ListDetails';
-import Messages from './pages/Messages';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { TermsOfService } from './pages/TermsOfService';
-import { Footer } from './components/Footer';
-import { MovieDetails } from './pages/details/MovieDetails';
-import { SeriesDetails } from './pages/details/SeriesDetails';
-import { BookDetails } from './pages/details/BookDetails';
-import { GameDetails } from './pages/details/GameDetails';
-import { PersonDetails } from './pages/details/PersonDetails';
-import { PlaceDetails } from './pages/details/PlaceDetails';
 import { BottomMenu } from './components/BottomMenu';
+import { Footer } from './components/Footer';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { InstallPrompt } from './components/InstallPrompt';
 import { CommentModal } from './components/CommentModal';
 import { ListPreview } from './components/ListPreview';
 import { getLists } from './lib/api';
+
+// Lazy load all route components for better performance
+const Login = lazy(() => import('./pages/auth/Login').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/auth/Register').then(module => ({ default: module.Register })));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword').then(module => ({ default: module.ForgotPassword })));
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail').then(module => ({ default: module.VerifyEmail })));
+const EmailConfirmed = lazy(() => import('./pages/auth/EmailConfirmed').then(module => ({ default: module.EmailConfirmed })));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword').then(module => ({ default: module.ResetPassword })));
+const MobileSearch = lazy(() => import('./pages/MobileSearch'));
+const Settings = lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
+const Search = lazy(() => import('./pages/Search').then(module => ({ default: module.Search })));
+const RoadMap = lazy(() => import('./pages/RoadMap').then(module => ({ default: module.RoadMap })));
+const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })));
+const Notifications = lazy(() => import('./pages/Notifications').then(module => ({ default: module.Notifications })));
+const SelectCategory = lazy(() => import('./pages/SelectCategory').then(module => ({ default: module.SelectCategory })));
+const CreateList = lazy(() => import('./pages/CreateList').then(module => ({ default: module.CreateList })));
+const ListDetails = lazy(() => import('./pages/ListDetails').then(module => ({ default: module.ListDetails })));
+const Messages = lazy(() => import('./pages/Messages'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(module => ({ default: module.PrivacyPolicy })));
+const TermsOfService = lazy(() => import('./pages/TermsOfService').then(module => ({ default: module.TermsOfService })));
+const MovieDetails = lazy(() => import('./pages/details/MovieDetails').then(module => ({ default: module.MovieDetails })));
+const SeriesDetails = lazy(() => import('./pages/details/SeriesDetails').then(module => ({ default: module.SeriesDetails })));
+const BookDetails = lazy(() => import('./pages/details/BookDetails').then(module => ({ default: module.BookDetails })));
+const GameDetails = lazy(() => import('./pages/details/GameDetails').then(module => ({ default: module.GameDetails })));
+const PersonDetails = lazy(() => import('./pages/details/PersonDetails').then(module => ({ default: module.PersonDetails })));
+const PlaceDetails = lazy(() => import('./pages/details/PlaceDetails').then(module => ({ default: module.PlaceDetails })));
+
+// MobileListView removed - using standard list view for all devices
 
 // Sayfa yüklendiğinde en üste kaydırma fonksiyonu
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-function Dashboard() {
-  const [lists, setLists] = useState<any[]>([]);
+function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoading, setIsLoading, page, setPage, sortDirection, setSortDirection, hasMore, setHasMore, isLoadingMore, setIsLoadingMore }: {
+  activeCategory: string;
+  setActiveCategory: (category: string) => void;
+  lists: any[];
+  setLists: (lists: any[] | ((prev: any[]) => any[])) => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  page: number;
+  setPage: (page: number | ((prev: number) => number)) => void;
+  sortDirection: 'asc' | 'desc';
+  setSortDirection: (direction: 'asc' | 'desc') => void;
+  hasMore: boolean;
+  setHasMore: (hasMore: boolean) => void;
+  isLoadingMore: boolean;
+  setIsLoadingMore: (loading: boolean) => void;
+}) {
   const location = useLocation();
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const listContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Ekran boyutunu kontrol et
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  // İlk yüklemede kategoriyi 'all' yap
+  useEffect(() => {
+    if (!location.state) {
+      setActiveCategory('all');
+      setSortDirection('desc');
+    }
+  }, []);
   
   useEffect(() => {
-    if (location.state?.refresh) {
-      // Eğer refresh state'i varsa, listeleri sıfırla ve yeniden yükle
-      setLists([]);
-      setPage(0);
-      setHasMore(true);
-      
-      // Sayfayı en üste kaydır
-      scrollToTop();
-      
-      // Eğer forceCategory varsa, kategoriyi zorla değiştir
-      if (location.state?.forceCategory) {
-        setActiveCategory(location.state.forceCategory);
-      }
-      
-      fetchLists();
-    }
     if (location.state) {
       // Kategori değişikliği varsa
-      if (location.state.category) {
+      if (location.state.category !== undefined) {
         setActiveCategory(location.state.category); 
-        // Sıralama yönünü kontrol et
-        if (location.state.sortDirection) {
-          setSortDirection(location.state.sortDirection);
-        }
+      }
+      
+      // Sıralama yönünü kontrol et
+      if (location.state.sortDirection) {
+        setSortDirection(location.state.sortDirection);
       }
       
       // Yenileme isteği varsa
@@ -89,7 +107,9 @@ function Dashboard() {
         setLists([]);
         setPage(0);
         setHasMore(true);
-        fetchLists();
+        scrollToTop();
+        // State'i temizle
+        window.history.replaceState({}, '', location.pathname);
       }
     }
   }, [location.state]);
@@ -101,7 +121,7 @@ function Dashboard() {
     scrollToTop();
     fetchLists().then(() => { 
       // Eğer son görüntülenen liste varsa, ona kaydır
-      if (lastViewedListId) {
+      if (lastViewedListId && !isMobile) {
         setTimeout(() => {
           const listElement = document.getElementById(`list-${lastViewedListId}`);
           if (listElement) {
@@ -133,7 +153,7 @@ function Dashboard() {
       // Bileşen unmount olduğunda aboneliği temizle
       supabase.removeChannel(listsChannel);
     };
-  }, [activeCategory, sortDirection]);
+  }, [activeCategory, sortDirection, isMobile]);
   
   // Supabase realtime aboneliği ile yeni listeleri gerçek zamanlı olarak izle
   useEffect(() => {
@@ -199,57 +219,72 @@ function Dashboard() {
     }
 
     try {
-      // Kategori işleme mantığını düzelt
-      let categoryToFetch;
-      if (activeCategory === 'all') {
-        categoryToFetch = undefined;
-      } else {
-        // Kategori adını doğrudan kullan, böylece 'people' kategorisi de düzgün çalışır
-        categoryToFetch = activeCategory;
-      }
-      console.log(`[App.tsx] Fetching lists with category: ${categoryToFetch}, page: ${page}, sortDirection: '${sortDirection}'`);
-      const fetchedLists = await getLists(categoryToFetch, page, undefined, sortDirection);
-      console.log(`[App.tsx] Fetched lists count: ${fetchedLists.length}`, fetchedLists);
+      const data = await getLists(
+        activeCategory === 'all' ? undefined : activeCategory,
+        page,
+        10,
+        sortDirection
+      );
 
-      if (fetchedLists.length === 0) {
-        setHasMore(false);
-      } else {
-        // İlk sayfa yükleniyorsa, listeleri sıfırla ve yeni listeleri göster
-        if (page === 0) {
-          setLists(fetchedLists);
-          // Sayfayı en üste kaydır
-          scrollToTop();
-        } else {
-          // Sonraki sayfalar için listelere ekle
-          setLists(prev => [...prev, ...fetchedLists]);
+      if (data && data.length > 0) {
+        const currentScrollHeight = listContainerRef.current?.scrollHeight || 0;
+        const currentScrollTop = listContainerRef.current?.scrollTop || 0;
+        
+        setLists(prevLists => isInitialLoad ? data : [...prevLists, ...data]);
+        setPage(prevPage => prevPage + 1);
+        setHasMore(data.length === 10);
+        
+        // Mobilde yeni içerik yüklendiğinde scroll pozisyonunu koru
+        if (isMobile && !isInitialLoad && listContainerRef.current) {
+          requestAnimationFrame(() => {
+            const newScrollHeight = listContainerRef.current?.scrollHeight || 0;
+            const heightDifference = newScrollHeight - currentScrollHeight;
+            if (listContainerRef.current) {
+              listContainerRef.current.scrollTop = currentScrollTop + heightDifference;
+            }
+          });
         }
-        setPage(prev => prev + 1);
+      } else {
+        setHasMore(false);
       }
     } catch (error) {
       console.error('Error fetching lists:', error);
+      setHasMore(false);
     } finally {
-      if (isInitialLoad) {
         setIsLoading(false);
-      } else {
         setIsLoadingMore(false);
-      }
     }
   };
 
-  useEffect(() => {
+  // Scroll event handler for infinite loading
     const handleScroll = () => {
-      if (!listContainerRef.current || !hasMore || isLoadingMore) return;
+    if (!listContainerRef.current || isLoadingMore || !hasMore) return;
 
-      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-      if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+    const { scrollTop, scrollHeight, clientHeight } = listContainerRef.current;
+    const threshold = 300;
+
+    // Mobilde tersine scroll için scrollTop < threshold kontrolü
+    if (isMobile) {
+      if (scrollTop < threshold) {
         fetchLists();
       }
+    } else {
+      // Desktop için normal scroll
+      if (scrollHeight - scrollTop - clientHeight < threshold) {
+        fetchLists();
+      }
+    }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [hasMore, isLoadingMore, page]);
+  useEffect(() => {
+    const container = listContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [isLoadingMore, hasMore, isMobile]);
 
+  // Tüm cihazlar için standart liste görünümü
   return (
     <div ref={listContainerRef} className="min-h-screen bg-gray-100"> 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[10px] pb-8"> 
@@ -271,25 +306,19 @@ function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="space-y-6 md:mt-0 mt-[-5px]">
+          <div className="flex flex-col-reverse space-y-reverse space-y-6 md:mt-0 mt-[-5px]">
             {lists.map((list) => (
               <div key={list.id} id={`list-${list.id}`}>
                 <ListPreview list={list} items={list.items} onListClick={() => setLastViewedListId(list.id)} />
-                {/* Her 5 listeden sonra reklam göster */}
-                {lists.indexOf(list) % 5 === 4 && (
-                  <div className="my-4">
-                    {/* Reklam alanı kaldırıldı */}
-                  </div>
-                )}
               </div>
             ))}
             {isLoadingMore && (
-              <div className="flex justify-center py-4">
+              <div className="flex justify-center py-4 order-first">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
               </div>
             )}
             {!hasMore && lists.length > 0 && (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-gray-500 order-first">
                 {t('listPreview.noMoreLists')}
               </div>
             )}
@@ -303,11 +332,6 @@ function Dashboard() {
             )}
           </div>
         )}
-        {!isLoading && lists.length > 0 && (
-          <div className="mt-6">
-            {/* Reklam alanı kaldırıldı */}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -316,7 +340,16 @@ function Dashboard() {
 function App() {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isAuthChecked, setIsAuthChecked] = useState(false); 
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  
+  // Dashboard state'leri
+  const [lists, setLists] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false); 
   
   // Android geri tuşu için genelleyici
   useAndroidBackButtonHandler();
@@ -351,27 +384,64 @@ function App() {
 
   const isAuthPage = location.pathname.startsWith('/auth');
   const isMobileSearchPage = location.pathname.startsWith('/mobile-search');
+  const isSearchPage = location.pathname.startsWith('/search');
   const isMobile = window.innerWidth < 768;
+  const isHomePage = location.pathname === '/';
 
   const getMainPaddingTop = () => {
-    if (isAuthPage || isMobileSearchPage) {
-      return 'pt-0'; // No padding for auth or mobile search pages
+    if (isAuthPage || isMobileSearchPage || (isSearchPage && isMobile)) {
+      return 'pt-0'; // No padding for auth, mobile search, or mobile search pages
     }
 
     if (isMobile) {
-      return 'pt-0'; // Mobile: Header/SubHeader in normal flow, so no main content padding needed
+      // Mobil'de Header + SubHeader fixed olduğu için padding gerekli
+      if (isHomePage) {
+        return 'pt-[116px]'; // Header (56px) + SubHeader (60px) için padding
+      }
+      return 'pt-14'; // Mobile: Header yüksekliği kadar padding (56px)
     } else { // Desktop
-      return 'pt-[139px]'; // Desktop: Fixed Header/SubHeader, so padding is needed
+      if (isHomePage) {
+        return 'pt-32'; // Desktop: Header (64px) + SubHeader (64px) için padding
+      }
+      return 'pt-16'; // Desktop: Header yüksekliği kadar padding (64px)
     }
   };
 
   return (
     <>
       <div className="flex flex-col min-h-screen bg-gray-50">
-        {!isAuthPage && <Header />}
-        {!isAuthPage && <SubHeader />}
+        {/* Header: Auth sayfalarında gizle */}
+        {!isAuthPage && (
+          <Header 
+            onLogoClick={isHomePage ? () => {
+              setActiveCategory('all');
+              setLists([]);
+              setPage(0);
+              setHasMore(true);
+              setSortDirection('desc');
+              scrollToTop();
+            } : undefined}
+          />
+        )}
+        
+        {/* SubHeader: Auth, MobileSearch ve mobil Search sayfalarında gizle */}
+        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && isHomePage && (
+          <SubHeader 
+            activeCategory={activeCategory}
+            onCategoryChange={(category) => {
+              setActiveCategory(category);
+              setLists([]);
+              setPage(0);
+              setHasMore(true);
+              scrollToTop();
+            }}
+          />
+        )}
+        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
+        
         {/* Main content area with conditional padding */}
         <main className={`flex-grow w-full ${getMainPaddingTop()}`}>
+          <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
@@ -461,11 +531,17 @@ function App() {
               element={<CommentsPage />}
             />
             <Route path="/movie/:id" element={<MovieDetails />} />
+            <Route path="/movie/:id/:slug" element={<MovieDetails />} />
             <Route path="/series/:id" element={<SeriesDetails />} />
+            <Route path="/series/:id/:slug" element={<SeriesDetails />} />
             <Route path="/book/:id" element={<BookDetails />} />
+            <Route path="/book/:id/:slug" element={<BookDetails />} />
             <Route path="/game/:id" element={<GameDetails />} />
+            <Route path="/game/:id/:slug" element={<GameDetails />} />
             <Route path="/person/:id" element={<PersonDetails />} />
+            <Route path="/person/:id/:slug" element={<PersonDetails />} />
             <Route path="/place/:id" element={<PlaceDetails />} />
+            <Route path="/place/:id/:slug" element={<PlaceDetails />} />
             <Route path="/list/:id" element={<ListDetails />} />
             <Route path="/search" element={<Search />} />
             <Route path="/mobile-search" element={<MobileSearch />} />
@@ -473,12 +549,32 @@ function App() {
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route
               path="/"
-              element={<Dashboard />}
+              element={
+                <Dashboard 
+                  activeCategory={activeCategory}
+                  setActiveCategory={setActiveCategory}
+                  lists={lists}
+                  setLists={setLists}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
+                  page={page}
+                  setPage={setPage}
+                  sortDirection={sortDirection}
+                  setSortDirection={setSortDirection}
+                  hasMore={hasMore}
+                  setHasMore={setHasMore}
+                  isLoadingMore={isLoadingMore}
+                  setIsLoadingMore={setIsLoadingMore}
+                />
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </main>
-        <Footer />
+        {/* Mobil anasayfada Footer'ı da gizle */}
+        {!(isMobile && isHomePage) && <Footer />}
+        {/* Mobil anasayfada BottomMenu'yu göster */}
         {!isAuthPage && <BottomMenu />}
         <InstallPrompt />
       </div>

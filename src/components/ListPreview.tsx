@@ -340,13 +340,13 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         <div
           ref={scrollContainerRef}
           id={`list-items-${list.id}`}
-          className="flex overflow-x-auto scrollbar-hide px-2 md:px-6 pb-2 md:pb-6 space-x-2 md:space-x-4 scroll-smooth"
+          className="flex overflow-x-auto scrollbar-hide px-3 md:px-6 pb-3 md:pb-6 space-x-3 md:space-x-4 scroll-smooth"
           style={{ scrollBehavior: 'smooth' }}
         >
           {items.filter(item => item.image_url).map((item) => (
             <div 
               key={item.id}
-              className={`flex-none ${item.type === 'video' ? 'w-[200px] md:w-[280px]' : 'w-[140px] md:w-[200px]'}`}
+              className={`flex-none ${item.type === 'video' ? 'w-[180px] md:w-[280px]' : 'w-[120px] md:w-[200px]'}`}
               onClick={() => {
                 switch (item.type) {
                   case 'movie':
