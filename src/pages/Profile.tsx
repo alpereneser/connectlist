@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthPopup } from '../components/AuthPopup';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../hooks/useRequireAuth';
-import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, GridFour, List, Heart, Eye } from '@phosphor-icons/react';
+import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, Heart } from '@phosphor-icons/react';
 import { FollowModal } from '../components/FollowModal';
 import { ListPreview } from '../components/ListPreview';
 import { ProfileCategories } from '../components/ProfileCategories';
@@ -91,7 +91,7 @@ export function Profile() {
   const likedListsContainerRef = useRef<HTMLDivElement>(null);
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [currentSessionUserId, setCurrentSessionUserId] = useState<string | null>(null);
-  const [mobileViewMode, setMobileViewMode] = useState<'grid' | 'list'>('list');
+  const [mobileViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -561,58 +561,89 @@ export function Profile() {
 
           <div className="bg-white">
             <div className="md:pt-[21px] px-6 md:pb-6">
-              {/* Mobile Layout - Instagram Style */}
-              <div className="md:hidden px-4 py-2">
-                {/* Header Row */}
-                <div className="flex items-center justify-between mb-4">
-                  {/* Avatar */}
-                  <div className="relative">
-                    <img
-                      src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${Date.now()}` : "https://api.dicebear.com/7.x/avataaars/svg"}
-                      alt={profile?.full_name}
-                      className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}`;
-                      }}
-                    />
+              {/* Mobile Layout - Threads Style */}
+              <div className="md:hidden px-4 py-6">
+                {/* Top Section - Avatar and Action Button */}
+                <div className="flex items-start justify-between mb-4">
+                  {/* Left Side - Avatar and Basic Info */}
+                  <div className="flex items-start gap-3">
+                    <div className="relative">
+                      <img
+                        src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${Date.now()}` : "https://api.dicebear.com/7.x/avataaars/svg"}
+                        alt={profile?.full_name}
+                        className="w-16 h-16 rounded-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}`;
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-xl font-bold text-gray-900 truncate">{profile?.full_name}</h1>
+                      <p className="text-sm text-gray-500 mb-1">@{profile?.username}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span>{filteredLists.length} {t('profile.lists')}</span>
+                        <button onClick={handleShowFollowers} className="hover:underline">
+                          {profile?.followers_count} {t('profile.followers')}
+                        </button>
+                        <button onClick={handleShowFollowing} className="hover:underline">
+                          {profile?.following_count} {t('profile.following')}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Stats Row */}
-                  <div className="flex-1 flex justify-around px-6">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{filteredLists.length}</div>
-                      <div className="text-sm text-gray-500">{t('profile.lists')}</div>
-                    </div>
-                    <button onClick={handleShowFollowers} className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{profile?.followers_count}</div>
-                      <div className="text-sm text-gray-500">{t('profile.followers')}</div>
-                    </button>
-                    <button onClick={handleShowFollowing} className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{profile?.following_count}</div>
-                      <div className="text-sm text-gray-500">{t('profile.following')}</div>
-                            </button>
-                          </div>
-                </div>
-
-                {/* Name & Username */}
-                <div className="mb-3">
-                  <h1 className="text-base font-semibold text-gray-900">{profile?.full_name}</h1>
-                  <p className="text-sm text-gray-500">@{profile?.username}</p>
-                </div>
-
-                {/* Bio */}
-                {profile?.bio && (
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-900 leading-relaxed">{profile.bio}</p>
-                          </div>
+                  {/* Right Side - Action Button */}
+                  <div className="flex gap-2 ml-3">
+                    {isCurrentUser ? (
+                      <button
+                        onClick={() => navigate('/settings')}
+                        className="px-4 py-1.5 bg-gray-100 text-gray-900 text-sm font-medium rounded-full hover:bg-gray-200 transition-colors"
+                      >
+                        {t('profile.editProfile')}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleFollowClick}
+                          disabled={isLoadingFollow}
+                          className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
+                            isFollowing
+                              ? 'bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300'
+                              : 'bg-black hover:bg-gray-800 text-white'
+                          }`}
+                        >
+                          {isLoadingFollow
+                            ? 'İşleniyor...'
+                            : isFollowing
+                            ? t('profile.unfollow')
+                            : t('profile.follow')}
+                        </button>
+                        {isFollowing && (
+                          <button
+                            onClick={() => navigate(`/messages?to=${profile?.username}`)}
+                            className="p-1.5 bg-gray-100 text-gray-900 rounded-full hover:bg-gray-200 transition-colors"
+                          >
+                            <ChatCircle size={16} />
+                          </button>
                         )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bio Section */}
+                {profile?.bio && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-900 leading-relaxed">{profile.bio}</p>
+                  </div>
+                )}
 
                 {/* Location & Website */}
                 {(profile?.location || profile?.website) && (
-                  <div className="mb-4 space-y-1">
+                  <div className="mb-4 space-y-2">
                     {profile?.location && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin size={14} />
+                        <MapPin size={14} className="text-gray-400" />
                         <span>{profile.location}</span>
                       </div>
                     )}
@@ -623,50 +654,12 @@ export function Profile() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
                       >
-                        <LinkIcon size={14} />
-                        <span>{profile.website}</span>
+                        <LinkIcon size={14} className="text-blue-500" />
+                        <span className="truncate">{profile.website}</span>
                       </a>
                     )}
                   </div>
                 )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {isCurrentUser ? (
-                    <button
-                      onClick={() => navigate('/settings')}
-                      className="flex-1 py-2 px-4 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      {t('profile.editProfile')}
-                    </button>
-                  ) : (
-                          <>
-                            <button
-                              onClick={handleFollowClick}
-                              disabled={isLoadingFollow}
-                        className={`flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${
-                                isFollowing
-                                  ? 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                              }`}
-                            >
-                              {isLoadingFollow
-                                ? 'İşleniyor...'
-                                : isFollowing
-                                ? t('profile.unfollow')
-                                : t('profile.follow')}
-                            </button>
-                            {isFollowing && (
-                              <button
-                                onClick={() => navigate(`/messages?to=${profile?.username}`)}
-                          className="px-4 py-2 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
-                              >
-                          <ChatCircle size={16} />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
               </div>
 
               {/* Desktop Layout */}
@@ -790,45 +783,7 @@ export function Profile() {
             />
           </div>
 
-          {/* Mobile View Toggle */}
-          <div className="md:hidden px-4 mb-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {activeCategory === 'all' ? 'Tüm Listeler' : 
-                 activeCategory === 'movies' ? 'Filmler' :
-                 activeCategory === 'series' ? 'Diziler' :
-                 activeCategory === 'books' ? 'Kitaplar' :
-                 activeCategory === 'games' ? 'Oyunlar' :
-                 activeCategory === 'people' ? 'Kişiler' :
-                 activeCategory === 'videos' ? 'Videolar' :
-                 activeCategory === 'places' ? 'Yerler' : 'Listeler'}
-                <span className="text-sm text-gray-500 ml-2">({filteredLists.length})</span>
-              </h2>
-              
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setMobileViewMode('list')}
-                  className={`p-2 rounded-md transition-all ${
-                    mobileViewMode === 'list'
-                      ? 'bg-white text-orange-500 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  <List size={18} />
-                </button>
-                <button
-                  onClick={() => setMobileViewMode('grid')}
-                  className={`p-2 rounded-md transition-all ${
-                    mobileViewMode === 'grid'
-                      ? 'bg-white text-orange-500 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  <GridFour size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
+
 
           {/* Kullanıcının Listeleri - Mobile */}
           <div ref={mobileListContainerRef} className="md:hidden bg-gray-50 min-h-screen">
@@ -930,16 +885,6 @@ export function Profile() {
                         {/* Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                              <span className="text-xl">
-                                {list.category === 'movies' ? '🎬' : 
-                                 list.category === 'series' ? '📺' : 
-                                 list.category === 'books' ? '📚' : 
-                                 list.category === 'games' ? '🎮' : 
-                                 list.category === 'people' ? '👤' : 
-                                 list.category === 'places' ? '📍' : '📋'}
-                              </span>
-                            </div>
                             <div>
                               <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">
                                 {list.title}
@@ -994,22 +939,7 @@ export function Profile() {
               </div>
             )}
             
-                        {/* Footer */}
-                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
-                          <div className="flex items-center space-x-2">
-                            <img
-                              src={list.profiles.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${list.profiles.full_name}`}
-                              alt={list.profiles.full_name}
-                              className="w-7 h-7 rounded-full"
-                            />
-                            <span className="text-sm text-gray-600 font-medium">@{list.profiles.username}</span>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 text-orange-500">
-                            <Eye size={16} />
-                            <span className="text-sm font-semibold">Görüntüle</span>
-                          </div>
-                        </div>
+                        {/* Footer - Removed for mobile */}
                       </div>
                     )}
                   </div>

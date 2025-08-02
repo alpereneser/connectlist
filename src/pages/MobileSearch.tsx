@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Mic, MicOff, Clock, X, TrendingUp, SlidersHorizontal, Calendar, Globe, ArrowUpDown } from 'lucide-react';
+import { Search, Mic, MicOff, X, TrendingUp, SlidersHorizontal, Calendar, Globe, ArrowUpDown } from 'lucide-react';
 import { searchTMDB, searchGames, searchBooks, searchUsers, searchLists, getDefaultPlaceImage } from '../lib/api';
 import { Header } from '../components/Header';
 import { SubHeader } from '../components/SubHeader';
@@ -101,7 +101,8 @@ export function MobileSearch() {
   
   // Touch handling
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const [isSwiping, setIsSwiping] = useState(false);
+ // Touch handling - unused
+  // const [isSwiping, setIsSwiping] = useState(false);
   
   // Advanced Features
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
@@ -116,7 +117,8 @@ export function MobileSearch() {
 
   // Performance & Optimization
   const [searchCache, setSearchCache] = useState<Map<string, SearchResult[]>>(new Map());
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+ // Performance optimization - unused
+  // const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [searchPage, setSearchPage] = useState(1);
   const [hasMoreResults, setHasMoreResults] = useState(true);
   const [loadingMoreResults, setLoadingMoreResults] = useState(false);
@@ -125,10 +127,12 @@ export function MobileSearch() {
 
   // Accessibility & Focus Management
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState<number>(-1);
-  const [isSearchInputFocused, setIsSearchInputFocused] = useState(false);
+ // Focus management - unused
+  // const [isSearchInputFocused, setIsSearchInputFocused] = useState(false);
   const [announceMessage, setAnnounceMessage] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRefs = useRef<(HTMLButtonElement | null)[]>([]);
+ // Accessibility refs - unused
+  // const suggestionsRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     // Sayfa yüklendiğinde en üste kaydır
@@ -253,7 +257,7 @@ export function MobileSearch() {
     const handleImageError = () => {
       setIsLoading(false);
       setHasError(true);
-      setImageErrors(prev => new Set([...prev, src]));
+      // setImageErrors(prev => new Set([...prev, src])); // Unused
       
       // Try fallback image
       if (fallbackSrc && imageSrc !== fallbackSrc) {
@@ -307,11 +311,11 @@ export function MobileSearch() {
     }
     
     // Apply date range filter
-    if (filters.dateRange !== 'all') {
-      // This would require date information in the results
-      // For now, we'll simulate filtering by keeping only newer items
-      const now = new Date();
-      const cutoffDates: Record<string, number> = {
+      if (filters.dateRange !== 'all') {
+        // This would require date information in the results
+        // For now, we'll simulate filtering by keeping only newer items
+        // const now = new Date(); // Unused
+        const cutoffDates: Record<string, number> = {
         today: 1,
         week: 7,
         month: 30,
@@ -445,11 +449,12 @@ export function MobileSearch() {
     }
   };
 
-  const clearSearchHistory = () => {
-    setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
-    triggerHapticFeedback('light');
-  };
+  // Clear search history - unused function
+  // const clearSearchHistory = () => {
+  //   setSearchHistory([]);
+  //   localStorage.removeItem('searchHistory');
+  //   triggerHapticFeedback('light');
+  // };
 
   // Voice search
   const startVoiceSearch = () => {
@@ -658,10 +663,10 @@ export function MobileSearch() {
         return;
       }
 
-      const currentPage = isLoadMore ? searchPage : 1;
+      // const currentPage = isLoadMore ? searchPage : 1; // Unused
       
       // Check cache first
-      const cachedResults = getCachedResults(debouncedSearch, activeCategory, filters, currentPage);
+      const cachedResults = getCachedResults(debouncedSearch, activeCategory, filters, searchPage);
       if (cachedResults && !isLoadMore) {
         setSearchResults(cachedResults);
         setHasSearched(true);
@@ -822,7 +827,7 @@ export function MobileSearch() {
         return;
       }
 
-      const currentPage = searchPage;
+      // const currentPage = searchPage; // Unused
       
       setLoadingMoreResults(true);
 
@@ -881,7 +886,7 @@ export function MobileSearch() {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY
     });
-    setIsSwiping(false);
+    // setIsSwiping(false); // Unused
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -904,7 +909,7 @@ export function MobileSearch() {
       setIsPulling(false);
       setPullDistance(0);
     }
-    setIsSwiping(false);
+    // setIsSwiping(false); // Unused
   };
 
   // Load discover content on mount
@@ -1215,7 +1220,7 @@ export function MobileSearch() {
 
   // Focus management for search input
   const handleSearchInputFocus = () => {
-    setIsSearchInputFocused(true);
+    // setIsSearchInputFocused(true); // Unused
     if (searchQuery.trim()) {
       generateSearchSuggestions(searchQuery);
     } else if (searchHistory.length > 0) {
@@ -1225,7 +1230,7 @@ export function MobileSearch() {
   };
 
   const handleSearchInputBlur = () => {
-    setIsSearchInputFocused(false);
+    // setIsSearchInputFocused(false); // Unused
     // Delay hiding suggestions to allow clicking
     setTimeout(() => {
       setShowSuggestions(false);
@@ -1246,16 +1251,17 @@ export function MobileSearch() {
   };
 
   // Enhanced search function with accessibility
-  const handleSearchWithAccessibility = (query: string) => {
-    setSearchQuery(query);
-    setShowSuggestions(false);
-    setShowSearchHistory(false);
-    setFocusedSuggestionIndex(-1);
-    
-    if (query.trim()) {
-      announceToScreenReader(`Aranıyor: ${query}`);
-    }
-  };
+  // Enhanced search with accessibility - unused function
+  // const handleSearchWithAccessibility = (query: string) => {
+  //   setSearchQuery(query);
+  //   setShowSuggestions(false);
+  //   setShowSearchHistory(false);
+  //   setFocusedSuggestionIndex(-1);
+  //   
+  //   if (query.trim()) {
+  //     announceToScreenReader(`Aranıyor: ${query}`);
+  //   }
+  // };
 
   return (
     <>
@@ -1507,11 +1513,11 @@ export function MobileSearch() {
               onClick={() => {
                 setShowFilters(false);
                 // Re-trigger search with new filters
-                if (searchQuery.trim()) {
-                  // Trigger a re-search with current query and new filters
-                  setHasSearched(false);
-                  setTimeout(() => setHasSearched(true), 100);
-                }
+                   if (searchQuery.trim()) {
+                     // Trigger a re-search with current query and new filters
+                     setHasSearched(false);
+                     setTimeout(() => setHasSearched(true), 100);
+                   }
                 triggerHapticFeedback('medium');
                 announceToScreenReader('Filtreler uygulandı');
               }}
@@ -1636,7 +1642,7 @@ export function MobileSearch() {
                 {/* Search Results Grid */}
                 {getFilteredSearchResults().length > 0 && (
                   <div className="space-y-3" role="list" aria-label="Arama sonuçları">
-                    {getFilteredSearchResults().map((item, index) => (
+                    {getFilteredSearchResults().map((item) => (
                       <div
                         key={`${item.id}-${item.type}`}
                         onClick={() => {
@@ -1739,7 +1745,7 @@ export function MobileSearch() {
                   <p className="text-gray-500">Popüler içerikleri keşfet</p>
                 </div>
                 <div className="grid grid-cols-5 gap-3 w-full max-w-lg">
-              {discoverContent.slice(0, 20).map((item, index) => (
+              {discoverContent.slice(0, 20).map((item) => (
                 <div
                   key={`${item.type}-${item.id}`}
                       onClick={() => {

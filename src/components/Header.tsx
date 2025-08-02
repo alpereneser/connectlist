@@ -50,8 +50,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
 
   // Accessibility and Mobile UX States
   const [announceText, setAnnounceText] = useState<string>('');
-  const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
-  const [focusedElement, setFocusedElement] = useState<string | null>(null);
+
 
   // Ana sayfa kontrolü
   const isHomePage = location.pathname === '/' || location.pathname === '/index.html';
@@ -138,14 +137,6 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   }, []);
 
   const handleKeyboardNavigation = useCallback((event: KeyboardEvent) => {
-    setIsKeyboardNavigation(true);
-    
-    // Clear keyboard navigation flag after mouse use
-    const handleMouseMove = () => {
-      setIsKeyboardNavigation(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
 
     switch (event.key) {
       case 'Escape':
@@ -236,9 +227,9 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
       try {
         // Önce kullanıcının herhangi bir mesajı olup olmadığını kontrol et
         const { data: allMessages, error: allMsgError } = await supabase
-          .from('decrypted_messages')
+          .from('messages')
           .select('id')
-          .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+          .or(`sender_id.eq.${session.user.id},receiver_id.eq.${session.user.id}`)
           .limit(1);
 
         if (allMsgError) {
@@ -274,9 +265,9 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
           return;
         }
 
-        // Bu konuşmalardaki okunmamış mesajları kontrol et - decrypted_messages tablosunu kullan
+        // Bu konuşmalardaki okunmamış mesajları kontrol et - messages tablosunu kullan
         const { data: unreadMessages, error: msgError } = await supabase
-          .from('decrypted_messages')
+          .from('messages')
           .select('id, created_at')
           .in('conversation_id', conversations.map(c => c.conversation_id))
           .eq('is_read', false)
@@ -321,13 +312,13 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
     // İlk yüklemede okunmamış mesajları kontrol et
     checkUnreadMessages();
 
-    // Realtime subscription for messages - decrypted_messages tablosunu dinle
+    // Realtime subscription for messages - messages tablosunu dinle
     const messageSubscription = supabase
       .channel('messages-header')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'decrypted_messages'
+        table: 'messages'
       }, (payload) => {
         console.log('Message change detected in header:', payload);
         // Kısa bir gecikme ile kontrol et (veritabanı güncellemesinin tamamlanması için)
@@ -633,7 +624,6 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                     onChange={handleSearchInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
                     onFocus={() => {
-                      setFocusedElement('search');
                       setIsSearchFocused(true);
                       announceToScreenReader('Arama kutusuna odaklanıldı. Aramak için yazın veya / tuşuna basın');
                     }}
@@ -641,24 +631,17 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       const relatedTarget = e.relatedTarget as HTMLElement;
                       const searchContainer = e.currentTarget.closest('.relative');
                       
+                      // SearchResults içindeki elementlere tıklandığında blur olayını engelle
                       if (relatedTarget && searchContainer?.contains(relatedTarget)) {
                         return;
                       }
                       
-                      if (showResults && searchQuery.trim()) {
-                        setTimeout(() => {
-                          if (searchInputRef.current) {
-                            searchInputRef.current.focus();
-                          }
-                        }, 50);
-                        return;
-                      }
-                      
+                      // SearchResults açıkken ve arama sorgusu varken focus'u korumaya çalışma
+                      // Bu, kullanıcının sonuçlara tıklayabilmesi için gerekli
                       setTimeout(() => {
-                        setFocusedElement(null);
                         setShowResults(false);
                         setIsSearchFocused(false);
-                      }, 150);
+                      }, 200); // Delay'i artırdık ki kullanıcı sonuçlara tıklayabilsin
                     }}
                     placeholder={t('common.searchPlaceholder')}
                     className="search-input block w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-[13px]"

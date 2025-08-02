@@ -9,12 +9,30 @@ interface SitemapEntry {
     url: string;
     caption?: string;
     title?: string;
+    geoLocation?: string;
+    license?: string;
+  }>;
+  videos?: Array<{
+    url: string;
+    thumbnailUrl?: string;
+    title?: string;
+    description?: string;
+    duration?: number;
+  }>;
+  news?: {
+    publicationDate: string;
+    title: string;
+    keywords?: string;
+    stockTickers?: string;
+  };
+  alternateLanguages?: Array<{
+    hreflang: string;
+    href: string;
   }>;
 }
 
 export class DynamicSitemapGenerator {
   private static readonly BASE_URL = 'https://connectlist.me';
-  private static readonly MAX_URLS_PER_SITEMAP = 50000;
 
   // Generate sitemap for API content (movies, series, books, games, people)
   static async generateContentSitemap(): Promise<string> {
@@ -151,54 +169,86 @@ export class DynamicSitemapGenerator {
 
   // Create movie sitemap entry
   private static createMovieSitemapEntry(movie: any): SitemapEntry {
-    const slug = this.createSlug(movie.title);
-    const year = movie.release_date ? new Date(movie.release_date).getFullYear() : '';
+    const slug = this.createSlug(movie.title || movie.name);
+    const baseUrl = `${this.BASE_URL}/movie/${movie.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/movie/${movie.id}/${slug}`,
-      lastmod: movie.created_at || new Date().toISOString(),
+      url: baseUrl,
+      lastmod: movie.updated_at || new Date().toISOString().split('T')[0],
       changefreq: 'weekly',
-      priority: 0.8,
+      priority: movie.vote_average > 7 ? 0.9 : 0.8,
       images: movie.poster_path ? [{
         url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-        caption: `${movie.title} ${year ? `(${year})` : ''} poster`,
-        title: movie.title
-      }] : undefined
+        caption: `${movie.title || movie.name} - Film Posteri`,
+        title: movie.title || movie.name,
+        license: 'https://www.themoviedb.org/terms-of-use'
+      }] : undefined,
+      videos: movie.trailer_url ? [{
+        url: movie.trailer_url,
+        thumbnailUrl: movie.backdrop_path ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` : undefined,
+        title: `${movie.title || movie.name} - Fragman`,
+        description: movie.overview,
+        duration: movie.runtime ? movie.runtime * 60 : undefined
+      }] : undefined,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
   // Create series sitemap entry
   private static createSeriesSitemapEntry(series: any): SitemapEntry {
     const slug = this.createSlug(series.title);
-    const year = series.first_air_date ? new Date(series.first_air_date).getFullYear() : '';
+    const baseUrl = `${this.BASE_URL}/series/${series.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/series/${series.id}/${slug}`,
-      lastmod: series.created_at || new Date().toISOString(),
-      changefreq: 'weekly',
-      priority: 0.8,
+      url: baseUrl,
+      lastmod: series.updated_at || new Date().toISOString().split('T')[0],
+      changefreq: series.status === 'Returning Series' ? 'daily' : 'weekly',
+      priority: series.vote_average > 7 ? 0.9 : 0.8,
       images: series.poster_path ? [{
         url: `https://image.tmdb.org/t/p/w500${series.poster_path}`,
-        caption: `${series.title} ${year ? `(${year})` : ''} poster`,
-        title: series.title
-      }] : undefined
+        caption: `${series.title} - Dizi Posteri`,
+        title: series.title,
+        license: 'https://www.themoviedb.org/terms-of-use'
+      }] : undefined,
+      videos: series.trailer_url ? [{
+        url: series.trailer_url,
+        thumbnailUrl: series.backdrop_path ? `https://image.tmdb.org/t/p/w780${series.backdrop_path}` : undefined,
+        title: `${series.title} - Fragman`,
+        description: series.overview
+      }] : undefined,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
   // Create book sitemap entry
   private static createBookSitemapEntry(book: any): SitemapEntry {
     const slug = this.createSlug(book.title);
+    const baseUrl = `${this.BASE_URL}/book/${book.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/book/${book.id}/${slug}`,
-      lastmod: book.created_at || new Date().toISOString(),
+      url: baseUrl,
+      lastmod: book.updated_at || new Date().toISOString().split('T')[0],
       changefreq: 'monthly',
-      priority: 0.7,
+      priority: book.averageRating > 4 ? 0.8 : 0.7,
       images: book.image_links?.large || book.image_links?.thumbnail ? [{
         url: book.image_links.large || book.image_links.thumbnail,
-        caption: `${book.title} book cover`,
-        title: book.title
-      }] : undefined
+        caption: `${book.title} - Kitap Kapağı${book.authors ? ` - ${book.authors.join(', ')}` : ''}`,
+        title: book.title,
+        license: 'https://books.google.com/intl/en/googlebooks/tos.html'
+      }] : undefined,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
@@ -206,46 +256,66 @@ export class DynamicSitemapGenerator {
   private static createGameSitemapEntry(game: any): SitemapEntry {
     const slug = this.createSlug(game.name);
     const year = game.released ? new Date(game.released).getFullYear() : '';
+    const baseUrl = `${this.BASE_URL}/game/${game.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/game/${game.id}/${slug}`,
-      lastmod: game.created_at || new Date().toISOString(),
+      url: baseUrl,
+      lastmod: game.updated_at || new Date().toISOString().split('T')[0],
       changefreq: 'monthly',
-      priority: 0.7,
+      priority: game.rating > 4 ? 0.8 : 0.7,
       images: game.background_image ? [{
         url: game.background_image,
-        caption: `${game.name} ${year ? `(${year})` : ''} screenshot`,
-        title: game.name
-      }] : undefined
+        caption: `${game.name} ${year ? `(${year})` : ''} - Oyun Ekran Görüntüsü${game.genres ? ` - ${game.genres.map((g: any) => g.name).join(', ')}` : ''}`,
+        title: game.name,
+        license: 'https://rawg.io/terms'
+      }] : undefined,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
   // Create person sitemap entry
   private static createPersonSitemapEntry(person: any): SitemapEntry {
     const slug = this.createSlug(person.name);
+    const baseUrl = `${this.BASE_URL}/person/${person.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/person/${person.id}/${slug}`,
-      lastmod: person.created_at || new Date().toISOString(),
+      url: baseUrl,
+      lastmod: person.updated_at || new Date().toISOString().split('T')[0],
       changefreq: 'monthly',
-      priority: 0.6,
+      priority: person.popularity > 10 ? 0.7 : 0.6,
       images: person.profile_path ? [{
         url: `https://image.tmdb.org/t/p/w500${person.profile_path}`,
-        caption: `${person.name} profile photo`,
-        title: person.name
-      }] : undefined
+        caption: `${person.name} - ${person.known_for_department || 'Sanatçı'} Profil Fotoğrafı`,
+        title: person.name,
+        license: 'https://www.themoviedb.org/terms-of-use'
+      }] : undefined,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
   // Create list sitemap entry
   private static createListSitemapEntry(list: any): SitemapEntry {
     const slug = this.createSlug(list.title);
+    const baseUrl = `${this.BASE_URL}/list/${list.id}/${slug}`;
     
     return {
-      url: `${this.BASE_URL}/list/${list.id}/${slug}`,
-      lastmod: list.updated_at || new Date().toISOString(),
-      changefreq: 'daily',
-      priority: 0.9
+      url: baseUrl,
+      lastmod: list.updated_at || new Date().toISOString().split('T')[0],
+      changefreq: 'weekly',
+      priority: 0.8,
+      alternateLanguages: [
+        { hreflang: 'tr', href: baseUrl },
+        { hreflang: 'en', href: `${baseUrl}?lang=en` },
+        { hreflang: 'x-default', href: baseUrl }
+      ]
     };
   }
 
@@ -253,23 +323,34 @@ export class DynamicSitemapGenerator {
   private static generateXMLSitemap(entries: SitemapEntry[]): string {
     const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">`;
 
     const xmlFooter = `</urlset>`;
 
     const urlEntries = entries.map(entry => {
       let xml = `  <url>
-    <loc>${entry.url}</loc>
+    <loc>${this.escapeXML(entry.url)}</loc>
     <lastmod>${entry.lastmod}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority}</priority>`;
+
+      // Add alternate language versions
+      if (entry.alternateLanguages && entry.alternateLanguages.length > 0) {
+        entry.alternateLanguages.forEach(alt => {
+          xml += `
+    <xhtml:link rel="alternate" hreflang="${alt.hreflang}" href="${this.escapeXML(alt.href)}" />`;
+        });
+      }
 
       // Add image entries if available
       if (entry.images && entry.images.length > 0) {
         entry.images.forEach(image => {
           xml += `
     <image:image>
-      <image:loc>${image.url}</image:loc>`;
+      <image:loc>${this.escapeXML(image.url)}</image:loc>`;
           if (image.caption) {
             xml += `
       <image:caption>${this.escapeXML(image.caption)}</image:caption>`;
@@ -278,9 +359,66 @@ export class DynamicSitemapGenerator {
             xml += `
       <image:title>${this.escapeXML(image.title)}</image:title>`;
           }
+          if (image.geoLocation) {
+            xml += `
+      <image:geo_location>${this.escapeXML(image.geoLocation)}</image:geo_location>`;
+          }
+          if (image.license) {
+            xml += `
+      <image:license>${this.escapeXML(image.license)}</image:license>`;
+          }
           xml += `
     </image:image>`;
         });
+      }
+
+      // Add videos if present
+      if (entry.videos && entry.videos.length > 0) {
+        entry.videos.forEach(video => {
+          xml += `
+    <video:video>
+      <video:content_loc>${this.escapeXML(video.url)}</video:content_loc>`;
+          if (video.thumbnailUrl) {
+            xml += `
+      <video:thumbnail_loc>${this.escapeXML(video.thumbnailUrl)}</video:thumbnail_loc>`;
+          }
+          if (video.title) {
+            xml += `
+      <video:title>${this.escapeXML(video.title)}</video:title>`;
+          }
+          if (video.description) {
+            xml += `
+      <video:description>${this.escapeXML(video.description)}</video:description>`;
+          }
+          if (video.duration) {
+            xml += `
+      <video:duration>${video.duration}</video:duration>`;
+          }
+          xml += `
+    </video:video>`;
+        });
+      }
+
+      // Add news if present
+      if (entry.news) {
+        xml += `
+    <news:news>
+      <news:publication>
+        <news:name>Connectlist</news:name>
+        <news:language>tr</news:language>
+      </news:publication>
+      <news:publication_date>${entry.news.publicationDate}</news:publication_date>
+      <news:title>${this.escapeXML(entry.news.title)}</news:title>`;
+        if (entry.news.keywords) {
+          xml += `
+      <news:keywords>${this.escapeXML(entry.news.keywords)}</news:keywords>`;
+        }
+        if (entry.news.stockTickers) {
+          xml += `
+      <news:stock_tickers>${this.escapeXML(entry.news.stockTickers)}</news:stock_tickers>`;
+        }
+        xml += `
+    </news:news>`;
       }
 
       xml += `
@@ -302,11 +440,9 @@ export class DynamicSitemapGenerator {
         .select(`
           content_type,
           content_id,
-          created_at,
-          count(*) as usage_count
+          created_at
         `)
-        .group(['content_type', 'content_id', 'created_at'])
-        .order('usage_count', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1000);
 
       if (popularContent) {
@@ -326,7 +462,6 @@ export class DynamicSitemapGenerator {
   // Create popular content entry
   private static async createPopularContentEntry(content: any): Promise<SitemapEntry | null> {
     try {
-      let details: any = null;
       let tableName = '';
 
       switch (content.content_type) {
@@ -428,4 +563,4 @@ export class DynamicSitemapGenerator {
   }
 }
 
-export default DynamicSitemapGenerator; 
+export default DynamicSitemapGenerator;

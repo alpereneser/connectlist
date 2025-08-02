@@ -21,7 +21,7 @@ async function checkEmailPreference(userId: string, preferenceKey: string): Prom
       return false;
     }
     
-    return data[preferenceKey] === true;
+    return (data as any)[preferenceKey] === true;
   } catch (error) {
     console.error('E-posta tercihi kontrol edilirken beklenmeyen hata:', error);
     return false;
@@ -154,7 +154,7 @@ export async function triggerListItemAddedNotification(listId: string, newItemId
         listData.title,
         listData.id,
         listData.slug,
-        listData.profiles.username,
+        (listData.profiles as any).username,
         {
           title: itemData.title,
           description: itemData.description,
@@ -258,13 +258,13 @@ export async function triggerCommentNotification(
     const result = await sendCommentNotification(
       recipient.email,
       recipient.full_name,
-      commentData.profiles.full_name,
-      commentData.profiles.username,
-      commentData.profiles.avatar,
+      (commentData.profiles as any).full_name,
+      (commentData.profiles as any).username,
+      (commentData.profiles as any).avatar,
       listData.title,
       listData.id,
       listData.slug,
-      listData.profiles.username,
+      (listData.profiles as any).username,
       commentData.content,
       isReply
     );
@@ -281,7 +281,7 @@ export async function triggerMessageNotification(messageId: string) {
   try {
     // Mesaj bilgilerini al
     const { data: messageData, error: messageError } = await supabase
-      .from('decrypted_messages') // Şifresi çözülmüş mesajlar tablosunu kullanıyoruz
+      .from('messages') // Messages tablosunu kullanıyoruz
       .select(`
         id, 
         conversation_id, 
@@ -366,8 +366,8 @@ export async function triggerNewListNotification(listId: string) {
     // 3. Her takipçiye mail gönder
     let sentCount = 0;
     for (const follower of followersData) {
-      const email = follower.profiles?.email;
-      const name = follower.profiles?.full_name;
+      const email = (follower.profiles as any)?.email;
+      const name = (follower.profiles as any)?.full_name;
       if (!email) continue;
 
       await sendNewListNotification(
@@ -375,8 +375,8 @@ export async function triggerNewListNotification(listId: string) {
         name,
         listData.title,
         listData.slug,
-        listData.profiles.full_name,
-        listData.profiles.username,
+        (listData.profiles as any).full_name,
+        (listData.profiles as any).username,
         listData.description,
         listData.created_at
       );

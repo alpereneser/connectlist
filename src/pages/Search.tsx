@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { Header } from '../components/Header';
 import { BottomMenu } from '../components/BottomMenu';
-import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks } from '../lib/api';
-import { searchPlaces, getDefaultPlaceImage } from '../lib/api-places';
+import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks, searchPlaces } from '../lib/api';
+import { getDefaultPlaceImage } from '../lib/api';
 import { Movie, Show, Person, Game, Book as BookType, User } from '../types/search';
 import { List } from '../types/supabase';
 import { AuthPopup } from '../components/AuthPopup';
@@ -49,17 +50,7 @@ export function Search() {
   const [activeTab, setActiveTab] = useState('all');
   const [results, setResults] = useState<{
     users: User[];
-    lists: Array<{
-      id: string;
-      title: string;
-      items_count: number;
-      category: string;
-      profiles: {
-        username: string;
-        full_name: string;
-        avatar: string;
-      };
-    }>;
+    lists: List[];
     movies: Movie[];
     shows: Show[];
     people: Person[];
@@ -156,7 +147,7 @@ export function Search() {
       }
       
       try {
-        placesResults = await searchPlaces(query);
+        placesResults = await searchPlaces(query, i18n.language);
       } catch (error) {
         console.error('Error searching places:', error);
       }
@@ -974,34 +965,101 @@ export function Search() {
     <div className="h-screen bg-white overflow-hidden fixed inset-0">
       <Header />
       
-      {/* Web ölçülerinde arama alanı - SubHeader alanında */}
-      <div className="hidden md:block bg-gray-100 border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[55px]">
-            <div className="flex h-full items-center space-x-4 overflow-visible">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                      activeTab === tab.id
-                        ? 'border-b-2 border-orange-500 text-orange-500'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                    {tab.count > 0 && <span className="text-xs bg-gray-200 text-gray-700 rounded-full px-1 py-0 ml-1">{tab.count}</span>}
-                  </button>
-                );
-              })}
+      {/* Web ölçülerinde kategori seçimi - arama yapıldığında */}
+      {query && (
+        <div className="hidden md:block bg-gray-100 border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[55px]">
+              <div className="flex h-full items-center space-x-4 overflow-visible">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                        activeTab === tab.id
+                          ? 'border-b-2 border-orange-500 text-orange-500'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      onClick={() => setActiveTab(tab.id)}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                      {tab.count > 0 && <span className="text-xs bg-gray-200 text-gray-700 rounded-full px-1 py-0 ml-1">{tab.count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-
           </div>
         </div>
-      </div>
+      )}
+      
+      {/* Web ölçülerinde kategori seçimi - arama yapılmadığında */}
+      {!query && (
+        <div className="hidden md:block bg-white border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[55px]">
+              <div className="flex h-full items-center space-x-4 overflow-x-auto scrollbar-hide">
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'all' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>{t('common.categories.all')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'movie' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('movie')}
+                >
+                  <Film className="w-4 h-4" />
+                  <span>{t('common.categories.movies')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'series' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('series')}
+                >
+                  <Tv className="w-4 h-4" />
+                  <span>{t('common.categories.series')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'game' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('game')}
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>{t('common.categories.games')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'book' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('book')}
+                >
+                  <Book className="w-4 h-4" />
+                  <span>{t('common.categories.books')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'place' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('place')}
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span>{t('common.categories.places')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pt-[10px] mt-0 md:pt-[55px] h-[calc(100vh-64px)] overflow-auto fixed inset-x-0 top-[64px] bottom-0">
         <div className="space-y-4">

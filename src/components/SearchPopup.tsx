@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, X, Check } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useRef } from 'react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useDebounce } from '../hooks/useDebounce';
 import { searchTMDB, searchGames, searchBooks, getVideoDetails, searchLists } from '../lib/api';
-import { searchPlaces, getDefaultPlaceImage } from '../lib/api-places';
+import { searchPlaces, getDefaultPlaceImage } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -32,10 +32,15 @@ interface SearchPopupProps {
     type: string;
     year?: string;
     description?: string;
+    username?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
   }) => void;
   category: string;
   alreadyAddedItemIds?: string[]; // Listede zaten olanlar
-  selectedItemIds?: string[]; // Şu an seçili olanlar (CreateList için)
 }
 
 type SearchResult = {
@@ -48,7 +53,7 @@ type SearchResult = {
   username?: string;
 }
 
-export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedItemIds = [], selectedItemIds = [] }: SearchPopupProps) {
+export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedItemIds = [] }: SearchPopupProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,12 +143,12 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
   const getCategoryTitle = () => {
     switch (normalizedCategory) {
-      case 'movies': return t('common.categories.movies');
-      case 'series': return t('common.categories.series');
-      case 'books': return t('common.categories.books');
-      case 'games': return t('common.categories.games');
-      case 'people': return t('common.categories.people');
-      case 'videos': return t('common.categories.videos');
+      case 'movies': return t('categories.movie');
+      case 'series': return t('categories.series');
+      case 'books': return t('categories.book');
+      case 'games': return t('categories.game');
+      case 'people': return t('categories.person');
+      case 'videos': return t('categories.video');
       case 'lists': return t('search.categories.lists');
       default: return '';
     }
@@ -215,7 +220,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'movie' && item.poster_path)
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.title || 'İsimsiz Film',
+                title: item.title || t('createList.defaultNames.untitledMovie'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title || 'Film')}&backgroundColor=red`,
                 type: 'movie',
@@ -228,7 +233,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'tv')
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Dizi',
+                title: item.name || t('createList.defaultNames.untitledSeries'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name || 'Dizi')}&backgroundColor=purple`,
                 type: 'series',
@@ -241,7 +246,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'person' && item.profile_path)
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Kişi',
+                title: item.name || t('createList.defaultNames.untitledPerson'),
                 image: `https://image.tmdb.org/t/p/w185${item.profile_path}`,
                 type: 'person',
                 description: item.known_for_department || ''
@@ -255,7 +260,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                   return null;
                 }
                 
-                const title = item.volumeInfo.title || 'İsimsiz Kitap';
+                const title = item.volumeInfo.title || t('createList.defaultNames.untitledBook');
                 
                 let imageUrl = '';
                 if (item.volumeInfo.imageLinks && item.volumeInfo.imageLinks.thumbnail) {
@@ -287,7 +292,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 console.error('Kitap formatlanırken hata:', error, item);
                 return null;
               }
-            }).filter((item): item is SearchResult => item !== null);
+            }).filter((item: SearchResult | null): item is SearchResult => item !== null);
             
             // Oyun araması
             const gameResults = await searchGames(debouncedSearch);
@@ -296,7 +301,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 item && item.background_image)
               .map((item: { background_image: string; id: number; name: string; released?: string; description_raw?: string }) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Oyun',
+                title: item.name || t('createList.defaultNames.untitledGame'),
                 image: item.background_image,
                 type: 'game',
                 year: item.released?.split('-')[0] || '',
@@ -319,7 +324,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'movie' && item.poster_path)
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.title || 'İsimsiz Film',
+                title: item.title || t('createList.defaultNames.untitledMovie'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title || 'Film')}&backgroundColor=red`,
                 type: 'movie',
@@ -345,7 +350,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'tv')
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Dizi',
+                title: item.name || t('createList.defaultNames.untitledSeries'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name || 'Dizi')}&backgroundColor=purple`,
                 type: 'series',
@@ -376,7 +381,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 .filter(item => item && item.volumeInfo)
                 .map((item: any) => {
                   // Kitap başlığını güvenli bir şekilde al
-                  const title = item.volumeInfo.title || 'İsimsiz Kitap';
+                  const title = item.volumeInfo.title || t('createList.defaultNames.untitledBook');
                   
                   // Resim URL'sini güvenli bir şekilde al
                   let imageUrl = '';
@@ -436,7 +441,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 item && item.background_image)
               .map((item: { background_image: string; id: number; name: string; released?: string; description_raw?: string }) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Oyun',
+                title: item.name || t('createList.defaultNames.untitledGame'),
                 image: item.background_image,
                 type: 'game',
                 year: item.released?.split('-')[0] || '',
@@ -459,7 +464,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
               .filter((item: TMDBItem) => item && item.media_type === 'person' && item.profile_path)
               .map((item: TMDBItem) => ({
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Kişi',
+                title: item.name || t('createList.defaultNames.untitledPerson'),
                 image: `https://image.tmdb.org/t/p/w185${item.profile_path}`,
                 type: 'person',
                 description: item.known_for_department || ''
@@ -703,8 +708,14 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
             <div className="p-4 flex-1 overflow-y-auto">
               {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                  <p>{error}</p>
+                <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 flex items-start gap-3">
+                  <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="font-medium">{t('common.searchError')}</p>
+                    <p className="text-sm mt-1">{error}</p>
+                  </div>
                 </div>
               )}
               
@@ -722,8 +733,9 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
               <div className="max-h-[50vh] overflow-y-auto">
                 {isSearching ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-10 w-10 border-2 border-orange-500 border-t-transparent" />
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-2 border-orange-500 border-t-transparent mb-3" />
+                    <p className="text-gray-600 text-sm">{t('common.searching')}</p>
                   </div>
                 ) : searchResults.length > 0 ? (
                   <div className="space-y-3">
@@ -761,15 +773,42 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                             )}
                           </div>
                           {isAlreadyAdded && (
-                            <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">Eklendi</span>
+                            <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">{t('common.added')}</span>
                           )}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 py-12">
-                    {searchQuery ? t('search.noResults', { query: searchQuery }) : t('common.searchPlaceholder')}
+                  <div className="text-center py-12">
+                    {searchQuery ? (
+                      <div>
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-medium mb-2 text-gray-900">{t('common.noResultsFound')}</h3>
+                        <p className="text-gray-500 mb-2">
+                          {t('common.noResultsFor', { query: searchQuery, category: getCategoryTitle().toLowerCase() })}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {t('common.tryDifferentKeywords')}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-medium mb-2 text-gray-900">{t('common.startSearching')}</h3>
+                        <p className="text-gray-500">
+                          {t('common.searchInstructions', { category: getCategoryTitle() })}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -794,10 +833,16 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
             <div className="p-4">
               {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
-                  <p>{error}</p>
+              <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 flex items-start gap-3">
+                <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="font-medium">Arama Hatası</p>
+                  <p className="text-sm mt-1">{error}</p>
                 </div>
-              )}
+              </div>
+            )}
               
               <div className="relative mb-4">
                 <input
@@ -812,11 +857,12 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
 
               <div className="max-h-[60vh] overflow-y-auto">
                 {isSearching ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
-                  </div>
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent mb-2" />
+                  <p className="text-gray-600 text-sm">{t('common.searching')}</p>
+                </div>
                 ) : searchResults.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
                     {searchResults.map((result) => {
                       const item = result.image && result.title ? result : formatResult(result);
                       if (!item) return null;
@@ -835,33 +881,60 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                               onClose();
                             }
                           }}
-                          className={`flex gap-3 p-2 bg-gray-50 rounded-lg ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer'}`}
+                          className={`flex gap-4 p-4 bg-gray-50 rounded-xl ${isAlreadyAdded ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 cursor-pointer active:scale-95'} transition-all`}
                           style={isAlreadyAdded ? { pointerEvents: 'none' } : {}}
                         >
                           <img
                             src={item.image}
                             alt={item.title}
-                            className="w-20 h-28 object-cover rounded"
+                            className="w-16 h-20 object-cover rounded-lg"
                             onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title)}`; }}
                           />
-                          <div>
-                            <h3 className="font-medium">{item.title}</h3>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-lg mb-1">{item.title}</h3>
                             {item.year && (
                               <p className="text-sm text-gray-500">{item.year}</p>
                             )}
                           </div>
                           {isAlreadyAdded && (
-                            <span className="absolute top-2 right-2 bg-gray-200 text-gray-500 text-[10px] px-2 py-0.5 rounded">Eklendi</span>
+                            <span className="px-3 py-1 bg-gray-200 text-gray-500 text-sm rounded-full">{t('common.added')}</span>
                           )}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    {searchQuery ? t('search.noResults', { query: searchQuery }) : t('common.searchPlaceholder')}
-                  </div>
-                )}
+                <div className="text-center py-8">
+                  {searchQuery ? (
+                    <div>
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-base font-medium mb-2 text-gray-900">{t('common.noResultsFound')}</h3>
+                      <p className="text-gray-500 text-sm mb-2">
+                        {t('common.noResultsFor', { query: searchQuery, category: getCategoryTitle().toLowerCase() })}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {t('common.tryDifferentKeywords')}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-base font-medium mb-2 text-gray-900">{t('common.startSearching')}</h3>
+                      <p className="text-gray-500 text-sm">
+                        {t('common.searchInstructions', { category: getCategoryTitle() })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
             </div>
           </div>

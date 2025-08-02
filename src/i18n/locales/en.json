@@ -15,7 +15,13 @@
     "errors": {
       "fileTooLarge": "File size must be less than 5MB",
       "invalidFileType": "Only JPG, PNG and GIF files are allowed",
-      "selectCountryCity": "Please select a country and city first"
+      "selectCountryCity": "Please select a country and city first",
+      "notLoggedIn": "You must be logged in to perform this action",
+      "updateFailed": "Update failed",
+      "deleteFailed": "Delete operation failed",
+      "listNotFound": "List not found",
+      "listNotFoundDescription": "The list you are looking for could not be found or may have been deleted",
+      "searchFailed": "Search operation failed"
     },
     "form": {
       "enterUsername": "Enter your username",
@@ -130,7 +136,63 @@
       "daysAgo": "{{count}} days ago",
       "daysAgo_one": "{{count}} day ago",
       "lastUpdate": "Last updated:"
-    }
+    },
+    "createList": {
+      "buttonText": "Create List",
+      "title": "Create {{category}} List",
+      "pasteYouTubeLink": "Paste YouTube video link",
+      "form": {
+        "titleLabel": "List Title",
+        "titlePlaceholder": "Give your list a title",
+        "descriptionLabel": "List Description",
+        "descriptionPlaceholder": "Write a short description about your list",
+        "searchPlacesPlaceholder": "Search places...",
+        "creating": "Creating list...",
+        "createButton": "Create List",
+        "youtubeLink": "YouTube Video Link",
+        "searchContent": "Search Content"
+      },
+      "preview": {
+        "title": "List Preview",
+        "noContent": "No content added yet"
+      },
+      "errors": {
+        "generalError": "An error occurred while creating the list",
+        "sessionExpired": "Your session has expired, please log in again",
+        "apiNotFound": "API not found",
+        "serverError": "Server error occurred",
+        "videoDetailsError": "An error occurred while fetching video details",
+        "videoNotFound": "Video not found",
+        "videoPrivate": "Video is private or restricted",
+        "invalidYouTubeLink": "Invalid YouTube link",
+        "categoryNotSpecified": "Category not specified",
+        "titleRequired": "Title is required",
+        "listCreatedButNoId": "List created but no ID received"
+      },
+      "defaultNames": {
+        "untitledMovie": "Untitled Movie",
+        "untitledSeries": "Untitled Series",
+        "untitledBook": "Untitled Book",
+        "untitledGame": "Untitled Game",
+        "untitledPerson": "Untitled Person"
+      }
+    },
+    "createListOld": "Create List",
+    "unknown": "Unknown",
+    "unknownUser": "Unknown User",
+    "untitledList": "Untitled List",
+    "back": "Back",
+    "users": "Users",
+    "items": "Items",
+    "searchContent": "Search Content",
+    "searching": "Searching...",
+    "searchError": "Search Error",
+    "noResultsFound": "No results found",
+    "noResultsFor": "No {{category}} found for \"{{query}}\".",
+    "tryDifferentKeywords": "Try different keywords.",
+    "startSearching": "Start searching",
+    "searchInstructions": "Type in the box above to search for {{category}}.",
+    "added": "Added"
   },
   "categories": {
     "movie": "Movie",
@@ -138,6 +200,8 @@
     "book": "Book",
     "game": "Game",
     "video": "Video",
+    "person": "Person",
+    "place": "Place",
     "unknown": "Item"
   },
   "auth": {
@@ -146,6 +210,7 @@
     "login": "Log In",
     "register": "Sign Up",
     "requireAuthMessage": "You need to log in to perform this action: {{action}}",
+    "loginRequired": "You need to log in to perform this action: adding items to a list",
     "forgotPassword": "Forgot Password",
     "email": "Email",
     "password": "Password",
@@ -312,6 +377,9 @@
   },
   "search": {
     "noResults": "No results found for '{{query}}'",
+    "noResultsFor": "No results found for '{{query}}' in {{category}}",
+    "allCategories": "any category",
+    "tryDifferentKeywords": "Try different keywords or search in all categories",
     "noCategoryResults": "No results found for {{category}}",
     "result": "Result",
     "itemCount": "{{count}} items",

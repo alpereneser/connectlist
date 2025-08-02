@@ -15,6 +15,7 @@ import { CommentModal } from '../components/CommentModal';
 import { useListDetails } from '../hooks/useListDetails';
 import { useListMutations } from '../hooks/useListMutations';
 import { useLikeMutation } from '../hooks/useLikeMutation';
+import { deleteList } from '../lib/api';
 
 const formatDate = (dateString: string, t: TFunction, i18nLanguage: string) => {
   if (!dateString) return '';
@@ -645,61 +646,26 @@ export default function ListDetails() {
   const handleDelete = async () => {
     if (!listId) return;
     
-
-
     try {
-      // Oturum kontrolü
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session?.user?.id) {
-        alert(t('common.errors.notLoggedIn'));
-        return;
-      }
-
-      // 1. Adım: Liste öğelerini sil
-      try {
-        const { error: itemsError } = await supabase
-          .from('list_items')
-          .delete()
-          .eq('list_id', listId);
-        
-        if (itemsError) {
-          console.error('Liste öğeleri silinirken hata:', itemsError);
-          // Silme hatası olsa bile devam et
-        }
-      } catch (error) {
-        console.warn('RLS uyarısı (liste öğeleri silme - görmezden gelinebilir):', error);
-      }
+      // API fonksiyonunu kullanarak listeyi sil
+      await deleteList(listId);
       
-      // 2. Adım: Listeyi sil
-      try {
-        const { error: listError } = await supabase
-          .from('lists')
-          .delete()
-          .eq('id', listId)
-          .eq('user_id', sessionData.session.user.id);
-        
-        if (listError) {
-          console.error('Liste silinirken hata:', listError);
-          alert(t('common.errors.deleteFailed'));
-          return;
-        }
-      } catch (error) {
-        console.warn('RLS uyarısı (liste silme - görmezden gelinebilir):', error);
-      }
-      
-      // 3. Adım: Anasayfaya yönlendir
+      // Başarılı silme sonrası anasayfaya yönlendir
       navigate('/', { 
         replace: true, 
         state: { 
           refresh: true, 
           timestamp: new Date().getTime(),
           forceCategory: 'all',
-          sortDirection: 'desc' // Listeleri sondan başa doğru sırala
+          sortDirection: 'desc'
         } 
       });
     } catch (error) {
       console.error('Liste silme hatası:', error);
       alert(t('common.errors.deleteFailed'));
+    } finally {
+      // Modal'ı kapat
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -1445,7 +1411,6 @@ export default function ListDetails() {
             onSelect={handleAddItem}
             category={getNormalizedCategory(safeData?.list?.category)}
             alreadyAddedItemIds={filterUndefined(items.map(item => item.external_id))}
-            selectedItemIds={filterUndefined(items.map(item => item.external_id))}
           />
         </>
       )}

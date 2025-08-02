@@ -4,13 +4,8 @@ const TMDB_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzNzhiNmViM2M2OWYyMWQw
 const TMDB_LANGUAGE = 'en-US'; // API yanıtlarının İngilizce olması için 'tr-TR' yerine 'en-US' kullanılıyor
 const RAWG_API_KEY = 'd4b747af4c42469293a56cb985354e36';
 const GOOGLE_BOOKS_API_KEY = 'AIzaSyDe4BIkhTKqHXggqlT88_04nDvfeePXc7w';
-const NETLIFY_FUNCTION_ENDPOINT = '/.netlify/functions/google-places-proxy';
-
-// .env dosyasından Foursquare API anahtarını al
-const FOURSQUARE_API_KEY = import.meta.env.VITE_FOURSQUARE_API_KEY || 'fsq3RCVf1EnORc52JQxOhBqNYKb1CEMlxok6vRWvKKKELF4=';
-
 // API anahtarlarını dışa aktar
-export { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY, FOURSQUARE_API_KEY, NETLIFY_FUNCTION_ENDPOINT };
+export { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY };
 
 // Kitap kapağı için varsayılan görsel URL'si oluştur
 function getDefaultBookCover(title: string) {
@@ -520,56 +515,8 @@ export async function searchBooks(query: string) {
 }
 
 // Google Places API Fonksiyonları (Netlify Proxy üzerinden)
-export async function searchGooglePlaces(query: string, language: string = 'tr', otherParams: Record<string, string> = {}) {
-  const params = new URLSearchParams({
-    endpoint: 'textsearch',
-    query: query,
-    language: language,
-    ...otherParams
-  });
-  const response = await fetch(`${NETLIFY_FUNCTION_ENDPOINT}?${params.toString()}`);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Failed to fetch places and could not parse error' }));
-    console.error("Error searching places:", errorData);
-    throw new Error(errorData.message || 'Failed to fetch places');
-  }
-  return response.json();
-}
-
-export async function getGooglePlaceDetails(placeId: string, fields: string, language: string = 'tr', sessiontoken?: string) {
-  const params = new URLSearchParams({
-    endpoint: 'details',
-    place_id: placeId,
-    fields: fields,
-    language: language,
-  });
-  if (sessiontoken) {
-    params.append('sessiontoken', sessiontoken);
-  }
-  const response = await fetch(`${NETLIFY_FUNCTION_ENDPOINT}?${params.toString()}`);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Failed to fetch place details and could not parse error' }));
-    console.error("Error fetching place details:", errorData);
-    throw new Error(errorData.message || 'Failed to fetch place details');
-  }
-  return response.json();
-}
-
-export async function getGooglePlaceAutocomplete(input: string, language: string = 'tr', otherParams: Record<string, string> = {}) {
-  const params = new URLSearchParams({
-    endpoint: 'autocomplete',
-    input: input,
-    language: language,
-    ...otherParams
-  });
-  const response = await fetch(`${NETLIFY_FUNCTION_ENDPOINT}?${params.toString()}`);
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Failed to fetch place autocomplete and could not parse error' }));
-    console.error("Error fetching place autocomplete:", errorData);
-    throw new Error(errorData.message || 'Failed to fetch place autocomplete');
-  }
-  return response.json();
-}
+// Eski Google Places API fonksiyonları kaldırıldı
+// Artık sadece searchPlaces ve getPlaceDetails fonksiyonları kullanılıyor
 
 // Details API functions
 export async function getMovieDetails(id: string) {
@@ -1053,6 +1000,159 @@ export async function likeList(listId: string) {
   if (error) throw error;
 }
 
+// Ülkeler listesi
+export const countries = [
+  { code: 'TR', name: 'Türkiye' },
+  { code: 'US', name: 'Amerika Birleşik Devletleri' },
+  { code: 'GB', name: 'Birleşik Krallık' },
+  { code: 'DE', name: 'Almanya' },
+  { code: 'FR', name: 'Fransa' },
+  { code: 'IT', name: 'İtalya' },
+  { code: 'ES', name: 'İspanya' },
+  { code: 'NL', name: 'Hollanda' },
+  { code: 'RU', name: 'Rusya' },
+  { code: 'JP', name: 'Japonya' },
+  { code: 'CN', name: 'Çin' },
+  { code: 'IN', name: 'Hindistan' },
+  { code: 'BR', name: 'Brezilya' },
+  { code: 'CA', name: 'Kanada' },
+  { code: 'AU', name: 'Avustralya' },
+];
+
+// Şehirleri getiren fonksiyon
+export const getCitiesByCountry = async (countryCode: string): Promise<{ name: string }[]> => {
+  try {
+    // Ülkeye göre popüler şehirleri döndür
+    const citiesByCountry: Record<string, { name: string }[]> = {
+      'TR': [
+        { name: 'İstanbul' },
+        { name: 'Ankara' },
+        { name: 'İzmir' },
+        { name: 'Antalya' },
+        { name: 'Bursa' },
+        { name: 'Adana' },
+      ],
+      'US': [
+        { name: 'New York' },
+        { name: 'Los Angeles' },
+        { name: 'Chicago' },
+        { name: 'Houston' },
+        { name: 'Phoenix' },
+        { name: 'Philadelphia' },
+      ],
+      'GB': [
+        { name: 'London' },
+        { name: 'Birmingham' },
+        { name: 'Manchester' },
+        { name: 'Glasgow' },
+        { name: 'Liverpool' },
+        { name: 'Edinburgh' },
+      ],
+      'DE': [
+        { name: 'Berlin' },
+        { name: 'Hamburg' },
+        { name: 'Munich' },
+        { name: 'Cologne' },
+        { name: 'Frankfurt' },
+        { name: 'Stuttgart' },
+      ],
+      'FR': [
+        { name: 'Paris' },
+        { name: 'Marseille' },
+        { name: 'Lyon' },
+        { name: 'Toulouse' },
+        { name: 'Nice' },
+        { name: 'Nantes' },
+      ],
+      'RU': [
+        { name: 'Moscow' },
+        { name: 'Saint Petersburg' },
+        { name: 'Novosibirsk' },
+        { name: 'Yekaterinburg' },
+        { name: 'Kazan' },
+        { name: 'Nizhny Novgorod' },
+      ],
+      'JP': [
+        { name: 'Tokyo' },
+        { name: 'Osaka' },
+        { name: 'Kyoto' },
+        { name: 'Yokohama' },
+        { name: 'Nagoya' },
+        { name: 'Sapporo' },
+      ],
+      'CN': [
+        { name: 'Beijing' },
+        { name: 'Shanghai' },
+        { name: 'Guangzhou' },
+        { name: 'Shenzhen' },
+        { name: 'Chengdu' },
+        { name: 'Hangzhou' },
+      ],
+      'IN': [
+        { name: 'Mumbai' },
+        { name: 'Delhi' },
+        { name: 'Bangalore' },
+        { name: 'Hyderabad' },
+        { name: 'Chennai' },
+        { name: 'Kolkata' },
+      ],
+      'BR': [
+        { name: 'São Paulo' },
+        { name: 'Rio de Janeiro' },
+        { name: 'Brasília' },
+        { name: 'Salvador' },
+        { name: 'Fortaleza' },
+        { name: 'Belo Horizonte' },
+      ],
+      'CA': [
+        { name: 'Toronto' },
+        { name: 'Montreal' },
+        { name: 'Vancouver' },
+        { name: 'Calgary' },
+        { name: 'Edmonton' },
+        { name: 'Ottawa' },
+      ],
+      'AU': [
+        { name: 'Sydney' },
+        { name: 'Melbourne' },
+        { name: 'Brisbane' },
+        { name: 'Perth' },
+        { name: 'Adelaide' },
+        { name: 'Gold Coast' },
+      ],
+      'IT': [
+        { name: 'Rome' },
+        { name: 'Milan' },
+        { name: 'Naples' },
+        { name: 'Turin' },
+        { name: 'Palermo' },
+        { name: 'Genoa' },
+      ],
+      'ES': [
+        { name: 'Madrid' },
+        { name: 'Barcelona' },
+        { name: 'Valencia' },
+        { name: 'Seville' },
+        { name: 'Zaragoza' },
+        { name: 'Málaga' },
+      ],
+      'NL': [
+        { name: 'Amsterdam' },
+        { name: 'Rotterdam' },
+        { name: 'The Hague' },
+        { name: 'Utrecht' },
+        { name: 'Eindhoven' },
+        { name: 'Tilburg' },
+      ],
+    };
+
+    return citiesByCountry[countryCode] || [];
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    return [];
+  }
+};
+
 export async function unlikeList(listId: string) {
   const { data: { session } } = await supabaseBrowser.auth.getSession();
   if (!session) throw new Error('Oturum bulunamadı');
@@ -1179,127 +1279,164 @@ export async function getUserLists(userId: string) {
   }));
 }
 
-// Mekan araması yap (Google Places API - Netlify Proxy üzerinden)
+// Arama önbelleği - API kullanımını azaltmak için
+const searchCache: Record<string, { timestamp: number, results: any[] }> = {};
+const CACHE_DURATION = 10 * 60 * 1000; // 10 dakika
+
+// Mekan araması yap (Google Places API - Text Search New)
 export async function searchPlaces(query: string, language: string = 'tr') {
   try {
-    const netlifyFunctionUrl = '/.netlify/functions/google-places-proxy';
+    // Önbellek kontrolü
+    const cacheKey = `${query.toLowerCase().trim()}_${language}`;
+    if (searchCache[cacheKey] && (Date.now() - searchCache[cacheKey].timestamp) < CACHE_DURATION) {
+      console.log('Önbellekten mekan araması sonuçları kullanılıyor:', query);
+      return searchCache[cacheKey].results;
+    }
 
-    const params = new URLSearchParams();
-    params.append('endpoint', 'textsearch');
-    params.append('query', query);
-    params.append('language', language);
-    // CreateList.tsx'de ülke ve şehir bilgisi query'ye dahil edildiği için region parametresini burada eklemiyorum.
-    // Eğer proxy'de region için özel bir işlem varsa veya query'den ayrıştırmak istenirse eklenebilir.
-
-    console.log('Google Places API (Netlify Proxy) ile mekan araması yapılıyor:', query, 'Dil:', language);
-
-    const response = await fetch(`${netlifyFunctionUrl}?${params.toString()}`, {
-      method: 'GET',
+    console.log('Google Places API ile mekan araması yapılıyor:', query, 'Dil:', language);
+    
+    const GOOGLE_PLACES_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || 'AIzaSyCEQZ1ri472vtTCiexDsriTKZTIPQoRJkY';
+    
+    if (!GOOGLE_PLACES_API_KEY) {
+      console.error('Google Places API key is not configured');
+      return [];
+    }
+    
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
-      }
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.photos,places.types,places.addressComponents,places.businessStatus'
+      },
+      body: JSON.stringify({
+        textQuery: query.trim(),
+        languageCode: language,
+        maxResultCount: 25,
+        // includedType kaldırıldı - 'establishment' geçersiz tip
+      })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Google Places API (Netlify Proxy) error [searchPlaces]: ${response.status}`, errorText);
-      throw new Error(`Google Places API (Netlify Proxy) error [searchPlaces]: ${response.status} - ${errorText}`);
+      console.error(`Google Places API error [searchPlaces]: ${response.status}`, errorText);
+      throw new Error(`Google Places API error [searchPlaces]: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Google Places API (Netlify Proxy) yanıtı [searchPlaces]:', data);
+    console.log('Google Places API yanıtı [searchPlaces]:', data);
 
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      console.error('Unexpected Google Places API response status [searchPlaces]:', data.status, data.error_message);
+    if (!data.places || !Array.isArray(data.places)) {
+      console.log('No places found in Google Places API response [searchPlaces]:', data);
+      searchCache[cacheKey] = { timestamp: Date.now(), results: [] };
       return [];
     }
 
-    if (!data.results || !Array.isArray(data.results)) {
-      console.error('Unexpected Google Places API response format [searchPlaces]:', data);
-      return [];
-    }
+    const results = data.places
+      .filter((place: any) => {
+        // Sadece açık olan işletmeleri filtrele
+        return !place.businessStatus || place.businessStatus === 'OPERATIONAL';
+      })
+      .map((place: any) => {
+        // Google Places API'den fotoğraf URL'i oluştur
+        let imageUrl = getDefaultPlaceImage(place.displayName?.text || place.name || 'Place');
+        if (place.photos && place.photos.length > 0) {
+          const photoName = place.photos[0].name;
+          imageUrl = `https://places.googleapis.com/v1/${photoName}/media?maxHeightPx=400&maxWidthPx=400&key=${GOOGLE_PLACES_API_KEY}`;
+        }
+        
+        let city = '';
+        let country = '';
+        
+        // Google Places API address components'tan şehir ve ülke bilgisini al
+        if (place.addressComponents) {
+          const cityComponent = place.addressComponents.find((c: any) => 
+            c.types && (c.types.includes('locality') || c.types.includes('administrative_area_level_2'))
+          );
+          if (cityComponent) city = cityComponent.longText;
+          
+          const countryComponent = place.addressComponents.find((c: any) => c.types && c.types.includes('country'));
+          if (countryComponent) country = countryComponent.longText;
+        }
+        
+        // Eğer şehir bilgisi yoksa formatted_address'ten çıkarmaya çalış
+        if (!city && place.formattedAddress) {
+          const parts = place.formattedAddress.split(',');
+          if (parts.length >= 2) {
+            city = parts[parts.length - 2].trim();
+          }
+          if (!country && parts.length >= 1) {
+            country = parts[parts.length - 1].trim();
+          }
+        }
 
-    return data.results.map((place: any) => {
-      const photoReference = place.photos && place.photos.length > 0 ? place.photos[0].photo_reference : null;
-      // Proxy'nin 'photo' endpoint'ini desteklediğini varsayıyoruz.
-      // Eğer desteklemiyorsa, tam Google Photo URL'si oluşturulmalı veya proxy güncellenmeli.
-      const imageUrl = photoReference
-        ? `/.netlify/functions/google-places-proxy?endpoint=photo&photoreference=${photoReference}&maxwidth=400`
-        : getDefaultPlaceImage(place.name);
-      
-      let city = '';
-      let country = '';
-      if (place.address_components) {
-        const cityComponent = place.address_components.find((c: any) => c.types.includes('locality') || c.types.includes('administrative_area_level_2'));
-        if (cityComponent) city = cityComponent.long_name;
-        const countryComponent = place.address_components.find((c: any) => c.types.includes('country'));
-        if (countryComponent) country = countryComponent.long_name;
-      }
-      if (!city && place.vicinity) { 
-        const parts = place.vicinity.split(',');
-        if (parts.length > 0) city = parts[parts.length -1].trim();
-      }
-      if (!city && place.formatted_address){
-        const parts = place.formatted_address.split(',');
-        if(parts.length >=2 && parts[parts.length-2]) city = parts[parts.length-2].trim();
-        if(parts.length >=1 && !country && parts[parts.length-1]) country = parts[parts.length-1].trim();
-      }
+        return {
+          id: place.id,
+          name: place.displayName?.text || place.name || 'Unknown Place',
+          address: place.formattedAddress || '',
+          city: city,
+          country: country,
+          image: imageUrl,
+          latitude: place.location?.latitude,
+          longitude: place.location?.longitude,
+          rating: place.rating || 0,
+          user_ratings_total: place.userRatingCount || 0,
+          description: place.types ? place.types.join(', ') : undefined
+        };
+      });
 
-      return {
-        id: place.place_id,
-        name: place.name,
-        address: place.formatted_address || place.vicinity || '',
-        city: city,
-        country: country,
-        image: imageUrl,
-        latitude: place.geometry?.location?.lat,
-        longitude: place.geometry?.location?.lng,
-        rating: place.rating,
-        user_ratings_total: place.user_ratings_total,
-        description: place.types ? place.types.join(', ') : undefined
-      };
-    });
+    // Sonuçları önbelleğe kaydet
+    searchCache[cacheKey] = { timestamp: Date.now(), results };
+    return results;
   } catch (error) {
-    console.error('Error searching places via Google Places (Netlify Proxy):', error);
+    console.error('Error searching places via Google Places API:', error);
+    const cacheKey = `${query.toLowerCase().trim()}_${language}`;
+    searchCache[cacheKey] = { timestamp: Date.now(), results: [] };
     return [];
   }
 }
 
-// Mekan detaylarını getir (Google Places API - Netlify Proxy üzerinden)
+// Mekan detayları önbelleği
+const placeDetailsCache: Record<string, { timestamp: number, result: any }> = {};
+
+// Mekan detaylarını getir (Google Places API - Place Details)
 export async function getPlaceDetails(placeId: string, language: string = 'tr') {
+  // Önbellek kontrolü
+  const cacheKey = `${placeId}_${language}`;
+  const cached = placeDetailsCache[cacheKey];
+  if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    console.log('Mekan detayları önbellekten getiriliyor:', placeId);
+    return cached.result;
+  }
+
   try {
-    const netlifyFunctionUrl = '/.netlify/functions/google-places-proxy';
-    const params = new URLSearchParams();
-    params.append('endpoint', 'details');
-    params.append('place_id', placeId);
-    params.append('language', language);
-    // İstenen alanları belirtmek API maliyetini düşürebilir ve performansı artırabilir.
-    // Temel alanlar: address_component, adr_address, business_status, formatted_address, geometry, icon, icon_mask_base_uri, icon_background_color, name, photo, place_id, plus_code, type, url, utc_offset, vicinity, wheelchair_accessible_entrance.
-    // Contact alanları: formatted_phone_number, international_phone_number, opening_hours, current_opening_hours, secondary_opening_hours, website.
-    // Atmosphere alanları: curbside_pickup, delivery, dine_in, editorial_summary, price_level, rating, reservable, reviews, serves_beer, serves_breakfast, serves_brunch, serves_dinner, serves_lunch, serves_vegetarian_food, serves_wine, takeout, user_ratings_total.
-    params.append('fields', 'place_id,name,formatted_address,address_components,geometry,vicinity,photos,rating,user_ratings_total,types,url,opening_hours,website,formatted_phone_number');
+    console.log('Google Places API ile mekan detayları getiriliyor:', placeId, 'Dil:', language);
 
-    console.log('Google Places API (Netlify Proxy) ile mekan detayları getiriliyor:', placeId, 'Dil:', language);
-
-    const response = await fetch(`${netlifyFunctionUrl}?${params.toString()}`, {
-      method: 'GET',
+    // Netlify proxy fonksiyonunu kullan
+    const response = await fetch('/.netlify/functions/google-places-proxy', {
+      method: 'POST',
       headers: {
-        'Accept': 'application/json',
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        endpoint: 'details',
+        place_id: placeId,
+        fields: 'place_id,name,formatted_address,address_components,geometry,vicinity,photos,rating,user_ratings_total,types,url,opening_hours,website,formatted_phone_number,editorial_summary',
+        language: language
+      })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Google Places API (Netlify Proxy) error [getPlaceDetails]: ${response.status}`, errorText);
-      throw new Error(`Google Places API (Netlify Proxy) error [getPlaceDetails]: ${response.status} - ${errorText}`);
+      console.error(`Google Places API error [getPlaceDetails]: ${response.status}`, errorText);
+      throw new Error(`Google Places API error [getPlaceDetails]: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Google Places API (Netlify Proxy) yanıtı [getPlaceDetails]:', data);
+    console.log('Google Places API yanıtı [getPlaceDetails]:', data);
 
     if (data.status !== 'OK') {
       console.error('Unexpected Google Places API response status [getPlaceDetails]:', data.status, data.error_message);
-      // Hata durumunda null veya özel bir hata nesnesi döndürülebilir.
       return null;
     }
 
@@ -1309,10 +1446,10 @@ export async function getPlaceDetails(placeId: string, language: string = 'tr') 
       return null;
     }
 
-    const photoReferences = place.photos?.map((p: any) => p.photo_reference).filter(Boolean) || [];
-    const photoUrls = photoReferences.map((ref: string) => 
-      `/.netlify/functions/google-places-proxy?endpoint=photo&photoreference=${ref}&maxwidth=400`
-    );
+    // Google Places API fotoğraf URL'lerini oluştur
+    const photoUrls = place.photos?.map((photo: any) => 
+      `/.netlify/functions/google-places-photo?photoreference=${photo.photo_reference}&maxwidth=400`
+    ) || [];
 
     let city = '';
     let country = '';
@@ -1328,14 +1465,14 @@ export async function getPlaceDetails(placeId: string, language: string = 'tr') 
         if(parts.length >=1 && !country && parts[parts.length-1]) country = parts[parts.length-1].trim();
     }
 
-    return {
+    const result = {
       id: place.place_id,
       name: place.name,
       address: place.formatted_address || place.vicinity || '',
       city: city,
       country: country,
       image: photoUrls.length > 0 ? photoUrls[0] : getDefaultPlaceImage(place.name),
-      photos: photoUrls, // Tüm fotoğrafların URL'leri
+      photos: photoUrls,
       latitude: place.geometry?.location?.lat,
       longitude: place.geometry?.location?.lng,
       rating: place.rating,
@@ -1349,8 +1486,13 @@ export async function getPlaceDetails(placeId: string, language: string = 'tr') 
       // Diğer detaylar eklenebilir: reviews, price_level vb.
     };
 
+    // Sonucu önbelleğe kaydet
+    placeDetailsCache[cacheKey] = { timestamp: Date.now(), result };
+    return result;
+
   } catch (error) {
     console.error('Error fetching place details via Google Places (Netlify Proxy):', error);
+    placeDetailsCache[cacheKey] = { timestamp: Date.now(), result: null };
     return null; // Hata durumunda null döndür
   }
 }
@@ -1493,18 +1635,35 @@ export async function sendMessage(conversationId: string, text: string) {
   if (!session) throw new Error('Oturum bulunamadı');
 
   try {
+    // Konuşma bilgilerini al (alıcı ID'sini bulmak için)
+    const { data: conversation, error: convError } = await supabaseBrowser
+      .from('conversations')
+      .select('user1_id, user2_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation) {
+      throw new Error('Konuşma bulunamadı');
+    }
+
+    // Alıcı ID'sini belirle
+    const receiverId = conversation.user1_id === session.user.id 
+      ? conversation.user2_id 
+      : conversation.user1_id;
+
     // Mesajı ekleyelim ve ID'sini alalım
     const { data: insertedMessage, error: insertError } = await supabaseBrowser
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: session.user.id,
+        receiver_id: receiverId,
         text: text,
         encrypted_text: text, // Şifrelemesiz basit metin
         encryption_key_id: null, // Şifrelemesiz
         is_read: false
       })
-      .select('id, created_at, sender_id, text, is_read')
+      .select('id, created_at, sender_id, receiver_id, text, is_read')
       .single();
 
     if (insertError) {
@@ -1530,15 +1689,26 @@ export async function sendMessage(conversationId: string, text: string) {
       // Konuşma güncellenemese bile mesaj gönderildiği için devam ediyoruz
     }
 
-    // Mesajı döndür
-    // Bildirim gönder
+    // Bildirim oluştur (Instagram benzeri)
+    try {
+      await createMessageNotification(insertedMessage.id, receiverId, session.user.id, text);
+    } catch (notificationError) {
+      console.error('Bildirim oluşturulurken hata:', notificationError);
+      // Bildirim hatası mesaj gönderimini engellemez
+    }
+
+    // Email bildirimi gönder (arka planda)
     import('../lib/email-triggers').then(({ triggerMessageNotification }) => {
       triggerMessageNotification(insertedMessage.id);
+    }).catch(error => {
+      console.error('Email bildirimi gönderilirken hata:', error);
     });
+
     return {
       id: insertedMessage.id,
       conversation_id: conversationId,
       sender_id: session.user.id,
+      receiver_id: receiverId,
       text: text,
       created_at: insertedMessage.created_at,
       is_read: false
@@ -1546,6 +1716,49 @@ export async function sendMessage(conversationId: string, text: string) {
   } catch (error) {
     console.error('Mesaj gönderilirken hata:', error);
     throw error;
+  }
+}
+
+// Mesaj bildirimi oluştur (Instagram benzeri)
+export async function createMessageNotification(messageId: string, receiverId: string, senderId: string, messageText: string) {
+  try {
+    // Gönderen kullanıcının bilgilerini al
+    const { data: senderProfile, error: senderError } = await supabaseBrowser
+      .from('profiles')
+      .select('username, full_name, avatar')
+      .eq('id', senderId)
+      .single();
+
+    if (senderError || !senderProfile) {
+      console.error('Gönderen kullanıcı bilgileri alınamadı:', senderError);
+      return;
+    }
+
+    // Bildirim oluştur
+    const { error: notificationError } = await supabaseBrowser
+      .from('notifications')
+      .insert({
+        user_id: receiverId,
+        type: 'message',
+        title: `${senderProfile.full_name || senderProfile.username} size mesaj gönderdi`,
+        message: messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText,
+        is_read: false,
+        related_user_id: senderId,
+        data: {
+          message_id: messageId,
+          sender_id: senderId,
+          username: senderProfile.username,
+          full_name: senderProfile.full_name,
+          avatar: senderProfile.avatar,
+          message_text: messageText
+        }
+      });
+
+    if (notificationError) {
+      console.error('Mesaj bildirimi oluşturulurken hata:', notificationError);
+    }
+  } catch (error) {
+    console.error('Mesaj bildirimi oluşturulurken beklenmeyen hata:', error);
   }
 }
 

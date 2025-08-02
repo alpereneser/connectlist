@@ -2,10 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser'; // supabaseBrowser'ı supabase olarak kullan
-import { markNotificationAsRead, deleteNotification, deleteAllNotifications } from '../lib/api';
+import { deleteNotification, deleteAllNotifications } from '../lib/api';
 import { Check, Trash2, X, Bell, Heart, MessageCircle, UserPlus, List, AlertCircle } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { turkishToEnglish } from '../lib/utils';
 
 interface Notification {
   id: string;
@@ -204,61 +203,58 @@ export function NotificationDropdown({
     }
   }, [triggerHaptic, announceToScreenReader, onMarkAllRead]);
 
-  // Delete all notifications
-  const handleDeleteAllNotifications = useCallback(async () => {
-    try {
-      setIsDeletingAll(true);
-      triggerHaptic('heavy');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setNotifications([]);
-      announceToScreenReader('Tüm bildirimler silindi');
-      onNotificationsRead();
-    } catch (error) {
-      console.error('Error deleting all notifications:', error);
-      announceToScreenReader('Bildirimler silinirken hata oluştu');
-    } finally {
-      setIsDeletingAll(false);
-    }
-  }, [triggerHaptic, announceToScreenReader, onNotificationsRead]);
 
   // Handle notification click
-  const handleNotificationClick = useCallback((notification: Notification) => {
+  const handleNotificationClick = useCallback(async (notification: Notification) => {
     triggerHaptic('medium');
     
     // Mark as read if not already read
     if (!notification.is_read) {
-      handleMarkAsRead(notification.id);
+      await handleMarkAsRead(notification.id);
     }
 
     // Navigate based on notification type
-    switch (notification.type) {
-      case 'like':
-      case 'comment':
-        if (notification.data.list_id) {
-          navigate(`/list/${notification.data.list_id}`);
-          announceToScreenReader(`${notification.data.list_title || 'Liste'} sayfasına yönlendirildi`);
-        }
-        break;
-      case 'follow':
-        if (notification.data.username) {
-          navigate(`/profile/${notification.data.username}`);
-          announceToScreenReader(`${notification.data.username} profiline yönlendirildi`);
-        }
-        break;
-      case 'message':
-        navigate('/messages');
-        announceToScreenReader('Mesajlar sayfasına yönlendirildi');
-        break;
+    try {
+      switch (notification.type) {
+        case 'like':
+        case 'comment':
+          if (notification.data.list_id && notification.data.username) {
+            // Use the same navigation logic as in Notifications.tsx
+            const normalizedTitle = notification.data.list_title ? 
+              notification.data.list_title.toLowerCase()
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '') : 'liste';
+            
+            navigate(`/${notification.data.username}/list/${normalizedTitle}`, {
+              state: { 
+                listId: notification.data.list_id,
+                fromNotification: true,
+                type: notification.type
+              }
+            });
+            announceToScreenReader(`${notification.data.list_title || 'Liste'} sayfasına yönlendirildi`);
+          }
+          break;
+        case 'follow':
+          if (notification.data.username) {
+            navigate(`/profile/${notification.data.username}`);
+            announceToScreenReader(`${notification.data.username} profiline yönlendirildi`);
+          }
+          break;
+        case 'message':
+          navigate('/messages');
+          announceToScreenReader('Mesajlar sayfasına yönlendirildi');
+          break;
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
     }
       
     onClose();
@@ -426,17 +422,34 @@ export function NotificationDropdown({
     }
   }, [isKeyboardNavigation]);
 
-  // Fetch notifications when opened
+  // Fetch notifications when opened and setup real-time subscription
   useEffect(() => {
     if (isOpen) {
       fetchNotifications();
+      
+      // Setup real-time subscription for notifications
+      const notificationsSubscription = supabase
+        .channel('notifications-dropdown')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications'
+        }, (payload) => {
+          console.log('Notification change detected in dropdown:', payload);
+          // Refresh notifications when any change occurs
+          setTimeout(() => {
+            fetchNotifications();
+          }, 500);
+        })
+        .subscribe();
+        
+      return () => {
+        notificationsSubscription.unsubscribe();
+      };
     }
   }, [isOpen, fetchNotifications]);
 
-  const handleDeleteNotification = async (notificationId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDeleteConfirm(notificationId);
-  };
+  // handleDeleteNotification function removed as unused
 
   const confirmDeleteNotification = async (notificationId: string) => {
     try {

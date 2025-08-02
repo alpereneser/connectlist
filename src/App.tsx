@@ -387,6 +387,8 @@ function App() {
   const isSearchPage = location.pathname.startsWith('/search');
   const isMobile = window.innerWidth < 768;
   const isHomePage = location.pathname === '/';
+  const isProfilePage = location.pathname.startsWith('/profile');
+  const isMessagesPage = location.pathname.startsWith('/messages');
 
   const getMainPaddingTop = () => {
     if (isAuthPage || isMobileSearchPage || (isSearchPage && isMobile)) {
@@ -397,6 +399,10 @@ function App() {
       // Mobil'de Header + SubHeader fixed olduğu için padding gerekli
       if (isHomePage) {
         return 'pt-[116px]'; // Header (56px) + SubHeader (60px) için padding
+      }
+      // Profile sayfasında mobil'de SubHeader yok, sadece Header padding'i
+      if (isProfilePage) {
+        return 'pt-14'; // Mobile: Header yüksekliği kadar padding (56px)
       }
       return 'pt-14'; // Mobile: Header yüksekliği kadar padding (56px)
     } else { // Desktop
@@ -424,8 +430,8 @@ function App() {
           />
         )}
         
-        {/* SubHeader: Auth, MobileSearch ve mobil Search sayfalarında gizle */}
-        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && isHomePage && (
+        {/* SubHeader: Sadece ana sayfada göster */}
+        {!isAuthPage && isHomePage && (
           <SubHeader 
             activeCategory={activeCategory}
             onCategoryChange={(category) => {
@@ -433,11 +439,11 @@ function App() {
               setLists([]);
               setPage(0);
               setHasMore(true);
+              setSortDirection('desc');
               scrollToTop();
             }}
           />
         )}
-        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
         
         {/* Main content area with conditional padding */}
         <main className={`flex-grow w-full ${getMainPaddingTop()}`}>
@@ -572,10 +578,10 @@ function App() {
           </Routes>
           </Suspense>
         </main>
-        {/* Mobil anasayfada Footer'ı da gizle */}
-        {!(isMobile && isHomePage) && <Footer />}
-        {/* Mobil anasayfada BottomMenu'yu göster */}
-        {!isAuthPage && <BottomMenu />}
+        {/* Mobil anasayfada ve Messages sayfasında Footer'ı gizle */}
+        {!(isMobile && isHomePage) && !isMessagesPage && <Footer />}
+        {/* BottomMenu: Auth ve Messages sayfalarında gizle */}
+        {!isAuthPage && !isMessagesPage && <BottomMenu />}
         <InstallPrompt />
       </div>
     </>

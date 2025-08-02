@@ -45,7 +45,7 @@ export function Notifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
+
   
   // Mobile Gestures & Interactions
   const [swipedNotification, setSwipedNotification] = useState<string | null>(null);
@@ -66,8 +66,8 @@ export function Notifications() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [notificationCache, setNotificationCache] = useState<Map<string, Notification>>(new Map());
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+
   
   // Modals & UI State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -142,7 +142,7 @@ export function Notifications() {
     const handleImageError = () => {
       setIsLoading(false);
       setHasError(true);
-      setImageErrors(prev => new Set([...prev, src]));
+
       
       if (fallbackSrc && imageSrc !== fallbackSrc) {
         setImageSrc(fallbackSrc);
@@ -396,26 +396,6 @@ export function Notifications() {
   };
 
   // Cache Management
-  const getCachedNotification = (id: string): Notification | undefined => {
-    return notificationCache.get(id);
-  };
-
-  const setCachedNotification = (notification: Notification) => {
-    setNotificationCache(prev => {
-      const newCache = new Map(prev);
-      newCache.set(notification.id, notification);
-      
-      // Limit cache size
-      if (newCache.size > 100) {
-        const firstKey = newCache.keys().next().value;
-        if (firstKey) {
-          newCache.delete(firstKey);
-        }
-      }
-      
-      return newCache;
-    });
-  };
 
   // Enhanced notification actions
   const handleMarkAsRead = async (notificationId: string) => {
@@ -485,32 +465,75 @@ export function Notifications() {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const { data, error } = await supabaseBrowser
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      try {
+        const { data: { user } } = await supabaseBrowser.auth.getUser();
+        
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
 
-      if (error) {
-        console.error('Error fetching notifications:', error);
-        return;
+        const { data, error } = await supabaseBrowser
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) {
+          console.error('Error fetching notifications:', error);
+          return;
+        }
+
+        // Enrich notifications with profile data
+        const enrichedNotifications = await Promise.all(
+          (data || []).map(async (notification) => {
+            if (notification.data?.user_id) {
+              const { data: profile } = await supabaseBrowser
+                .from('profiles')
+                .select('username, full_name, avatar')
+                .eq('id', notification.data.user_id)
+                .single();
+
+              if (profile) {
+                return {
+                  ...notification,
+                  data: {
+                    ...notification.data,
+                    username: profile.username,
+                    full_name: profile.full_name,
+                    avatar: profile.avatar
+                  }
+                };
+              }
+            }
+            return notification;
+          })
+        );
+
+        setNotifications(enrichedNotifications);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error in fetchNotifications:', error);
+        setIsLoading(false);
       }
-
-      setNotifications(data);
-      setIsLoading(false);
     };
 
     fetchNotifications();
 
-    // Subscribe to new notifications
+    // Subscribe to new notifications with user filter
     const notificationsSubscription = supabaseBrowser
-      .channel('notifications')
+      .channel('notifications-page')
       .on('postgres_changes', {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
         table: 'notifications'
-      }, () => {
-        fetchNotifications();
+      }, (payload) => {
+        console.log('Notification change detected in page:', payload);
+        // Refresh notifications when any change occurs
+        setTimeout(() => {
+          fetchNotifications();
+        }, 500);
       })
       .subscribe();
 
@@ -587,35 +610,13 @@ export function Notifications() {
   };
 
   const confirmDeleteAllNotifications = async () => {
-    setIsDeletingAll(true);
+
     try {
       await deleteAllNotifications();
       setNotifications([]);
       setShowDeleteAllConfirm(false);
     } catch (error) {
       console.error('Error deleting all notifications:', error);
-    } finally {
-      setIsDeletingAll(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (seconds < 60) {
-      return 'şimdi';
-    } else if (minutes < 60) {
-      return `${minutes}d`;
-    } else if (hours < 24) {
-      return `${hours}s`;
-    } else {
-      return `${days}g`;
     }
   };
 

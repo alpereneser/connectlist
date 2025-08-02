@@ -11,49 +11,35 @@ export function SelectCategory() {
   const categories = useMemo(() => [
     { 
       id: 'movies', 
-      label: 'Filmler', 
-      icon: Film, 
-      description: ''
+      icon: Film
     },
     { 
       id: 'series', 
-      label: 'Diziler', 
-      icon: Tv, 
-      description: ''
+      icon: Tv
     },
     { 
       id: 'books', 
-      label: 'Kitaplar', 
-      icon: Book, 
-      description: ''
+      icon: Book
     },
     { 
       id: 'games', 
-      label: 'Oyunlar', 
-      icon: Gamepad2, 
-      description: ''
+      icon: Gamepad2
     },
     { 
       id: 'people', 
-      label: 'Kişiler', 
-      icon: Users2, 
-      description: ''
+      icon: Users2
     },
     { 
       id: 'videos', 
-      label: 'Videolar', 
-      icon: Video, 
-      description: ''
+      icon: Video
     },
     { 
       id: 'places', 
-      label: 'Mekanlar', 
-      icon: MapPin, 
-      description: ''
+      icon: MapPin
     },
   ].map(category => ({
     ...category,
-    label: t(`common.categories.${category.id}`),
+    label: t(`categories.${category.id}`),
     description: t(`common.categoryDescriptions.${category.id}`)
   })), [t]);
 

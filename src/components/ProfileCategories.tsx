@@ -25,11 +25,11 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
 
   return (
     <div className="bg-white md:h-[75px]">
-      {/* Mobile Categories - Modern chip design */}
-      <div className="md:hidden bg-gray-50 px-4 py-1">
+      {/* Mobile Categories - Minimal design with bottom border */}
+      <div className="md:hidden bg-white px-4 py-3 border-b border-gray-100">
       <div
         ref={scrollContainerRef}
-          className="flex gap-2 overflow-x-auto scrollbar-hide"
+          className="flex gap-6 overflow-x-auto scrollbar-hide"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {categories.map((category) => {
@@ -48,10 +48,10 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 border ${
+                className={`flex items-center gap-2 px-1 py-2 text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 border-b-2 ${
                   activeCategory === category.id
-                    ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-200'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'text-orange-500 border-orange-500'
+                    : 'text-gray-600 border-transparent hover:text-gray-900'
                 }`}
               >
                 <span className="text-base">

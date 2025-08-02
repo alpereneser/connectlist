@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthPopup } from './AuthPopup';
 import { 
   ListBullets, 
   FilmStrip, 
@@ -8,7 +10,8 @@ import {
   Book, 
   GameController, 
   User, 
-  MapPin 
+  MapPin,
+  Plus 
 } from '@phosphor-icons/react';
 
 interface SubHeaderProps {
@@ -18,24 +21,22 @@ interface SubHeaderProps {
 
 export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeaderProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
+  const { user } = useAuth();
   
   // Mobile UX States
   const [isMobile, setIsMobile] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [scrollPosition, setScrollPosition] = useState(0);
-
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
   // Tab configuration with Phosphor icons
   const tabs = [
     { id: 'all', label: t('search.categories.all'), icon: ListBullets, count: 0 },
-    { id: 'movie', label: t('search.categories.movies'), icon: FilmStrip, count: 0 },
+    { id: 'movies', label: t('search.categories.movies'), icon: FilmStrip, count: 0 },
     { id: 'series', label: t('search.categories.series'), icon: Television, count: 0 },
-    { id: 'book', label: t('search.categories.books'), icon: Book, count: 0 },
-    { id: 'game', label: t('search.categories.games'), icon: GameController, count: 0 },
-    { id: 'person', label: t('search.tabs.people'), icon: User, count: 0 },
-    { id: 'place', label: t('search.tabs.places'), icon: MapPin, count: 0 },
+    { id: 'books', label: t('search.categories.books'), icon: Book, count: 0 },
+    { id: 'games', label: t('search.categories.games'), icon: GameController, count: 0 },
+    { id: 'people', label: t('search.tabs.people'), icon: User, count: 0 },
+    { id: 'places', label: t('search.tabs.places'), icon: MapPin, count: 0 },
   ];
 
   // Mobile detection with orientation support
@@ -65,11 +66,13 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
       onCategoryChange(tabId);
     } else {
       // Fallback navigation for non-homepage usage
+      // Tüm kategoriler için sondan başa (desc) sıralama
+      const sortDirection = 'desc';
       navigate('/', { 
         state: { 
           category: tabId,
           refresh: true,
-          sortDirection: 'desc'
+          sortDirection: sortDirection
         } 
       });
     }
@@ -80,6 +83,15 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
       announceToScreenReader(`${selectedTab.label} kategorisi seçildi`);
     }
   }, [onCategoryChange, navigate, tabs, isMobile]);
+
+  // Handle create list button click
+  const handleCreateList = useCallback(() => {
+    if (!user) {
+      setShowAuthPopup(true);
+      return;
+    }
+    navigate('/select-category');
+  }, [navigate, user]);
 
   // Screen reader announcements
   const announceToScreenReader = (message: string) => {
@@ -95,36 +107,10 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
     }, 1000);
   };
 
-  // Touch handling for mobile swipe navigation
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStartX) return;
-    
-    const touchEndX = e.changedTouches[0].clientX;
-    const deltaX = touchStartX - touchEndX;
-    const threshold = 50;
-    
-    if (Math.abs(deltaX) > threshold) {
-      const currentIndex = tabs.findIndex(tab => tab.id === activeCategory);
-      
-      if (deltaX > 0 && currentIndex < tabs.length - 1) {
-        // Swipe left - next tab
-        handleTabChange(tabs[currentIndex + 1].id);
-      } else if (deltaX < 0 && currentIndex > 0) {
-        // Swipe right - previous tab
-        handleTabChange(tabs[currentIndex - 1].id);
-      }
-    }
-    
-    setTouchStartX(0);
-  };
+  // Touch handling removed - only click navigation allowed
 
   // Scroll handling for tab container
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollPosition(e.currentTarget.scrollLeft);
+  const handleScroll = () => {
     setIsScrolling(true);
     
     // Clear scrolling state after scroll ends
@@ -161,34 +147,29 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
     <div 
       className={`
         fixed left-0 right-0 z-30
-        bg-white border-b border-gray-200 
+        bg-white h-[70px]
         ${isMobile ? 'top-14' : 'top-16'}
       `}
-      style={{
-        top: isMobile ? '56px' : '64px' // Header height
-      }}
       role="navigation"
       aria-label="Kategori navigasyonu"
     >
       {/* Container with same structure as Header */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-        <div className={`${isMobile ? 'h-15' : 'h-16'}`}>
+        <div className="h-[70px]">
           {/* Tab container with Header-consistent spacing */}
           <div 
             id="tab-container"
             className={`
-              w-full flex justify-between gap-1 md:gap-2
+              w-full flex ${isMobile ? 'justify-between' : 'justify-start'} gap-1 md:gap-2
               overflow-x-auto scrollbar-hide
-              ${isMobile ? 'py-3' : 'py-4'}
+              ${isMobile ? 'py-0' : 'py-0'} // Remove padding to prevent overflow
               ${isScrolling ? 'scroll-smooth' : ''}
             `}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
             onScroll={handleScroll}
             role="tablist"
             aria-orientation="horizontal"
           >
-            {tabs.map((tab, index) => {
+            {tabs.map((tab) => {
               const isActive = activeCategory === tab.id;
               const IconComponent = tab.icon;
               
@@ -199,13 +180,13 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                   onClick={() => handleTabChange(tab.id)}
                   className={`
                     flex-1 flex flex-col items-center justify-center
-                    ${isMobile ? 'px-1 py-2 min-w-[70px]' : 'px-2 py-2 min-w-[80px]'}
-                    h-auto rounded-lg font-medium
+                    ${isMobile ? 'px-1 min-w-[70px]' : 'px-2 min-w-[80px]'}
+                    h-[70px] font-medium
                     transition-all duration-200 ease-in-out
                     focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
                     ${isActive 
-                      ? 'bg-orange-500 text-white shadow-md' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 active:scale-95'
+                      ? `border-b-4 border-orange-600 text-orange-600` 
+                      : 'text-gray-600 hover:text-gray-800 active:scale-95'
                     }
                     ${isMobile ? 'active:scale-95 touch-manipulation' : ''}
                   `}
@@ -216,7 +197,7 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                   title={tab.label}
                 >
                   {/* Icon and label layout - vertical for both mobile and desktop */}
-                  <div className="flex flex-col items-center space-y-1">
+                  <div className="flex flex-col items-center space-y-0">
                     <IconComponent 
                       className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`}
                       weight="regular"
@@ -242,6 +223,35 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                 </button>
               );
             })}
+            
+            {/* Create List Button - Only visible on desktop */}
+            {!isMobile && (
+              <button
+                onClick={handleCreateList}
+                className="
+                  flex flex-col items-center justify-center
+                  px-2 min-w-[80px]
+                  h-[70px] rounded-lg font-medium
+                  transition-all duration-200 ease-in-out
+                  focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2
+                  bg-orange-500 text-white shadow-md
+                  hover:bg-orange-600 active:scale-95
+                  ml-2
+                "
+                title={t('createList.buttonText')}
+              >
+                <div className="flex flex-col items-center space-y-1">
+                  <Plus 
+                    className="w-5 h-5"
+                    weight="regular"
+                    aria-label="Liste oluştur ikonu"
+                  />
+                  <span className="text-[10px] font-medium text-center leading-tight whitespace-nowrap">
+                    {t('createList.buttonText')}
+                  </span>
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -250,6 +260,17 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {`Aktif kategori: ${tabs.find(tab => tab.id === activeCategory)?.label || 'Tümü'}`}
       </div>
+      
+      {/* Auth Popup */}
+      {showAuthPopup && (
+        <AuthPopup 
+          onClose={() => setShowAuthPopup(false)}
+          onSuccess={() => {
+            setShowAuthPopup(false);
+            navigate('/select-category');
+          }}
+        />
+      )}
     </div>
   );
 }

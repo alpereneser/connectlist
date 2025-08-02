@@ -7,11 +7,10 @@ import { z } from 'zod';
 import { Film, Tv, BookOpen, Users2, Youtube, Gamepad2, MapPin, Search, X, AlertCircle } from 'lucide-react';
 import { Header } from '../components/Header';
 import { useDebounce } from '../hooks/useDebounce';
-import { searchTMDB, searchGames, searchBooks, createList, getVideoDetails, searchPlaces } from '../lib/api';
-import { countries, getCitiesByCountry, getDefaultPlaceImage } from '../lib/api-google-places';
+import { searchTMDB, searchGames, searchBooks, createList, getVideoDetails, searchPlaces, getDefaultPlaceImage } from '../lib/api';
 
 const listSchema = z.object({
-  title: z.string().min(3, 'Başlık en az 3 karakter olmalıdır'),
+  title: z.string().min(3),
   description: z.string().optional(),
 });
 
@@ -46,12 +45,6 @@ export function CreateList() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
-  // Mekan araması için ülke ve şehir seçimi
-  const [showLocationSelect, setShowLocationSelect] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
-  const [selectedCity, setSelectedCity] = useState<string>('');
-  const [availableCities, setAvailableCities] = useState<{name: string}[]>([]);
   
   // API yanıt tipleri
   interface TMDBMovie {
@@ -105,31 +98,7 @@ export function CreateList() {
     description?: string;
   }
 
-  // Kategori places olduğunda ülke ve şehir seçimini göster
-  useEffect(() => {
-    if (category === 'places') {
-      setShowLocationSelect(true);
-    } else {
-      setShowLocationSelect(false);
-    }
-  }, [category]);
-
-  // Ülke seçildiğinde şehirleri getir
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (selectedCountry) {
-        console.log(`Fetching cities for country: ${selectedCountry}`);
-        const cities = await getCitiesByCountry(selectedCountry);
-        setAvailableCities(cities);
-        setSelectedCity(''); // Ülke değiştiğinde şehir seçimini sıfırla
-      } else {
-        setAvailableCities([]);
-        setSelectedCity('');
-      }
-    };
-    
-    fetchCities();
-  }, [selectedCountry]);
+  // Places kategorisi için konum seçimi artık gerekli değil - doğrudan arama yapılacak
 
   // Arama işlemini gerçekleştiren fonksiyon
   const handleSearch = useCallback(async () => {
@@ -160,13 +129,13 @@ export function CreateList() {
           setSearchQuery(''); // Input'u temizle
         } catch (error) {
           console.error('Error fetching video details:', error);
-          let message = 'Video detayları alınamadı. Lütfen geçerli bir YouTube linki girdiğinizden emin olun.';
+          let message = t('createList.errors.videoDetailsError');
           
           if (error instanceof Error) {
             if (error.message.includes('404')) {
-              message = 'Video bulunamadı. Lütfen linki kontrol edin.';
+              message = t('createList.errors.videoNotFound');
             } else if (error.message.includes('401') || error.message.includes('403')) {
-              message = 'Bu video özel veya erişime kapalı. Lütfen başka bir video deneyin.';
+              message = t('createList.errors.videoPrivate');
             } else {
               message = error.message;
             }
@@ -178,7 +147,7 @@ export function CreateList() {
           setIsSearching(false);
         }
       } else if (!videoId && debouncedSearch.trim()) { // Sadece debouncedSearch boş değilse hata göster
-        setErrorMessage('Lütfen geçerli bir YouTube video linki girin.');
+        setErrorMessage(t('createList.errors.invalidYouTubeLink'));
         setShowErrorPopup(true);
       }
       return;
@@ -214,7 +183,7 @@ export function CreateList() {
               
               return {
                 id: item.id.toString(),
-                title: item.title || 'İsimsiz Film',
+                title: item.title || t('createList.defaultNames.untitledMovie'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title || 'Film')}&backgroundColor=red`,
                 type: 'movie',
@@ -236,7 +205,7 @@ export function CreateList() {
               
               return {
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Dizi',
+                title: item.name || t('createList.defaultNames.untitledSeries'),
                 image: item.poster_path ? `https://image.tmdb.org/t/p/w185${item.poster_path}` : 
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name || 'Dizi')}&backgroundColor=purple`,
                 type: 'series',
@@ -253,7 +222,7 @@ export function CreateList() {
           const bookItems = bookResults
             .filter((item: BookItem) => item && item.volumeInfo)
             .map((item: BookItem) => {
-              const title = item.volumeInfo.title || 'İsimsiz Kitap';
+              const title = item.volumeInfo.title || t('createList.defaultNames.untitledBook');
               let imageUrl = '';
               if (item.volumeInfo.imageLinks && item.volumeInfo.imageLinks.thumbnail) {
                 imageUrl = item.volumeInfo.imageLinks.thumbnail;
@@ -291,7 +260,7 @@ export function CreateList() {
             .filter((item: GameItem) => item)
             .map((item: GameItem) => ({
               id: item.id.toString(),
-              title: item.name || 'İsimsiz Oyun',
+              title: item.name || t('createList.defaultNames.untitledGame'),
               image: item.background_image || (item.name ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name)}&backgroundColor=green` : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent('Oyun')}&backgroundColor=green`),
               type: 'game',
               year: item.released?.split('-')[0] || '',
@@ -311,7 +280,7 @@ export function CreateList() {
               
               return {
                 id: item.id.toString(),
-                title: item.name || 'İsimsiz Kişi',
+                title: item.name || t('createList.defaultNames.untitledPerson'),
                 image: item.profile_path ? `https://image.tmdb.org/t/p/w185${item.profile_path}` :
                        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.name || 'Kişi')}&backgroundColor=blue`,
                 type: 'person',
@@ -323,35 +292,18 @@ export function CreateList() {
           break;
         }
         case 'places': {
-          // Ülke ve şehir seçilmemişse arama yapma
-          if (!selectedCountry && category === 'places') {
-            setErrorMessage(t('common.errors.selectCountryCity'));
-            setShowErrorPopup(true);
-            setSearchResults([]);
-            setIsSearching(false);
-            return;
-          }
-          
           // Arama sorgusu boş değilse ve en az 2 karakter ise arama yap
           if (debouncedSearch.trim().length >= 2) {
             try {
-              // lib/api.ts'deki searchPlaces fonksiyonunu kullan
-              let placeQuery = debouncedSearch;
-              const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
-              if (selectedCity && countryName) {
-                placeQuery = `${debouncedSearch} ${selectedCity} ${countryName}`;
-              } else if (countryName) {
-                placeQuery = `${debouncedSearch} ${countryName}`;
-              }
-              console.log('Mekan araması için oluşturulan sorgu:', placeQuery);
-              const placeResults = await searchPlaces(placeQuery, i18n.language); // searchPlaces çağrısı
-              console.log('Bulunan mekanlar (searchPlaces):', placeResults);
-              // searchPlaces zaten ListItem formatına yakın bir formatta dönüyor olmalı
-              // Gerekirse burada ek map'leme yapılabilir.
+              // Google Places API ile doğrudan arama yap
+              console.log('Mekan araması için sorgu:', debouncedSearch);
+              const placeResults = await searchPlaces(debouncedSearch, i18n.language);
+              console.log('Bulunan mekanlar (Google Places API):', placeResults);
+              
               setSearchResults(placeResults.map((place: any) => ({
                 id: place.id,
                 title: place.name,
-                image: place.image || getDefaultPlaceImage(place.name), // getDefaultPlaceImage fonksiyonu kullanıldı
+                image: place.image || getDefaultPlaceImage(place.name),
                 type: 'place',
                 address: place.address,
                 city: place.city,
@@ -379,7 +331,7 @@ export function CreateList() {
       clearTimeout(searchTimeout);
       setIsSearching(false);
     }
-  }, [category, debouncedSearch, selectedCountry, selectedCity, selectedItems, getVideoDetails, searchTMDB, searchGames, searchBooks, t]);
+  }, [category, debouncedSearch, selectedItems, getVideoDetails, searchTMDB, searchGames, searchBooks, t]);
   
   // useEffect ile arama işlemini yönet
   useEffect(() => {
@@ -442,24 +394,8 @@ export function CreateList() {
   };
 
   const getCategoryTitle = () => {
-    const isTurkish = i18n.language === 'tr';
-    
-    switch (category) {
-      case 'movies':
-        return isTurkish ? 'Film' : 'Movie';
-      case 'series':
-        return isTurkish ? 'Dizi' : 'TV Series';
-      case 'books':
-        return isTurkish ? 'Kitap' : 'Book';
-      case 'games':
-        return isTurkish ? 'Oyun' : 'Game';
-      case 'videos':
-        return isTurkish ? 'Video' : 'Video';
-      case 'places':
-        return isTurkish ? 'Mekan' : 'Place';
-      default:
-        return isTurkish ? 'Bilinmeyen' : 'Unknown';
-    }
+    if (!category) return t('categories.unknown');
+    return t(`categories.${category}`);
   };
 
   // handleSelectItem fonksiyonu güncellendi: ListItem tipinde parametre alıyor
@@ -487,7 +423,7 @@ export function CreateList() {
 
   const onSubmit = async (data: ListForm) => {
     if (selectedItems.length === 0) {
-      setErrorMessage('En az bir içerik seçmelisiniz');
+      setErrorMessage(t('createList.errors.noItemsSelected'));
       setShowErrorPopup(true);
       return;
     }
@@ -506,11 +442,11 @@ export function CreateList() {
 
       // Veri kontrolü yap
       if (!category) {
-        throw new Error('Kategori belirtilmemiş');
+        throw new Error(t('createList.errors.categoryNotSpecified'));
       }
 
       if (!data.title || data.title.trim() === '') {
-        throw new Error('Liste başlığı boş olamaz');
+        throw new Error(t('createList.errors.titleRequired'));
       }
 
       console.log('Gönderilecek veriler:', {
@@ -528,7 +464,7 @@ export function CreateList() {
       });
 
       if (!list || !list.id) {
-        throw new Error('Liste oluşturuldu ancak ID alınamadı');
+        throw new Error(t('createList.errors.listCreatedButNoId'));
       }
 
       // Takipçilere mail bildirimi gönder
@@ -547,17 +483,17 @@ export function CreateList() {
       });
     } catch (error) {
       console.error('Error creating list:', error);
-      let errorMessage = 'Liste oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+      let errorMessage = t('createList.errors.generalError');
       
       if (error instanceof Error) {
         if (error.message.includes('401') || error.message.includes('403')) {
-          errorMessage = 'Oturum süreniz dolmuş olabilir. Lütfen tekrar giriş yapın.';
+          errorMessage = t('createList.errors.sessionExpired');
         } else if (error.message.includes('404')) {
-          errorMessage = 'API endpoint bulunamadı. Lütfen daha sonra tekrar deneyin.';
+          errorMessage = t('createList.errors.apiNotFound');
         } else if (error.message.includes('500')) {
-          errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+          errorMessage = t('createList.errors.serverError');
         } else {
-          errorMessage = `Hata: ${error.message}`;
+          errorMessage = `${t('common.error')}: ${error.message}`;
         }
       }
       
@@ -584,14 +520,14 @@ export function CreateList() {
             <div className="p-6">
               <div className="flex items-center gap-3 text-red-500 mb-4">
                 <AlertCircle className="w-6 h-6 flex-shrink-0" />
-                <h3 className="text-lg font-semibold">Video Hatası</h3>
+                <h3 className="text-lg font-semibold">{t('common.error')}</h3>
               </div>
               <p className="text-gray-600">{errorMessage}</p>
               <button
                 onClick={() => setShowErrorPopup(false)}
                 className="w-full mt-6 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600"
               >
-                Tamam
+                {t('common.ok')}
               </button>
             </div>
           </div>
@@ -602,9 +538,7 @@ export function CreateList() {
           <div className="flex items-center gap-3 mb-8 mt-[25px]">
             <Icon size={32} className="text-orange-500" />
             <h1 className="text-[15px] font-bold">
-              {i18n.language === 'tr' ? 
-                `Yeni ${getCategoryTitle()} Listesi Oluştur` : 
-                `Create New ${getCategoryTitle()} List`}
+              {t('createList.title', { category: getCategoryTitle() })}
             </h1>
           </div>
 
@@ -615,13 +549,13 @@ export function CreateList() {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {i18n.language === 'tr' ? 'Liste Başlığı' : 'List Title'}
+                      {t('createList.form.titleLabel')}
                     </label>
                     <input
                       type="text"
                       {...register('title')}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder={i18n.language === 'tr' ? 'Listeye bir başlık verin' : 'Give your list a title'}
+                      placeholder={t('createList.form.titlePlaceholder')}
                     />
                     {errors.title && (
                       <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
@@ -630,69 +564,24 @@ export function CreateList() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {i18n.language === 'tr' ? 'Liste Açıklaması' : 'List Description'}
+                      {t('createList.form.descriptionLabel')}
                     </label>
                     <textarea
                       {...register('description')}
                       rows={4}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      placeholder={i18n.language === 'tr' ? 'Listeniz hakkında kısa bir açıklama yazın' : 'Write a short description about your list'}
+                      placeholder={t('createList.form.descriptionPlaceholder')}
                     />
                     {errors.description && (
                       <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
                     )}
                   </div>
 
-                  {/* Ülke ve şehir seçimi - Sadece places kategorisi için gösterilir */}
-                  {showLocationSelect && (
-                    <div className="space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-700">{t('common.locationSelection')}</h3>
-                      
-                      {/* Ülke Seçimi */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t('common.country')}
-                        </label>
-                        <select
-                          value={selectedCountry}
-                          onChange={(e) => setSelectedCountry(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                          <option value="">{t('common.selectCountry')}</option>
-                          {countries.map(country => (
-                            <option key={country.code} value={country.code}>
-                              {country.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      {/* Şehir Seçimi - Sadece ülke seçildiğinde gösterilir */}
-                      {selectedCountry && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common.city')}
-                          </label>
-                          <select
-                            value={selectedCity}
-                            onChange={(e) => setSelectedCity(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          >
-                            <option value="">{t('common.selectCity')}</option>
-                            {availableCities.map(city => (
-                              <option key={city.name} value={city.name}>
-                                {city.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Konum seçimi kaldırıldı - Places için doğrudan arama yapılacak */}
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {category === 'videos' ? t('listPreview.listDetails.youtubeLink') : t('listPreview.listDetails.searchContent')}
+                      {category === 'videos' ? t('createList.form.youtubeLink') : t('createList.form.searchContent')}
                     </label>
                     <div className="relative">
                       <input
@@ -711,7 +600,7 @@ export function CreateList() {
                         placeholder={category === 'videos'
                           ? t('listPreview.listDetails.youtubeLinkPlaceholder')
                           : category === 'places'
-                            ? t('listPreview.listDetails.searchPlacesPlaceholder', { city: selectedCity || t('common.selectedLocation') })
+                            ? t('createList.form.searchPlacesPlaceholder')
                             : t('listPreview.listDetails.searchContentPlaceholder', { category: getCategoryTitle() })}
                       />
                       <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -782,8 +671,8 @@ export function CreateList() {
                     className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
                   >
                     {isSubmitting ? 
-                      (i18n.language === 'tr' ? 'Oluşturuluyor...' : 'Creating...') : 
-                      (i18n.language === 'tr' ? 'Liste Oluştur' : 'Create List')
+                      t('createList.form.creating') : 
+                      t('createList.form.createButton')
                     }
                   </button>
                 </form>
@@ -792,11 +681,11 @@ export function CreateList() {
 
             {/* Sağ Kolon - Önizleme */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">{i18n.language === 'tr' ? 'Önizleme' : 'Preview'}</h2>
+              <h2 className="text-lg font-medium mb-4">{t('createList.preview.title')}</h2>
               
               {selectedItems.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
-                  {i18n.language === 'tr' ? 'Henüz içerik eklenmedi' : 'No content added yet'}
+                  {t('createList.preview.noContent')}
                 </div>
               ) : selectedItems.length > 0 ? (
                 <div className="space-y-4">

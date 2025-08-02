@@ -2,7 +2,7 @@ import type { Handler, HandlerEvent, HandlerContext } from "@netlify/functions";
 import fetch from 'node-fetch'; // node-fetch'i projenize eklemeniz gerekebilir: npm install node-fetch
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-  const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+  const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || 'AIzaSyCEQZ1ri472vtTCiexDsriTKZTIPQoRJkY';
 
   if (!GOOGLE_PLACES_API_KEY) {
     return {

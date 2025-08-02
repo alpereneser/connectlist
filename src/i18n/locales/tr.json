@@ -15,7 +15,13 @@
     "errors": {
       "fileTooLarge": "Dosya boyutu 5MB'dan küçük olmalıdır",
       "invalidFileType": "Sadece JPG, PNG ve GIF dosyaları yükleyebilirsiniz",
-      "selectCountryCity": "Lütfen önce bir ülke ve şehir seçin"
+      "selectCountryCity": "Lütfen önce bir ülke ve şehir seçin",
+      "notLoggedIn": "Bu işlemi yapabilmek için giriş yapmalısınız",
+      "updateFailed": "Güncelleme başarısız oldu",
+      "deleteFailed": "Silme işlemi başarısız oldu",
+      "listNotFound": "Liste bulunamadı",
+      "listNotFoundDescription": "Aradığınız liste bulunamadı veya silinmiş olabilir",
+      "searchFailed": "Arama işlemi başarısız oldu"
     },
     "form": {
       "enterUsername": "Kullanıcı adınızı girin",
@@ -125,7 +131,63 @@
       "hoursAgo": "{{count}} saat önce",
       "daysAgo": "{{count}} gün önce",
       "lastUpdate": "Son güncelleme:"
-    }
+    },
+    "createList": {
+      "buttonText": "Liste Oluştur",
+      "title": "{{category}} Listesi Oluştur",
+      "pasteYouTubeLink": "YouTube video linkini yapıştır",
+      "form": {
+        "titleLabel": "Liste Başlığı",
+        "titlePlaceholder": "Listenize bir başlık verin",
+        "descriptionLabel": "Liste Açıklaması",
+        "descriptionPlaceholder": "Listeniz hakkında kısa bir açıklama yazın",
+        "searchPlacesPlaceholder": "Mekan ara...",
+        "creating": "Liste oluşturuluyor...",
+        "createButton": "Liste Oluştur",
+        "youtubeLink": "YouTube Video Linki",
+        "searchContent": "İçerik Ara"
+      },
+      "preview": {
+        "title": "Liste Önizlemesi",
+        "noContent": "Henüz içerik eklenmedi"
+      },
+      "errors": {
+        "generalError": "Liste oluşturulurken bir hata oluştu",
+        "sessionExpired": "Oturumunuz sona erdi, lütfen tekrar giriş yapın",
+        "apiNotFound": "API bulunamadı",
+        "serverError": "Sunucu hatası oluştu",
+        "videoDetailsError": "Video detayları alınırken bir hata oluştu",
+        "videoNotFound": "Video bulunamadı",
+        "videoPrivate": "Video özel veya kısıtlı",
+        "invalidYouTubeLink": "Geçersiz YouTube linki",
+        "categoryNotSpecified": "Kategori belirtilmedi",
+        "titleRequired": "Başlık gerekli",
+        "listCreatedButNoId": "Liste oluşturuldu ancak ID alınamadı"
+      },
+      "defaultNames": {
+        "untitledMovie": "İsimsiz Film",
+        "untitledSeries": "İsimsiz Dizi",
+        "untitledBook": "İsimsiz Kitap",
+        "untitledGame": "İsimsiz Oyun",
+        "untitledPerson": "İsimsiz Kişi"
+      }
+    },
+    "createListOld": "Liste Oluştur",
+    "unknown": "Bilinmeyen",
+    "unknownUser": "Bilinmeyen Kullanıcı",
+    "untitledList": "Başlıksız Liste",
+    "back": "Geri",
+    "users": "Kullanıcılar",
+    "items": "Öğeler",
+    "searchContent": "İçerik Ara",
+    "searching": "Aranıyor...",
+    "searchError": "Arama Hatası",
+    "noResultsFound": "Sonuç bulunamadı",
+    "noResultsFor": "\"{{query}}\" için {{category}} bulunamadı.",
+    "tryDifferentKeywords": "Farklı anahtar kelimeler deneyin.",
+    "startSearching": "Arama yapın",
+    "searchInstructions": "{{category}} aramak için yukarıdaki kutucuğa yazın.",
+    "added": "Eklendi"
   },
   "categories": {
     "movie": "Film",
@@ -133,6 +195,8 @@
     "book": "Kitap",
     "game": "Oyun",
     "video": "Video",
+    "person": "Kişi",
+    "place": "Mekan",
     "unknown": "Öğe"
   },
   "auth": {
@@ -141,6 +205,7 @@
     "login": "Giriş Yap",
     "register": "Kayıt Ol",
     "requireAuthMessage": "Bu işlemi yapabilmek için giriş yapmalısınız: {{action}}",
+    "loginRequired": "Bu işlemi yapabilmek için giriş yapmalısınız: listeye öğe ekleme",
     "forgotPassword": "Şifremi Unuttum",
     "email": "E-posta",
     "password": "Şifre",
@@ -229,13 +294,27 @@
     "account": "Hesap",
     "email": "E-posta",
     "notifications": "Bildirimler",
-    "theme": "Tema",
+    "privacy": "Gizlilik",
     "language": "Dil",
+    "support": "Destek",
+    "theme": "Tema",
     "general": "Genel",
     "profile": "Profil",
     "security": "Güvenlik",
     "connectedAccounts": "Bağlı Hesaplar",
+    "profilePhoto": "Profil Fotoğrafı",
+    "changePhoto": "Fotoğrafı Değiştir",
+    "photoRequirements": "JPG, PNG veya GIF. Maksimum 5MB.",
+    "profileInfo": "Profil Bilgileri",
+    "about": "Hakkında",
+    "website": "Web Sitesi",
+    "location": "Konum",
+    "username": "Kullanıcı Adı",
+    "usernameDescription": "Kullanıcı adınız profil URL'nizde görünür ve değiştirilebilir.",
+    "fullName": "Ad Soyad",
     "changePassword": "Şifre Değiştir",
+    "enterPassword": "Şifrenizi girin",
+    "deleteAccountConfirmation": "Bu işlem geri alınamaz. Hesabınızı silmek için şifrenizi girin.",
     "changeEmail": "E-posta Değiştir",
     "updateProfile": "Profili Güncelle",
     "uploadAvatar": "Profil Resmi Yükle",
@@ -264,6 +343,45 @@
     "listUpdates": "Liste güncellemeleri",
     "commentsAndMentions": "Yorumlar ve bahsetmeler",
     "siteUpdates": "Site güncellemeleri",
+    "notificationSettings": {
+      "listNotifications": "Liste Bildirimleri",
+      "listNotificationsDesc": "Listelerinize gelen yorumlar ve beğeniler",
+      "followerNotifications": "Takipçi Bildirimleri",
+      "followerNotificationsDesc": "Yeni takipçiler",
+      "messageNotifications": "Mesaj Bildirimleri",
+      "messageNotificationsDesc": "Yeni mesajlar"
+    },
+    "privacySettings": {
+      "profile": "Profil Gizliliği",
+      "profileDesc": "Sadece takipçileriniz profilinizi görebilir",
+      "list": "Liste Gizliliği",
+      "listDesc": "Sadece takipçileriniz listelerinizi görebilir",
+      "online": "Çevrimiçi Durumu",
+      "onlineDesc": "Diğer kullanıcılar çevrimiçi durumunuzu görebilir",
+      "legal": "Yasal Belgeler",
+      "viewPrivacyPolicy": "Gizlilik Politikasını Görüntüle",
+      "viewTerms": "Kullanım Şartlarını Görüntüle"
+    },
+    "languagePreference": "Tercih Edilen Dil",
+    "languages": {
+      "tr": "Türkçe",
+      "en": "İngilizce",
+      "de": "Almanca",
+      "fr": "Fransızca",
+      "es": "İspanyolca"
+    },
+    "supportForm": {
+      "title": "Destek Talebi",
+      "description": "Sorunlarınızı veya önerilerinizi bize iletmek için aşağıdaki formu doldurun.",
+      "subject": "Konu",
+      "message": "Mesaj",
+      "send": "Gönder",
+      "sending": "Gönderiliyor...",
+      "success": "Destek talebiniz başarıyla gönderildi. En kısa sürede size geri döneceğiz.",
+      "error": "Destek talebiniz gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      "subjectPlaceholder": "Destek talebinizin konusu",
+      "messagePlaceholder": "Lütfen sorununuzu veya önerinizi detaylı bir şekilde açıklayın"
+    },
     "deleteAccount": "Hesabı Sil",
     "deleteAccountConfirm": "Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "enterPasswordToDelete": "Devam etmek için şifrenizi girin",
@@ -295,7 +413,6 @@
     "userNotFound": "Kullanıcı bulunamadı"
   },
   "list": {
-    "createList": "Liste Oluştur",
     "editList": "Listeyi Düzenle",
     "listName": "Liste Adı",
     "description": "Açıklama (isteğe bağlı)",
@@ -383,7 +500,10 @@
       "searchPlacesPlaceholder": "{{city}} için mekan ara",
       "youtubeLink": "YouTube Video Linki",
       "youtubeLinkPlaceholder": "YouTube video linkini yapıştır",
+      "youtubeLinkExample": "Örnek: https://www.youtube.com/watch?v=VIDEO_ID",
       "searching": "Aranıyor...",
+      "selectCategory": "Liste kategorisi seçin",
+      "selectCategoryDescription": "Seçtiğiniz kategoriye göre yeni bir liste oluşturabilir veya mevcut listeleri arayabilirsiniz.",
       "comments": {
         "title": "Yorumlar",
         "placeholder": "Yorum yaz...",
@@ -706,6 +826,9 @@
     "games": "Oyunlar",
     "people": "Kişiler",
     "noResults": "'{{query}}' için sonuç bulunamadı",
+    "noResultsFor": "'{{query}}' için {{category}}de sonuç bulunamadı",
+    "allCategories": "hiçbir kategori",
+    "tryDifferentKeywords": "Farklı anahtar kelimeler deneyin veya tüm kategorilerde arama yapın",
     "result": "Sonuç",
     "itemCount": "{{count}} öğe",
     "tabs": {
