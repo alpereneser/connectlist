@@ -8,7 +8,7 @@ import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 interface AddToListModalProps {
   isOpen: boolean;
   onClose: () => void;
-  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place';
+  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place' | 'music';
   contentId: string;
   contentTitle: string;
   contentImage: string;
@@ -99,6 +99,7 @@ export function AddToListModal({
       case 'person': return 'people';
       case 'video': return 'videos';
       case 'place': return 'places';
+      case 'music': return 'musics';
       default: return '';
     }
   };

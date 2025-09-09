@@ -4,11 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Film, Tv, BookOpen, Users2, Youtube, Gamepad2, MapPin, Search, X, AlertCircle } from 'lucide-react';
+import { Film, Tv, BookOpen, Users2, Youtube, Gamepad2, MapPin, Music, Search, X, AlertCircle } from 'lucide-react';
 import { Header } from '../components/Header';
 import { useDebounce } from '../hooks/useDebounce';
-import { searchTMDB, searchGames, searchBooks, createList, getVideoDetails, searchPlaces } from '../lib/api';
-import { countries, getCitiesByCountry, getDefaultPlaceImage } from '../lib/api-google-places';
+import { searchTMDB, searchGames, searchBooks, createList, getVideoDetails, searchPlaces, getDefaultPlaceImage } from '../lib/api';
 
 const listSchema = z.object({
   title: z.string().min(3, 'Başlık en az 3 karakter olmalıdır'),
@@ -21,7 +20,7 @@ type ListItem = {
   id: string;
   title: string;
   image: string;
-  type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place';
+  type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place' | 'music';
   year?: string;
   description?: string;
   address?: string;
@@ -46,12 +45,6 @@ export function CreateList() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
-  // Mekan araması için ülke ve şehir seçimi
-  const [showLocationSelect, setShowLocationSelect] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
-  const [selectedCity, setSelectedCity] = useState<string>('');
-  const [availableCities, setAvailableCities] = useState<{name: string}[]>([]);
   
   // API yanıt tipleri
   interface TMDBMovie {
@@ -105,31 +98,7 @@ export function CreateList() {
     description?: string;
   }
 
-  // Kategori places olduğunda ülke ve şehir seçimini göster
-  useEffect(() => {
-    if (category === 'places') {
-      setShowLocationSelect(true);
-    } else {
-      setShowLocationSelect(false);
-    }
-  }, [category]);
-
-  // Ülke seçildiğinde şehirleri getir
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (selectedCountry) {
-        console.log(`Fetching cities for country: ${selectedCountry}`);
-        const cities = await getCitiesByCountry(selectedCountry);
-        setAvailableCities(cities);
-        setSelectedCity(''); // Ülke değiştiğinde şehir seçimini sıfırla
-      } else {
-        setAvailableCities([]);
-        setSelectedCity('');
-      }
-    };
-    
-    fetchCities();
-  }, [selectedCountry]);
+  // Places kategorisi için konum seçimi artık gerekli değil - doğrudan arama yapılacak
 
   // Arama işlemini gerçekleştiren fonksiyon
   const handleSearch = useCallback(async () => {
@@ -323,35 +292,18 @@ export function CreateList() {
           break;
         }
         case 'places': {
-          // Ülke ve şehir seçilmemişse arama yapma
-          if (!selectedCountry && category === 'places') {
-            setErrorMessage(t('common.errors.selectCountryCity'));
-            setShowErrorPopup(true);
-            setSearchResults([]);
-            setIsSearching(false);
-            return;
-          }
-          
           // Arama sorgusu boş değilse ve en az 2 karakter ise arama yap
           if (debouncedSearch.trim().length >= 2) {
             try {
-              // lib/api.ts'deki searchPlaces fonksiyonunu kullan
-              let placeQuery = debouncedSearch;
-              const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
-              if (selectedCity && countryName) {
-                placeQuery = `${debouncedSearch} ${selectedCity} ${countryName}`;
-              } else if (countryName) {
-                placeQuery = `${debouncedSearch} ${countryName}`;
-              }
-              console.log('Mekan araması için oluşturulan sorgu:', placeQuery);
-              const placeResults = await searchPlaces(placeQuery, i18n.language); // searchPlaces çağrısı
-              console.log('Bulunan mekanlar (searchPlaces):', placeResults);
-              // searchPlaces zaten ListItem formatına yakın bir formatta dönüyor olmalı
-              // Gerekirse burada ek map'leme yapılabilir.
+              // Google Places API ile doğrudan arama yap
+              console.log('Mekan araması için sorgu:', debouncedSearch);
+              const placeResults = await searchPlaces(debouncedSearch, i18n.language);
+              console.log('Bulunan mekanlar (Google Places API):', placeResults);
+              
               setSearchResults(placeResults.map((place: any) => ({
                 id: place.id,
                 title: place.name,
-                image: place.image || getDefaultPlaceImage(place.name), // getDefaultPlaceImage fonksiyonu kullanıldı
+                image: place.image || getDefaultPlaceImage(place.name),
                 type: 'place',
                 address: place.address,
                 city: place.city,
@@ -371,6 +323,45 @@ export function CreateList() {
           }
           break;
         }
+        case 'musics': {
+          // Müzik araması için basit simülasyon
+          if (debouncedSearch.trim().length >= 2) {
+            try {
+              console.log('Müzik araması için sorgu:', debouncedSearch);
+              
+              // Simülasyon müzik sonuçları
+              const musicResults = [
+                {
+                  id: `music-${Date.now()}-1`,
+                  title: debouncedSearch,
+                  image: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(debouncedSearch)}&backgroundColor=purple`,
+                  type: 'music',
+                  year: '2024',
+                  description: 'Müzik parçası'
+                },
+                {
+                  id: `music-${Date.now()}-2`,
+                  title: `${debouncedSearch} - Remix`,
+                  image: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(debouncedSearch + ' Remix')}&backgroundColor=indigo`,
+                  type: 'music',
+                  year: '2023',
+                  description: 'Remix versiyonu'
+                }
+              ];
+              
+              console.log('Bulunan müzikler:', musicResults);
+              setSearchResults(musicResults);
+            } catch (error) {
+              console.error('Müzik araması hatası:', error);
+              setErrorMessage('Müzik araması başarısız oldu.');
+              setShowErrorPopup(true);
+              setSearchResults([]);
+            }
+          } else {
+            setSearchResults([]);
+          }
+          break;
+        }
       }
     } catch (error) {
       console.error('Arama hatası:', error);
@@ -379,7 +370,7 @@ export function CreateList() {
       clearTimeout(searchTimeout);
       setIsSearching(false);
     }
-  }, [category, debouncedSearch, selectedCountry, selectedCity, selectedItems, getVideoDetails, searchTMDB, searchGames, searchBooks, t]);
+  }, [category, debouncedSearch, selectedItems, getVideoDetails, searchTMDB, searchGames, searchBooks, t]);
   
   // useEffect ile arama işlemini yönet
   useEffect(() => {
@@ -437,6 +428,7 @@ export function CreateList() {
       case 'people': return Users2;
       case 'videos': return Youtube;
       case 'places': return MapPin;
+      case 'musics': return Music;
       default: return Film;
     }
   };
@@ -457,6 +449,8 @@ export function CreateList() {
         return isTurkish ? 'Video' : 'Video';
       case 'places':
         return isTurkish ? 'Mekan' : 'Place';
+      case 'musics':
+        return isTurkish ? 'Müzik' : 'Music';
       default:
         return isTurkish ? 'Bilinmeyen' : 'Unknown';
     }
@@ -643,52 +637,7 @@ export function CreateList() {
                     )}
                   </div>
 
-                  {/* Ülke ve şehir seçimi - Sadece places kategorisi için gösterilir */}
-                  {showLocationSelect && (
-                    <div className="space-y-4 mb-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-medium text-gray-700">{t('common.locationSelection')}</h3>
-                      
-                      {/* Ülke Seçimi */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t('common.country')}
-                        </label>
-                        <select
-                          value={selectedCountry}
-                          onChange={(e) => setSelectedCountry(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                          <option value="">{t('common.selectCountry')}</option>
-                          {countries.map(country => (
-                            <option key={country.code} value={country.code}>
-                              {country.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      {/* Şehir Seçimi - Sadece ülke seçildiğinde gösterilir */}
-                      {selectedCountry && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('common.city')}
-                          </label>
-                          <select
-                            value={selectedCity}
-                            onChange={(e) => setSelectedCity(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          >
-                            <option value="">{t('common.selectCity')}</option>
-                            {availableCities.map(city => (
-                              <option key={city.name} value={city.name}>
-                                {city.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Konum seçimi kaldırıldı - Places için doğrudan arama yapılacak */}
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -711,7 +660,7 @@ export function CreateList() {
                         placeholder={category === 'videos'
                           ? t('listPreview.listDetails.youtubeLinkPlaceholder')
                           : category === 'places'
-                            ? t('listPreview.listDetails.searchPlacesPlaceholder', { city: selectedCity || t('common.selectedLocation') })
+                            ? (i18n.language === 'tr' ? 'Mekan ara...' : 'Search places...')
                             : t('listPreview.listDetails.searchContentPlaceholder', { category: getCategoryTitle() })}
                       />
                       <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />

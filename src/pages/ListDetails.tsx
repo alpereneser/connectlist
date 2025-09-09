@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 import { Helmet } from 'react-helmet-async';
-import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Link as LinkIcon, Plus, Send, MapPin } from 'lucide-react';
+import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Link as LinkIcon, Plus, Send, MapPin, Music } from 'lucide-react';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { turkishToEnglish } from '../lib/utils';
 import { AuthPopup } from '../components/AuthPopup';
@@ -54,6 +54,7 @@ const getCategoryIcon = (category?: string) => {
     case 'people': return Users2;
     case 'videos': return Youtube;
     case 'places': return MapPin;
+    case 'musics': return Music;
     default: return Film;
   }
 };
@@ -73,6 +74,7 @@ const getNormalizedCategory = (category?: string): string => {
     case 'person': return 'people';
     case 'video': return 'videos';
     case 'place': return 'places';
+    case 'music': return 'musics';
     // Zaten doğru formatta olanlar
     case 'movies':
     case 'series':
@@ -81,6 +83,7 @@ const getNormalizedCategory = (category?: string): string => {
     case 'people':
     case 'videos':
     case 'places':
+    case 'musics':
       return category;
     default: return 'all';
   }
@@ -1145,6 +1148,10 @@ export default function ListDetails() {
                           break;
                         case 'video':
                           window.open(`https://www.youtube.com/watch?v=${item.external_id}`, '_blank');
+                          break;
+                        case 'music':
+                          // Müzik için Spotify linkini aç (external_id Spotify track ID'si olarak varsayılır)
+                          window.open(`https://open.spotify.com/track/${item.external_id}`, '_blank');
                           break;
                         case 'place':
                           // Mekan için Google Maps linkini aç

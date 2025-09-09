@@ -5,16 +5,33 @@ import { useTranslation } from 'react-i18next';
 import { useClickOutside } from '../hooks/useClickOutside';
 
 interface AuthPopupProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
-  message: string;
+  message?: string;
+  onSuccess?: () => void;
 }
 
-export function AuthPopup({ isOpen, onClose, message }: AuthPopupProps) {
+export function AuthPopup({ isOpen = true, onClose, message, onSuccess }: AuthPopupProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const popupRef = useRef<HTMLDivElement>(null);
   useClickOutside(popupRef, onClose);
+
+  const handleLogin = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate('/auth/login');
+    }
+  };
+
+  const handleRegister = () => {
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      navigate('/auth/register');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -31,16 +48,16 @@ export function AuthPopup({ isOpen, onClose, message }: AuthPopupProps) {
           </button>
         </div>
         <div className="p-6">
-          <p className="text-gray-600 mb-6">{message}</p>
+          <p className="text-gray-600 mb-6">{message || t('auth.loginRequired')}</p>
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/auth/login')}
+              onClick={handleLogin}
               className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600"
             >
               {t('auth.login')}
             </button>
             <button
-              onClick={() => navigate('/auth/register')}
+              onClick={handleRegister}
               className="w-full bg-gray-100 text-gray-900 py-2 px-4 rounded-lg hover:bg-gray-200"
             >
               {t('auth.register')}

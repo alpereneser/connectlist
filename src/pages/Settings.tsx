@@ -1,99 +1,23 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Header } from '../components/Header';
-import { supabaseBrowser as supabase } from '../lib/supabase-browser';
-import { Lock, Mail, Bell, Globe, Shield, UserMinus, Camera, LogOut, HelpCircle, Send } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { useDebounce } from '../hooks/useDebounce';
+import { useNavigate } from 'react-router-dom';
+import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-// Tip tanımları
-type SupportForm = {
-  subject: string;
-  message: string;
-};
-
-type EmailSettingsForm = {
-  email: string;
-};
-
-type PasswordSettingsForm = {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-};
-
-type UsernameForm = {
-  username: string;
-};
-
-type NotificationSettings = {
-  list_notifications: boolean;
-  follower_notifications: boolean;
-  message_notifications: boolean;
-};
-
-type PrivacySettings = {
-  private_profile: boolean;
-  private_lists: boolean;
-  show_online_status: boolean;
-};
-
-function Settings() {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const tabParam = queryParams.get('tab');
-  const [activeSection, setActiveSection] = useState(tabParam || 'account');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [profile, setProfile] = useState<{
-    id?: string;
-    full_name?: string;
-    username?: string;
-    bio?: string;
-    website?: string;
-    location?: string;
-    avatar_url?: string;
-    avatar?: string;
-  } | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
-  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
-    list_notifications: true,
-    follower_notifications: true,
-    message_notifications: true
-  });
-  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
-    private_profile: false,
-    private_lists: false,
-    show_online_status: true
-  });
-  const [announceText, setAnnounceText] = useState<string>('');
-  const { t, i18n } = useTranslation();
-  const [formData, setFormData] = useState({
+const Settings = ({ profile: userProfile, deletePassword, setShowDeleteConfirm, setDeletePassword }) => {
+  const [profile, setProfile] = useState<Profile>({
     full_name: '',
     username: '',
     bio: '',
     website: '',
     location: ''
   });
-  const navigate = useNavigate();
-
-  // Haptic Feedback
-  const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
-    if ('vibrate' in navigator) {
-      const patterns = { light: 10, medium: 20, heavy: 30 };
-      navigator.vibrate(patterns[type]);
-    }
-  }, []);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
 
   // Screen Reader Announcements
   const announceToScreenReader = useCallback((message: string) => {
@@ -594,7 +518,7 @@ function Settings() {
         <div className="max-w-5xl mx-auto px-2 md:px-6 lg:px-8 pt-0 pb-2 md:py-8">
           <div className="flex flex-col md:flex-row gap-2 md:gap-8">
             {/* Mobile Tab Navigation */}
-            <div className="md:hidden bg-white rounded-xl shadow-sm p-2 mb-2 sticky top-0 z-10">
+            <div className="md:hidden bg-white rounded-xl shadow-sm p-2 mb-2 sticky z-10" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}>
               <div className="flex gap-1 overflow-x-auto scrollbar-hide justify-center">
               {menuItems.map((item) => {
                 const Icon = item.icon;
@@ -612,7 +536,7 @@ function Settings() {
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                       aria-pressed={activeSection === item.id}
-                      aria-label={`${item.label} ayarları`}
+                      aria-label={`${item.label} ${t('settings.title')}`}
                     >
                       <Icon size={18} aria-hidden="true" />
                       <span className="font-medium">{item.label}</span>
@@ -641,7 +565,7 @@ function Settings() {
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
                       aria-pressed={activeSection === item.id}
-                      aria-label={`${item.label} ayarları`}
+                      aria-label={`${item.label} ${t('settings.title')}`}
                   >
                       <Icon size={20} aria-hidden="true" />
                     <span>{item.label}</span>
@@ -654,7 +578,7 @@ function Settings() {
               <button
                 onClick={handleDeleteAccount}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-red-600 hover:bg-red-50 transition-all"
-                  aria-label="Hesabı sil"
+                  aria-label={t('settings.deleteAccount')}
               >
                   <UserMinus size={20} aria-hidden="true" />
                <span>{t('settings.deleteAccount')}</span>
@@ -668,7 +592,7 @@ function Settings() {
                 navigate('/auth/login');
               }}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-medium text-gray-700 hover:bg-gray-50 transition-all"
-                  aria-label="Çıkış yap"
+                  aria-label={t('common.profile.signOut')}
             >
                   <LogOut size={20} aria-hidden="true" />
              <span>{t('common.profile.signOut')}</span>
@@ -992,7 +916,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={notificationSettings.list_notifications}
                             onChange={(e) => updateNotificationSettings('list_notifications', e.target.checked)}
-                            aria-label="Liste bildirimleri"
+                            aria-label={t('settings.notificationSettings.listNotifications')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1016,7 +940,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={notificationSettings.follower_notifications}
                             onChange={(e) => updateNotificationSettings('follower_notifications', e.target.checked)}
-                            aria-label="Takipçi bildirimleri"
+                            aria-label={t('settings.notificationSettings.followerNotifications')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1040,7 +964,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={notificationSettings.message_notifications}
                             onChange={(e) => updateNotificationSettings('message_notifications', e.target.checked)}
-                            aria-label="Mesaj bildirimleri"
+                            aria-label={t('settings.notificationSettings.messageNotifications')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1071,7 +995,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={privacySettings.private_profile}
                             onChange={(e) => updatePrivacySettings('private_profile', e.target.checked)}
-                            aria-label="Özel profil"
+                            aria-label={t('settings.privacySettings.profile')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1095,7 +1019,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={privacySettings.private_lists}
                             onChange={(e) => updatePrivacySettings('private_lists', e.target.checked)}
-                            aria-label="Özel listeler"
+                            aria-label={t('settings.privacySettings.list')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1119,7 +1043,7 @@ function Settings() {
                             className="sr-only peer" 
                             checked={privacySettings.show_online_status}
                             onChange={(e) => updatePrivacySettings('show_online_status', e.target.checked)}
-                            aria-label="Çevrimiçi durumu göster"
+                            aria-label={t('settings.privacySettings.online')}
                           />
                           <div className="w-12 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-500"></div>
                       </label>
@@ -1308,7 +1232,7 @@ function Settings() {
               </div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">{t('settings.deleteAccount')}</h2>
               <p className="text-gray-600 text-sm leading-relaxed">
-              {t('settings.deleteAccountConfirmation', 'Bu işlem geri alınamaz. Hesabınızı silmek için şifrenizi girin.')}
+              {t('settings.deleteAccountConfirmation')}
             </p>
             </div>
             

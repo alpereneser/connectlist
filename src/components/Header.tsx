@@ -50,8 +50,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
 
   // Accessibility and Mobile UX States
   const [announceText, setAnnounceText] = useState<string>('');
-  const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false);
-  const [focusedElement, setFocusedElement] = useState<string | null>(null);
+
 
   // Ana sayfa kontrolü
   const isHomePage = location.pathname === '/' || location.pathname === '/index.html';
@@ -138,14 +137,6 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   }, []);
 
   const handleKeyboardNavigation = useCallback((event: KeyboardEvent) => {
-    setIsKeyboardNavigation(true);
-    
-    // Clear keyboard navigation flag after mouse use
-    const handleMouseMove = () => {
-      setIsKeyboardNavigation(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-    document.addEventListener('mousemove', handleMouseMove);
 
     switch (event.key) {
       case 'Escape':
@@ -591,7 +582,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       replace: true,
                       state: { 
                         refresh: true,
-                        sortDirection: 'desc',
+                        sortDirection: 'asc',
                         category: 'all'
                       }
                     });
@@ -633,7 +624,6 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                     onChange={handleSearchInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
                     onFocus={() => {
-                      setFocusedElement('search');
                       setIsSearchFocused(true);
                       announceToScreenReader('Arama kutusuna odaklanıldı. Aramak için yazın veya / tuşuna basın');
                     }}
@@ -641,24 +631,17 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       const relatedTarget = e.relatedTarget as HTMLElement;
                       const searchContainer = e.currentTarget.closest('.relative');
                       
+                      // SearchResults içindeki elementlere tıklandığında blur olayını engelle
                       if (relatedTarget && searchContainer?.contains(relatedTarget)) {
                         return;
                       }
                       
-                      if (showResults && searchQuery.trim()) {
-                        setTimeout(() => {
-                          if (searchInputRef.current) {
-                            searchInputRef.current.focus();
-                          }
-                        }, 50);
-                        return;
-                      }
-                      
+                      // SearchResults açıkken ve arama sorgusu varken focus'u korumaya çalışma
+                      // Bu, kullanıcının sonuçlara tıklayabilmesi için gerekli
                       setTimeout(() => {
-                        setFocusedElement(null);
                         setShowResults(false);
                         setIsSearchFocused(false);
-                      }, 150);
+                      }, 200); // Delay'i artırdık ki kullanıcı sonuçlara tıklayabilsin
                     }}
                     placeholder={t('common.searchPlaceholder')}
                     className="search-input block w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-[13px]"

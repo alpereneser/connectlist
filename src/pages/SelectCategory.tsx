@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
-import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin } from 'lucide-react';
+import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin, Music } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Header } from '../components/Header';
 
@@ -51,6 +51,12 @@ export function SelectCategory() {
       icon: MapPin, 
       description: ''
     },
+    { 
+      id: 'musics', 
+      label: 'Müzikler', 
+      icon: Music, 
+      description: ''
+    },
   ].map(category => ({
     ...category,
     label: t(`common.categories.${category.id}`),
@@ -70,7 +76,7 @@ export function SelectCategory() {
               {t('listPreview.listDetails.selectCategoryDescription')}
             </p>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 md:grid-cols-3 gap-6">
               {categories.map((category) => {
                 const Icon = category.icon;
                 return (

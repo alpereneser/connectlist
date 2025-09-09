@@ -185,6 +185,15 @@ npm run build
 - Touch-optimized interface
 - Install prompts
 
+## 📱 Recent Updates
+
+### Mobile Layout Improvements (Latest)
+- **Fixed Search Page**: Resolved mobile category menu sticky positioning with proper header offset calculations
+- **Fixed Profile Page**: Updated mobile padding to prevent content overlap with header elements
+- **Fixed Settings Page**: Corrected sticky tab navigation positioning for mobile devices
+- **Standardized Safe Areas**: Implemented consistent CSS variables for mobile safe area calculations across all pages
+- **Enhanced Mobile UX**: All sticky elements now properly account for device safe areas and header heights
+
 ## 🔧 Configuration
 
 ### Database Schema

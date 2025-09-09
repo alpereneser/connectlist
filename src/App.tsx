@@ -8,7 +8,7 @@ import { useAndroidBackButtonHandler } from './hooks/useAndroidBackButtonHandler
 import { Header } from './components/Header';
 import { SubHeader } from './components/SubHeader';
 import { BottomMenu } from './components/BottomMenu';
-import { Footer } from './components/Footer';
+
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { InstallPrompt } from './components/InstallPrompt';
@@ -49,7 +49,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoading, setIsLoading, page, setPage, sortDirection, setSortDirection, hasMore, setHasMore, isLoadingMore, setIsLoadingMore }: {
+function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoading, setIsLoading, page, setPage, hasMore, setHasMore, isLoadingMore, setIsLoadingMore }: {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
   lists: any[];
@@ -58,8 +58,6 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   setIsLoading: (loading: boolean) => void;
   page: number;
   setPage: (page: number | ((prev: number) => number)) => void;
-  sortDirection: 'asc' | 'desc';
-  setSortDirection: (direction: 'asc' | 'desc') => void;
   hasMore: boolean;
   setHasMore: (hasMore: boolean) => void;
   isLoadingMore: boolean;
@@ -70,6 +68,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   const { t } = useTranslation();
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [isMobile, setIsMobile] = useState(false);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Ekran boyutunu kontrol et
   useEffect(() => {
@@ -86,7 +85,6 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   useEffect(() => {
     if (!location.state) {
       setActiveCategory('all');
-      setSortDirection('desc');
     }
   }, []);
   
@@ -97,11 +95,11 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
         setActiveCategory(location.state.category); 
       }
       
-      // Sıralama yönünü kontrol et
-      if (location.state.sortDirection) {
+      // Sıralama yönü gönderildiyse uygula
+      if (location.state.sortDirection === 'asc' || location.state.sortDirection === 'desc') {
         setSortDirection(location.state.sortDirection);
       }
-      
+
       // Yenileme isteği varsa
       if (location.state.refresh) {
         setLists([]);
@@ -132,28 +130,10 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
       }
     });
     
-    // Supabase gerçek zamanlı abonelik
-    const listsChannel = supabase
-      .channel('public:lists')
-      .on('postgres_changes', {
-        event: '*', // insert, update, delete olaylarını dinle
-        schema: 'public',
-        table: 'lists'
-      }, (payload) => {
-        console.log('Lists changed:', payload);
-        // Değişiklik olduğunda listeleri yeniden getir
-        setLists([]);
-        setPage(0);
-        setHasMore(true);
-        fetchLists();
-      })
-      .subscribe();
-    
     return () => {
-      // Bileşen unmount olduğunda aboneliği temizle
-      supabase.removeChannel(listsChannel);
+      // Cleanup function
     };
-  }, [activeCategory, sortDirection, isMobile]);
+  }, [activeCategory, isMobile, sortDirection]);
   
   // Supabase realtime aboneliği ile yeni listeleri gerçek zamanlı olarak izle
   useEffect(() => {
@@ -190,15 +170,15 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
           .eq('list_id', newList.id)
           .order('position');
           
-        // Yeni listeyi mevcut listelerin başına ekle
+        // Yeni listeyi mevcut listelerin başına/sonuna ekle
         const listWithProfile = {
           ...newList,
           profiles: profileData,
           items: items || []
         };
         
-        // Listeleri güncelle (en yeni liste en üste gelecek şekilde)
-        setLists(prevLists => [listWithProfile, ...prevLists]);
+        // Sıralama yönüne göre ekleme yap
+        setLists(prevLists => sortDirection === 'desc' ? [listWithProfile, ...prevLists] : [...prevLists, listWithProfile]);
       })
       .subscribe();
       
@@ -206,7 +186,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
       // Sayfa değiştiğinde aboneliği iptal et
       subscription.unsubscribe();
     };
-  }, [activeCategory]);
+  }, [activeCategory, sortDirection]);
 
   const fetchLists = async () => {
     if (isLoadingMore) return;
@@ -263,16 +243,9 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     const { scrollTop, scrollHeight, clientHeight } = listContainerRef.current;
     const threshold = 300;
 
-    // Mobilde tersine scroll için scrollTop < threshold kontrolü
-    if (isMobile) {
-      if (scrollTop < threshold) {
-        fetchLists();
-      }
-    } else {
-      // Desktop için normal scroll
-      if (scrollHeight - scrollTop - clientHeight < threshold) {
-        fetchLists();
-      }
+    // Tüm cihazlarda alt kısma yaklaşıldığında daha eski içerikleri yükle
+    if (scrollHeight - scrollTop - clientHeight < threshold) {
+      fetchLists();
     }
     };
 
@@ -306,19 +279,19 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
             ))}
           </div>
         ) : (
-          <div className="flex flex-col-reverse space-y-reverse space-y-6 md:mt-0 mt-[-5px]">
+          <div className="flex flex-col space-y-6 md:mt-0 mt-[-5px]">
             {lists.map((list) => (
               <div key={list.id} id={`list-${list.id}`}>
                 <ListPreview list={list} items={list.items} onListClick={() => setLastViewedListId(list.id)} />
               </div>
             ))}
             {isLoadingMore && (
-              <div className="flex justify-center py-4 order-first">
+              <div className="flex justify-center py-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent" />
               </div>
             )}
             {!hasMore && lists.length > 0 && (
-              <div className="text-center py-4 text-gray-500 order-first">
+              <div className="text-center py-4 text-gray-500">
                 {t('listPreview.noMoreLists')}
               </div>
             )}
@@ -347,7 +320,7 @@ function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false); 
   
@@ -418,7 +391,6 @@ function App() {
               setLists([]);
               setPage(0);
               setHasMore(true);
-              setSortDirection('desc');
               scrollToTop();
             } : undefined}
           />
@@ -559,8 +531,6 @@ function App() {
                   setIsLoading={setIsLoading}
                   page={page}
                   setPage={setPage}
-                  sortDirection={sortDirection}
-                  setSortDirection={setSortDirection}
                   hasMore={hasMore}
                   setHasMore={setHasMore}
                   isLoadingMore={isLoadingMore}
@@ -572,8 +542,8 @@ function App() {
           </Routes>
           </Suspense>
         </main>
-        {/* Mobil anasayfada Footer'ı da gizle */}
-        {!(isMobile && isHomePage) && <Footer />}
+
+
         {/* Mobil anasayfada BottomMenu'yu göster */}
         {!isAuthPage && <BottomMenu />}
         <InstallPrompt />

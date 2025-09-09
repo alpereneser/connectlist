@@ -55,9 +55,15 @@ export function Login() {
 
       if (authError) throw authError;
       
-      // Eğer bir yönlendirme varsa oraya git, yoksa ana sayfaya git
-      const from = location.state?.from?.pathname || '/';
-      navigate(from);
+      // Başarılı giriş sonrası anasayfaya yönlendir ve listeleri sondan başa (desc) yüklemek için state gönder
+      navigate('/', {
+        replace: true,
+        state: {
+          refresh: true,
+          sortDirection: 'desc',
+          category: 'all'
+        }
+      });
     } catch (error) {
       setAuthError(t('auth.invalidCredentials'));
     }

@@ -1,55 +1,56 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { House, Plus, Bell, User, UserPlus, ChatCircle } from '@phosphor-icons/react';
-import { AuthPopup } from './AuthPopup';
-import { supabaseBrowser as supabase } from '../lib/supabase-browser';
+import { House, ChatCircle, Plus, Bell, User, UserPlus } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabaseBrowser as supabase } from '../lib/supabase-browser';
+import { AuthPopup } from './AuthPopup';
 
 interface BottomMenuProps {
   hidden?: boolean;
 }
 
 export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
-  console.log("[BottomMenu] Rendering...");
   const navigate = useNavigate();
   const location = useLocation();
-  // const addListModalRef = useRef<HTMLDivElement>(null); // Kullanılmıyor, yorum satırına alındı
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
-  const [showLogout, setShowLogout] = useState(false);
-  const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const { user, isLoading: isLoadingAuth } = useAuth();
   const pathname = location.pathname;
+  
+  // State variables
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [hasUnreadMessagesBottom, setHasUnreadMessagesBottom] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
-  const { user, loading: isLoadingAuth } = useAuth();
-  const [hasUnreadMessagesBottom, setHasUnreadMessagesBottom] = useState(false);
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
-  console.log("[BottomMenu] Values from useAuth - isLoadingAuth:", isLoadingAuth, "User:", user);
-
-  // Okunmamış bildirimleri kontrol eden fonksiyon
+  // Helper functions
   const checkUnreadNotifications = async (userId: string) => {
     try {
-      // Okunmamış bildirimleri say
       const { count, error } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('is_read', false);
-      
-      if (error) throw error;
-      
-      // Okunmamış bildirim varsa state'i güncelle
-      setHasUnreadNotifications(count !== null && count > 0);
+
+      if (error) {
+        console.error('[BottomMenu] Error checking notifications:', error);
+        setHasUnreadNotifications(false);
+        return;
+      }
+
+      setHasUnreadNotifications((count ?? 0) > 0);
     } catch (error) {
-      console.error('Bildirimler kontrol edilirken hata oluştu:', error);
+      console.error('[BottomMenu] Error in checkUnreadNotifications:', error);
+      setHasUnreadNotifications(false);
     }
   };
 
-  // Add checkUnreadMessages function (adapted from Header.tsx)
   const checkUnreadMessagesBottom = async () => {
     if (!user) {
       setHasUnreadMessagesBottom(false);
       return;
     }
+    
     try {
       const { data: conversations, error: convError } = await supabase
         .from('conversation_participants')
@@ -79,7 +80,8 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
         setHasUnreadMessagesBottom(false);
         return;
       }
-      setHasUnreadMessagesBottom(unreadMessages !== null && unreadMessages.length > 0); // Corrected based on potential API response
+      
+      setHasUnreadMessagesBottom(unreadMessages !== null && unreadMessages.length > 0);
     } catch (error) {
       console.error('[BottomMenu] Error in checkUnreadMessagesBottom:', error);
       setHasUnreadMessagesBottom(false);
@@ -221,6 +223,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
     }
   }, [user]);
 
+  if (hidden) {
+    return null;
+  }
+
   console.log("[BottomMenu] Rendering decision - isLoadingAuth:", isLoadingAuth, "User:", user);
 
   return (
@@ -322,12 +328,14 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             }} className="p-2 rounded-full hover:bg-gray-100 text-gray-600">
               <Plus weight="regular" size={24} />
             </button>
+            
             <button onClick={handleNotificationClick} className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600">
               <Bell weight="regular" size={24} />
               {hasUnreadNotifications && (
                 <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
               )}
             </button>
+            
             {profileOrLoginLink} {/* Giriş butonu (SignIn) */}
           </div>
         )}
@@ -361,4 +369,4 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
       />
     </>
   );
-}
+};

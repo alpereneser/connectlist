@@ -31,7 +31,7 @@ interface ListItem {
   id: string;
   title: string;
   image_url: string;
-  type?: "movie" | "series" | "book" | "game" | "person" | "video" | "place";
+  type?: "movie" | "series" | "book" | "game" | "person" | "video" | "place" | "music";
   external_id?: string;
   year?: string;
   [key: string]: any; // Diğer olası alanlar için genel tip
@@ -551,7 +551,10 @@ export function Profile() {
 
       <Header />
       {/* ANA DIV BURADA BAŞLIYOR */}
-      <div className="min-h-screen bg-white md:bg-gray-100 pt-[45px] pb-[100px] md:pb-0" data-component-name="Profile"> 
+      <div className="min-h-screen bg-white md:bg-gray-100" data-component-name="Profile" style={{
+      paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height))',
+      paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))'
+      }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 md:py-8">
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
@@ -896,7 +899,8 @@ export function Profile() {
                                    list.category === 'books' ? '📚' : 
                                    list.category === 'games' ? '🎮' : 
                                    list.category === 'people' ? '👤' : 
-                                   list.category === 'places' ? '📍' : '📋'}
+                                   list.category === 'places' ? '📍' : 
+                                   list.category === 'musics' ? '🎵' : '📋'}
                                 </span>
                 </div>
                             )}
@@ -937,7 +941,8 @@ export function Profile() {
                                  list.category === 'books' ? '📚' : 
                                  list.category === 'games' ? '🎮' : 
                                  list.category === 'people' ? '👤' : 
-                                 list.category === 'places' ? '📍' : '📋'}
+                                 list.category === 'places' ? '📍' : 
+                                 list.category === 'musics' ? '🎵' : '📋'}
                               </span>
                             </div>
                             <div>

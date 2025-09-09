@@ -31,7 +31,7 @@ interface ListPreviewProps {
     title: string;
     image_url: string;
     year?: string;
-    type?: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place';
+    type?: 'movie' | 'series' | 'book' | 'game' | 'person' | 'video' | 'place' | 'music';
     external_id?: string;
   }>;
   onListClick?: () => void;
@@ -73,7 +73,8 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
     games: currentLanguage === 'tr' ? 'Oyunlar' : 'Games',
     people: currentLanguage === 'tr' ? 'Kişiler' : 'People',
     videos: currentLanguage === 'tr' ? 'Videolar' : 'Videos',
-    places: currentLanguage === 'tr' ? 'Mekanlar' : 'Places'
+    places: currentLanguage === 'tr' ? 'Mekanlar' : 'Places',
+    musics: currentLanguage === 'tr' ? 'Müzikler' : 'Music'
   };
 
   const handleLikeClick = async () => {

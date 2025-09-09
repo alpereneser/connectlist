@@ -7,6 +7,7 @@
   command = "vite"
   port = 3000
   targetPort = 5173
+  functionsPort = 8888
 
 # Dynamic sitemap routes
 [[redirects]]

@@ -12,6 +12,7 @@
     "selectCity": "Şehir seçin",
     "locationSelection": "Konum Seçimi",
     "selectedLocation": "seçilen konum",
+    "createList": "Liste Oluştur",
     "errors": {
       "fileTooLarge": "Dosya boyutu 5MB'dan küçük olmalıdır",
       "invalidFileType": "Sadece JPG, PNG ve GIF dosyaları yükleyebilirsiniz",
@@ -75,7 +76,8 @@
       "games": "Oyunlar",
       "people": "Kişiler",
       "videos": "Videolar",
-      "places": "Mekanlar"
+      "places": "Mekanlar",
+      "musics": "Müzikler"
     },
     "categoryDescriptions": {
       "movies": "En sevdiğiniz filmleri listeleyebilir, izleme listenizi oluşturabilirsiniz.",
@@ -84,7 +86,8 @@
       "games": "Oynadığınız veya oynamak istediğiniz oyunları listeleyebilirsiniz.",
       "people": "Sevdiğiniz aktör, yönetmen veya ünlüleri listeleyebilirsiniz.",
       "videos": "YouTube videolarını listeleyebilir, izleme listenizi oluşturabilirsiniz.",
-      "places": "Ziyaret ettiğiniz veya gitmek istediğiniz mekanları listeleyebilirsiniz."
+      "places": "Ziyaret ettiğiniz veya gitmek istediğiniz mekanları listeleyebilirsiniz.",
+      "musics": "Sevdiğiniz şarkı, albüm veya sanatçıları listeleyebilirsiniz."
     },
     "lists": {
       "all": "Tüm Listeler",
@@ -94,7 +97,8 @@
       "games": "Oyun Listeleri",
       "people": "Kişi Listeleri",
       "videos": "Video Listeleri",
-      "places": "Mekan Listeleri"
+      "places": "Mekan Listeleri",
+      "musics": "Müzik Listeleri"
     },
     "messages": {
       "title": "Mesajlar",
@@ -141,6 +145,7 @@
     "login": "Giriş Yap",
     "register": "Kayıt Ol",
     "requireAuthMessage": "Bu işlemi yapabilmek için giriş yapmalısınız: {{action}}",
+    "loginRequired": "Bu işlemi yapabilmek için giriş yapmalısınız: listeye öğe ekleme",
     "forgotPassword": "Şifremi Unuttum",
     "email": "E-posta",
     "password": "Şifre",
@@ -271,7 +276,63 @@
     "deletingAccount": "Hesap siliniyor...",
     "accountDeleted": "Hesap başarıyla silindi",
     "invalidPassword": "Geçersiz şifre",
-    "deleteAccountError": "Hesap silinirken hata oluştu"
+    "deleteAccountError": "Hesap silinirken hata oluştu",
+    "deleteAccountConfirmation": "Bu işlem geri alınamaz. Hesabınızı silmek için şifrenizi girin.",
+    "enterPassword": "Şifrenizi girin",
+    "privacy": "Gizlilik",
+    "support": "Destek",
+    "profilePhoto": "Profil Fotoğrafı",
+    "changePhoto": "Fotoğrafı Değiştir",
+    "photoRequirements": "JPG, PNG veya GIF. Maksimum 5MB.",
+    "profileInfo": "Profil Bilgileri",
+    "about": "Hakkında",
+    "website": "Web Sitesi",
+    "location": "Konum",
+    "username": "Kullanıcı Adı",
+    "usernameDescription": "Kullanıcı adınız profil URL'nizde görünür ve değiştirilebilir.",
+    "fullName": "Ad Soyad",
+    "changePassword": "Şifre Değiştir",
+    "enterPassword": "Şifrenizi girin",
+    "deleteAccountConfirmation": "Bu işlem geri alınamaz. Hesabınızı silmek için şifrenizi girin.",
+    "notificationSettings": {
+      "listNotifications": "Liste Bildirimleri",
+      "listNotificationsDesc": "Listelerinize gelen yorumlar ve beğeniler",
+      "followerNotifications": "Takipçi Bildirimleri",
+      "followerNotificationsDesc": "Yeni takipçiler",
+      "messageNotifications": "Mesaj Bildirimleri",
+      "messageNotificationsDesc": "Yeni mesajlar"
+    },
+    "privacySettings": {
+      "profile": "Profil Gizliliği",
+      "profileDesc": "Sadece takipçileriniz profilinizi görebilir",
+      "list": "Liste Gizliliği",
+      "listDesc": "Sadece takipçileriniz listelerinizi görebilir",
+      "online": "Çevrimiçi Durumu",
+      "onlineDesc": "Diğer kullanıcılar çevrimiçi durumunuzu görebilir",
+      "legal": "Yasal Belgeler",
+      "viewPrivacyPolicy": "Gizlilik Politikasını Görüntüle",
+      "viewTerms": "Hizmet Şartlarını Görüntüle"
+    },
+    "languagePreference": "Tercih Edilen Dil",
+    "languages": {
+      "tr": "Türkçe",
+      "en": "İngilizce",
+      "de": "Almanca",
+      "fr": "Fransızca",
+      "es": "İspanyolca"
+    },
+    "supportForm": {
+      "title": "Destek Talebi",
+      "description": "Sorunlarınızı veya önerilerinizi bize iletmek için aşağıdaki formu doldurun.",
+      "subject": "Konu",
+      "message": "Mesaj",
+      "send": "Gönder",
+      "sending": "Gönderiliyor...",
+      "success": "Destek talebiniz başarıyla gönderildi. En kısa sürede size geri döneceğiz.",
+      "error": "Destek talebiniz gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      "subjectPlaceholder": "Destek talebinizin konusu",
+      "messagePlaceholder": "Lütfen sorununuzu veya önerinizi detaylı bir şekilde açıklayın"
+    }
   },
   "discover": {
     "title": "Keşfet",
@@ -383,6 +444,8 @@
       "searchPlacesPlaceholder": "{{city}} için mekan ara",
       "youtubeLink": "YouTube Video Linki",
       "youtubeLinkPlaceholder": "YouTube video linkini yapıştır",
+      "selectCategory": "Liste kategorisini seçin",
+      "selectCategoryDescription": "Seçtiğiniz kategoriye göre yeni bir liste oluşturabilir veya mevcut listeleri arayabilirsiniz.",
       "searching": "Aranıyor...",
       "comments": {
         "title": "Yorumlar",
@@ -689,7 +752,8 @@
       "movies": "Filmler",
       "series": "Diziler",
       "books": "Kitaplar",
-      "games": "Oyunlar"
+      "games": "Oyunlar",
+      "musics": "Müzikler"
     },
     "filters": {
       "sortBy": "Sırala",
@@ -705,7 +769,11 @@
     "books": "Kitaplar",
     "games": "Oyunlar",
     "people": "Kişiler",
+    "musics": "Müzikler",
     "noResults": "'{{query}}' için sonuç bulunamadı",
+    "noResultsFor": "'{{query}}' için {{category}}de sonuç bulunamadı",
+    "allCategories": "hiçbir kategori",
+    "tryDifferentKeywords": "Farklı anahtar kelimeler deneyin veya tüm kategorilerde arama yapın",
     "result": "Sonuç",
     "itemCount": "{{count}} öğe",
     "tabs": {
@@ -717,7 +785,8 @@
       "people": "Kişiler",
       "games": "Oyunlar",
       "books": "Kitaplar",
-      "places": "Mekanlar"
+      "places": "Yerler",
+      "musics": "Müzikler"
     }
   },
   "listDetails": {

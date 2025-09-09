@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Film, Tv, BookOpen, Gamepad2, Users2, MapPin, X } from 'lucide-react';
+import { Film, Tv, BookOpen, Gamepad2, Users2, MapPin, X, Music } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface ListUser {
@@ -14,7 +14,7 @@ interface WhoAddedModalProps {
   isOpen: boolean;
   onClose: () => void;
   users: ListUser[];
-  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place';
+  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place' | 'music';
 }
 
 export function WhoAddedModal({ isOpen, onClose, users, contentType }: WhoAddedModalProps) {
@@ -37,6 +37,8 @@ export function WhoAddedModal({ isOpen, onClose, users, contentType }: WhoAddedM
         return Users2;
       case 'place':
         return MapPin;
+      case 'music':
+        return Music;
       default:
         return Film;
     }

@@ -77,7 +77,8 @@
       "games": "Games",
       "people": "People",
       "videos": "Videos",
-      "places": "Places"
+      "places": "Places",
+      "musics": "Music"
     },
     "categoryDescriptions": {
       "movies": "You can list your favorite movies and create your watch list.",
@@ -86,7 +87,8 @@
       "games": "You can list games you have played or want to play.",
       "people": "You can list your favorite actors, directors or celebrities.",
       "videos": "You can list YouTube videos and create your watch list.",
-      "places": "You can list places you have visited or want to visit."
+      "places": "You can list places you have visited or want to visit.",
+      "musics": "You can list your favorite songs, albums, and artists."
     },
     "lists": {
       "all": "All Lists",
@@ -96,7 +98,8 @@
       "games": "Game Lists",
       "people": "People Lists",
       "videos": "Video Lists",
-      "places": "Place Lists"
+      "places": "Place Lists",
+      "musics": "Music Lists"
     },
     "messages": {
       "title": "Messages",
@@ -130,7 +133,8 @@
       "daysAgo": "{{count}} days ago",
       "daysAgo_one": "{{count}} day ago",
       "lastUpdate": "Last updated:"
-    }
+    },
+    "createList": "Create List"
   },
   "categories": {
     "movie": "Movie",
@@ -146,6 +150,7 @@
     "login": "Log In",
     "register": "Sign Up",
     "requireAuthMessage": "You need to log in to perform this action: {{action}}",
+    "loginRequired": "You need to log in to perform this action: adding items to a list",
     "forgotPassword": "Forgot Password",
     "email": "Email",
     "password": "Password",
@@ -312,6 +317,9 @@
   },
   "search": {
     "noResults": "No results found for '{{query}}'",
+    "noResultsFor": "No results found for '{{query}}' in {{category}}",
+    "allCategories": "any category",
+    "tryDifferentKeywords": "Try different keywords or search in all categories",
     "noCategoryResults": "No results found for {{category}}",
     "result": "Result",
     "itemCount": "{{count}} items",
@@ -322,7 +330,8 @@
       "movies": "Movies",
       "series": "TV Series",
       "books": "Books",
-      "games": "Games"
+      "games": "Games",
+      "musics": "Music"
     },
     "tabs": {
       "all": "All",
@@ -333,7 +342,8 @@
       "people": "People",
       "games": "Games",
       "books": "Books",
-      "places": "Places"
+      "places": "Places",
+      "musics": "Music"
     }
   },
   "listPreview": {
@@ -370,7 +380,7 @@
       "noContentSelected": "No content selected yet",
       "searchAndSelect": "Search and select content",
       "noContentYet": "No content yet",
-      "selectCategory": "Select list category",
+      "selectCategory": "Select a list category",
       "selectCategoryDescription": "You can create a new list or search existing lists based on your selected category.",
       "comments": {
         "title": "Comments",

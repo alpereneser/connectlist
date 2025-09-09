@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Users, Plus, Star, Phone, Globe, Clock, MapPinned, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
 import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { AddToListModal } from '../../components/AddToListModal';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
-import { getPlaceDetails } from '../../lib/api-places';
+import { getPlaceDetails } from '../../lib/api';
 import { useWhoAdded } from '../../hooks/useWhoAdded';
 import { WhoAddedModal } from '../../components/WhoAddedModal';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
@@ -70,8 +71,27 @@ export function PlaceDetails() {
   useEffect(() => {
     const fetchPlaceDetails = async () => {
       try {
-        const placeData = await getPlaceDetails(id || '');
-        setPlace(placeData);
+        const placeData = await getPlaceDetails(id || '', i18n.language);
+        if (placeData) {
+          // API'den dönen veriyi PlaceDetails interface'ine uygun hale getir
+          const formattedPlace: PlaceDetails = {
+            id: placeData.id,
+            name: placeData.name,
+            description: placeData.description || '',
+            address: placeData.address,
+            city: placeData.city,
+            country: placeData.country,
+            categories: placeData.types || [],
+            rating: placeData.rating,
+            hours: placeData.opening_hours?.join(', '),
+            tel: placeData.phone,
+            website: placeData.website,
+            photos: placeData.photos ? placeData.photos.map((url: string) => ({ url })) : [],
+            latitude: placeData.latitude,
+            longitude: placeData.longitude
+          };
+          setPlace(formattedPlace);
+        }
       } catch (error) {
         console.error('Error fetching place details:', error);
         setError('Mekan detayları yüklenirken bir hata oluştu.');
@@ -114,7 +134,7 @@ export function PlaceDetails() {
   // Harita URL'si oluştur
   const mapUrl = useMemo(() => {
     if (!place?.latitude || !place?.longitude) return '';
-    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyDe4BIkhTKqHXggqlT88_04nDvfeePXc7w&q=${place.latitude},${place.longitude}&zoom=15`;
+    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyCEQZ1ri472vtTCiexDsriTKZTIPQoRJkY&q=${place.latitude},${place.longitude}&zoom=15`;
   }, [place?.latitude, place?.longitude]);
 
   // Meta açıklaması

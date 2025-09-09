@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Footer } from './Footer';
+
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -19,9 +19,7 @@ export function AuthLayout({ children, image }: AuthLayoutProps) {
           </div>
           {children}
         </div>
-        <div className="md:hidden fixed bottom-0 left-0 right-0">
-          <Footer />
-        </div>
+
       </div>
       <div className="hidden md:block md:w-1/2 relative">
         <img

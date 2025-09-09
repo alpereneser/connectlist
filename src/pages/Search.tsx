@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { Header } from '../components/Header';
 import { BottomMenu } from '../components/BottomMenu';
-import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks } from '../lib/api';
-import { searchPlaces, getDefaultPlaceImage } from '../lib/api-places';
+import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks, searchPlaces } from '../lib/api';
+import { getDefaultPlaceImage } from '../lib/api';
 import { Movie, Show, Person, Game, Book as BookType, User } from '../types/search';
 import { List } from '../types/supabase';
 import { AuthPopup } from '../components/AuthPopup';
 import { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY } from '../lib/api'; 
-import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, MapPin } from 'lucide-react';
+import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, MapPin, Music } from 'lucide-react';
 
 // TMDB sonuçları için genişletilmiş tipler
 interface TMDBMovie extends Movie {
@@ -35,6 +36,8 @@ const getCategoryIcon = (category: string) => {
       return <Book className="w-3 h-3 text-white" />;
     case 'game':
       return <Gamepad2 className="w-3 h-3 text-white" />;
+    case 'music':
+      return <Music className="w-3 h-3 text-white" />;
     default:
       return <Home className="w-3 h-3 text-white" />;
   }
@@ -49,17 +52,7 @@ export function Search() {
   const [activeTab, setActiveTab] = useState('all');
   const [results, setResults] = useState<{
     users: User[];
-    lists: Array<{
-      id: string;
-      title: string;
-      items_count: number;
-      category: string;
-      profiles: {
-        username: string;
-        full_name: string;
-        avatar: string;
-      };
-    }>;
+    lists: List[];
     movies: Movie[];
     shows: Show[];
     people: Person[];
@@ -76,6 +69,14 @@ export function Search() {
       latitude?: number;
       longitude?: number;
     }>;
+    musics: Array<{
+      id: string;
+      title: string;
+      artist: string;
+      album?: string;
+      image: string;
+      year?: string;
+    }>;
   }>({
     users: [],
     lists: [],
@@ -85,6 +86,7 @@ export function Search() {
     games: [],
     books: [],
     places: [],
+    musics: [],
   });
   const [discoverContent, setDiscoverContent] = useState<Array<{
     id: string | number;
@@ -124,6 +126,14 @@ export function Search() {
       let gamesResults: Game[] = [];
       let booksResults: BookType[] = [];
       let placesResults: any[] = [];
+      let musicsResults: Array<{
+        id: string;
+        title: string;
+        artist: string;
+        album?: string;
+        image: string;
+        year?: string;
+      }> = [];
       
       try {
         usersResults = await searchUsers(query);
@@ -156,9 +166,35 @@ export function Search() {
       }
       
       try {
-        placesResults = await searchPlaces(query);
+        placesResults = await searchPlaces(query, i18n.language);
       } catch (error) {
         console.error('Error searching places:', error);
+      }
+      
+      try {
+        // Simulated music search - replace with actual API call
+        musicsResults = [
+          {
+            id: `music-${query}-1`,
+            title: `${query} Song`,
+            artist: 'Various Artists',
+            album: 'Best Hits',
+            image: 'https://via.placeholder.com/300x300?text=Music',
+            year: '2023'
+          },
+          {
+            id: `music-${query}-2`,
+            title: `${query} Remix`,
+            artist: 'DJ Mix',
+            image: 'https://via.placeholder.com/300x300?text=Album',
+            year: '2024'
+          }
+        ].filter(music => 
+          music.title.toLowerCase().includes(query.toLowerCase()) ||
+          music.artist.toLowerCase().includes(query.toLowerCase())
+        );
+      } catch (error) {
+        console.error('Error searching music:', error);
       }
 
       setResults({
@@ -170,6 +206,7 @@ export function Search() {
         games: gamesResults,
         books: booksResults,
         places: placesResults,
+        musics: musicsResults,
       });
     } catch (error) {
       console.error('Search error:', error);
@@ -559,8 +596,36 @@ export function Search() {
     );
   };
 
+  const renderMusics = (limit?: number) => {
+    const musicsToShow = limit ? results.musics.slice(0, limit) : results.musics;
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+        {musicsToShow.map((music) => (
+          <div 
+            key={music.id} 
+            className="cursor-pointer"
+          >
+            <div className="aspect-square relative group">
+              <img
+                src={music.image}
+                alt={music.title}
+                className="w-full h-full object-cover rounded-lg"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg" />
+            </div>
+            <div className="mt-2">
+              <h3 className="font-medium text-sm truncate">{music.title}</h3>
+              <p className="text-xs text-gray-500">{music.artist}</p>
+              {music.year && <p className="text-xs text-gray-400">{music.year}</p>}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const tabs = useMemo(() => [
-    { id: 'all', label: t('common.categories.all'), icon: Home, count: results.users.length + results.lists.length + results.movies.length + results.shows.length + results.people.length + results.games.length + results.books.length + results.places.length },
+    { id: 'all', label: t('common.categories.all'), icon: Home, count: results.users.length + results.lists.length + results.movies.length + results.shows.length + results.people.length + results.games.length + results.books.length + results.places.length + results.musics.length },
     { id: 'users', label: t('profile.users'), icon: Users2, count: results.users.length },
     { id: 'lists', label: t('common.lists.all') || 'Listeler', icon: ListChecks, count: results.lists.length },
     { id: 'movies', label: t('common.categories.movies'), icon: Film, count: results.movies.length },
@@ -568,6 +633,7 @@ export function Search() {
     { id: 'books', label: t('common.categories.books'), icon: Book, count: results.books.length },
     { id: 'games', label: t('common.categories.games'), icon: Gamepad2, count: results.games.length },
     { id: 'places', label: t('common.categories.places'), icon: MapPin, count: results.places.length },
+    { id: 'musics', label: t('common.categories.musics'), icon: Music, count: results.musics.length },
   ], [t, results]);
 
   const renderResults = () => {
@@ -664,7 +730,7 @@ export function Search() {
             </div>
           </div>
         ) : null;
-      case 'shows':
+      case 'series':
         return results.shows.length ? (
           <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 md:p-6">
@@ -772,6 +838,33 @@ export function Search() {
             </div>
           </div>
         ) : null;
+      case 'musics':
+        return results.musics.length ? (
+          <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
+            <div className="p-4 md:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                {results.musics.slice(0, 16).map((music) => (
+                  <div
+                    key={music.id}
+                    className="aspect-square relative group cursor-pointer"
+                  >
+                    <img
+                      src={music.image}
+                      alt={music.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                      <h3 className="font-medium text-xs line-clamp-1">{music.title}</h3>
+                      <p className="text-xs line-clamp-1">{music.artist}</p>
+                      {music.year && <p className="text-xs line-clamp-1">{music.year}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null;
       default:
         return (
           <div className="space-y-8">
@@ -872,7 +965,7 @@ export function Search() {
                   {renderShows(8)}
                   {results.shows.length > 8 && (
                     <button
-                      onClick={() => setActiveTab('shows')}
+                      onClick={() => setActiveTab('series')}
                       className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
@@ -965,6 +1058,27 @@ export function Search() {
                 </div>
               </div>
             )}
+
+            {/* Music */}
+            {results.musics.length > 0 && (
+              <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
+                <div className="p-3 bg-orange-100 border-b border-orange-200 flex items-center">
+                  <Music size={16} className="text-orange-500 mr-2" />
+                  <h2 className="text-sm font-medium text-orange-800">{t('common.categories.musics')}</h2>
+                </div>
+                <div className="p-4 md:p-6">
+                  {renderMusics(8)}
+                  {results.musics.length > 8 && (
+                    <button
+                      onClick={() => setActiveTab('musics')}
+                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                    >
+                      {t('common.seeAll')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
     }
@@ -974,39 +1088,106 @@ export function Search() {
     <div className="h-screen bg-white overflow-hidden fixed inset-0">
       <Header />
       
-      {/* Web ölçülerinde arama alanı - SubHeader alanında */}
-      <div className="hidden md:block bg-gray-100 border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[55px]">
-            <div className="flex h-full items-center space-x-4 overflow-visible">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                      activeTab === tab.id
-                        ? 'border-b-2 border-orange-500 text-orange-500'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                    {tab.count > 0 && <span className="text-xs bg-gray-200 text-gray-700 rounded-full px-1 py-0 ml-1">{tab.count}</span>}
-                  </button>
-                );
-              })}
+      {/* Web ölçülerinde kategori seçimi - arama yapıldığında */}
+      {query && (
+        <div className="hidden md:block bg-gray-100 border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[55px]">
+              <div className="flex h-full items-center space-x-4 overflow-visible">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                        activeTab === tab.id
+                          ? 'border-b-2 border-orange-500 text-orange-500'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      onClick={() => setActiveTab(tab.id)}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                      {tab.count > 0 && <span className="text-xs bg-gray-200 text-gray-700 rounded-full px-1 py-0 ml-1">{tab.count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-
           </div>
         </div>
-      </div>
+      )}
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pt-[10px] mt-0 md:pt-[55px] h-[calc(100vh-64px)] overflow-auto fixed inset-x-0 top-[64px] bottom-0">
+      {/* Web ölçülerinde kategori seçimi - arama yapılmadığında */}
+      {!query && (
+        <div className="hidden md:block bg-white border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[55px]">
+              <div className="flex h-full items-center space-x-4 overflow-x-auto scrollbar-hide">
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'all' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>{t('common.categories.all')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'movie' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('movie')}
+                >
+                  <Film className="w-4 h-4" />
+                  <span>{t('common.categories.movies')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'series' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('series')}
+                >
+                  <Tv className="w-4 h-4" />
+                  <span>{t('common.categories.series')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'game' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('game')}
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>{t('common.categories.games')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'book' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('book')}
+                >
+                  <Book className="w-4 h-4" />
+                  <span>{t('common.categories.books')}</span>
+                </button>
+                <button
+                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === 'place' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setSelectedCategory('place')}
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span>{t('common.categories.places')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pt-[10px] mt-0 md:pt-[55px] overflow-auto fixed inset-x-0" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))', bottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
         <div className="space-y-4">
           {/* Arama Input - Sadece mobil görünümde */}
-          <div className="md:hidden bg-white border-b border-gray-200 mb-2 sticky top-0 z-50">
+          <div className="md:hidden bg-white border-b border-gray-200 mb-2 sticky z-50" style={{ top: 'calc(var(--safe-area-inset-top) + var(--subheader-height))' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1038,7 +1219,7 @@ export function Search() {
           
           {/* 2. Kategori Menüsü - Sadece mobil görünümde */}
           {query ? (
-            <div className="md:hidden bg-gray-100 border-b border-gray-200 sticky top-[60px] z-40">
+            <div className="md:hidden bg-gray-100 border-b border-gray-200 sticky z-40" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height) + var(--subheader-height))' }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide py-0 my-0">
@@ -1065,7 +1246,7 @@ export function Search() {
               </div>
             </div>
           ) : (
-            <div className="md:hidden bg-white border-b border-gray-200 mb-4 sticky top-[60px] z-30">
+            <div className="md:hidden bg-white border-b border-gray-200 mb-4 sticky z-30" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height) + var(--subheader-height))' }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0 overflow-x-auto scrollbar-hide">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide">
