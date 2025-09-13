@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { House, ChatCircle, Plus, Bell, User, UserPlus } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
+import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin, Music } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { AuthPopup } from './AuthPopup';
 
@@ -12,8 +14,9 @@ interface BottomMenuProps {
 export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isLoading: isLoadingAuth } = useAuth();
+  const { user, loading: isLoadingAuth } = useAuth();
   const pathname = location.pathname;
+  const { t } = useTranslation();
   
   // State variables
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
@@ -22,6 +25,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [showCategorySheet, setShowCategorySheet] = useState(false);
 
   // Helper functions
   const checkUnreadNotifications = async (userId: string) => {
@@ -160,11 +164,12 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       navigate('/', { 
         replace: true,
-        state: { 
+    state: { 
           refresh: true,
           timestamp: new Date().getTime(),
           randomize: false,
-          forceCategory: 'all' // Kategoriyi zorla 'all' yap
+          category: 'all',
+          sortDirection: 'desc'
         } 
       });
     } else {
@@ -173,7 +178,8 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
         state: {
           refresh: true, // Sayfayı yenileme durumu
           randomize: false,
-          forceCategory: 'all' // Kategoriyi zorla 'all' yap
+          category: 'all',
+          sortDirection: 'desc'
         }
       });
     }
@@ -231,7 +237,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
 
   return (
     <>
-      <div className={`fixed-bottom-safe bg-white border-t border-gray-200 z-50 md:hidden h-[84px] bottom-with-indicator safe-x ${hidden ? 'hidden' : ''}`}>
+      <div className={`fixed-bottom-safe bg-white border-t border-gray-200 z-50 md:hidden h-[84px] safe-x ${hidden ? 'hidden' : ''}`}>
         {isLoadingAuth ? (
           // Yükleniyor durumu veya boşluk
           <div className="flex justify-around items-center h-full">
@@ -266,13 +272,19 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             <button
               onClick={() => {
                 if (user) {
-                  navigate('/select-category');
+                  // Open iOS-style category sheet instead of navigating
+                  // to SelectCategory page
+                  // Sheet UI defined below in this component
+                  ;
+                  // Set flag to show sheet
+                  // Use optional chaining to avoid TS emit issues on older builds
+                  (setShowCategorySheet as any)?.(true);
                 } else {
                   setAuthMessage('Liste oluşturmak için giriş yapmalısınız');
                   setShowAuthPopup(true);
                 }
               }}
-              className="p-2 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600"
+              className="w-12 h-12 flex items-center justify-center bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600"
             >
               <Plus size={24} weight="bold" />
             </button>
@@ -367,6 +379,67 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
         message={authMessage}
         onClose={() => setShowAuthPopup(false)}
       />
+
+      {/* Category Bottom Sheet with animation */}
+      {showCategorySheet && (
+        <div className="fixed inset-0 z-[60]" onClick={() => { setShowCategorySheet(false); }}>
+          <div className="absolute inset-0 bg-black/40 transition-opacity duration-300 opacity-100" />
+          <div
+            className="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl shadow-2xl transform transition-transform duration-300 ease-out translate-y-0"
+            style={{ paddingBottom: 'calc(16px + var(--safe-area-inset-bottom))' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-2 mb-1" />
+            <div className="text-center mb-2 px-4">
+              <h3 className="text-sm font-medium text-gray-900">
+                {t('listPreview.listDetails.selectCategory') as string}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {(t('listPreview.listDetails.selectCategoryDescription') as string) || 'Liste oluşturmak için bir kategori seçebilirsiniz.'}
+              </p>
+            </div>
+            <div className="px-4 pb-2">
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  { id: 'movies', label: t('common.categories.movies'), Icon: Film },
+                  { id: 'series', label: t('common.categories.series'), Icon: Tv },
+                  { id: 'books', label: t('common.categories.books'), Icon: Book },
+                  { id: 'games', label: t('common.categories.games'), Icon: Gamepad2 },
+                  { id: 'people', label: t('common.categories.people'), Icon: Users2 },
+                  { id: 'videos', label: t('common.categories.videos'), Icon: Video },
+                  { id: 'places', label: t('common.categories.places'), Icon: MapPin },
+                  { id: 'musics', label: t('common.categories.musics'), Icon: Music },
+                ].map(({ id, label, Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      setShowCategorySheet(false);
+                      navigate(`/create-list/${id}`);
+                    }}
+                    className="group flex flex-col items-center justify-center h-20 bg-white border border-gray-200 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.06)] active:scale-95 hover:border-orange-300 hover:shadow-[0_2px_12px_rgba(251,146,60,0.15)] transition-all duration-200 ease-out"
+                    aria-label={String(label)}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gray-50 ring-1 ring-gray-100 flex items-center justify-center mb-1 group-hover:bg-orange-50 group-hover:ring-orange-200 transition-all duration-200">
+                      <Icon size={20} className="text-gray-700 group-hover:text-orange-600 transition-colors duration-200" />
+                    </div>
+                    <span className="text-[11px] text-gray-900 font-medium line-clamp-1 group-hover:text-orange-700 transition-colors duration-200">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="px-4 mt-1">
+              <button
+                onClick={() => setShowCategorySheet(false)}
+                className="w-full py-3 text-sm text-gray-600 bg-gray-100 rounded-xl active:scale-95"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </>
   );
 };

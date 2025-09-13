@@ -368,7 +368,6 @@ export function Blog() {
         </div>
       </div>
 
-      <BottomMenu />
     </>
   );
 } 

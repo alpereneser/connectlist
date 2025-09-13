@@ -47,18 +47,30 @@
   - Real-time subscriptions
   - Authentication
   - Storage
+  - Edge Functions
 - **Netlify** - Deployment and hosting
-- **SendGrid** - Email notifications
+  - Serverless Functions
+  - Edge Functions
+  - CI/CD Pipeline
+  - Environment Management
+- **SendGrid** - Email notifications and transactional emails
 - **TMDB API** - Movie and TV data
 - **Google Books API** - Book information
 - **RAWG API** - Game database
-- **Google Places API** - Location data
+- **Google Places API** - Location data with photo support
+- **Foursquare API** - Additional place information
+- **YouTube API** - Video content integration
 
 ### Development Tools
 - **ESLint** - Code linting
 - **Prettier** - Code formatting
 - **Phosphor Icons** - Beautiful icon library
+- **Lucide React** - Additional icon library
 - **PostCSS** - CSS processing
+- **Netlify CLI** - Local development and deployment
+- **MCP (Model Context Protocol)** - AI-powered development assistance
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and dev server
 
 ## 🚀 Getting Started
 
@@ -84,30 +96,59 @@
    
    Create a `.env` file in the root directory:
    ```env
-   # Supabase
+   # Supabase Configuration
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    
-   # API Keys
+   # External API Keys
    VITE_TMDB_API_KEY=your_tmdb_api_key
    VITE_GOOGLE_BOOKS_API_KEY=your_google_books_api_key
    VITE_RAWG_API_KEY=your_rawg_api_key
    VITE_GOOGLE_PLACES_API_KEY=your_google_places_api_key
    VITE_FOURSQUARE_API_KEY=your_foursquare_api_key
+   VITE_YOUTUBE_API_KEY=your_youtube_api_key
    
-   # Email Service
+   # Email Service Configuration
    SENDGRID_API_KEY=your_sendgrid_api_key
    SENDGRID_FROM_EMAIL=your_verified_email
+   SENDGRID_TEMPLATE_ID=your_template_id
+   
+   # Analytics & Monitoring
+   VITE_GA_MEASUREMENT_ID=your_google_analytics_id
+   VITE_CLARITY_PROJECT_ID=your_clarity_project_id
+   
+   # MCP Configuration
+   MCP_SUPABASE_CONNECTION_STRING=your_postgres_connection_string
+   MCP_FIGMA_ACCESS_TOKEN=your_figma_access_token
    ```
 
 4. **Start development server**
    ```bash
    npm run dev
    ```
+   This will start Netlify Dev which includes both the frontend and serverless functions.
 
 5. **Open your browser**
    
-   Navigate to `http://localhost:3000`
+   Navigate to `http://localhost:8888` (Netlify Dev default port)
+
+### Available Scripts
+
+```bash
+# Development
+npm run dev          # Start Netlify Dev server with functions
+npm run preview      # Preview production build locally
+
+# Building
+npm run build        # Build for production
+npm run lint         # Run ESLint
+
+# MCP Servers
+npm run mcp:supabase # Start Supabase MCP server
+npm run mcp:figma    # Start Figma MCP server
+npm run mcp:start    # Start default MCP server
+```
 
 ### Building for Production
 
@@ -120,6 +161,10 @@ npm run build
 ```
 connectlist/
 ├── public/                 # Static assets
+│   ├── manifest.json      # PWA manifest
+│   ├── serviceWorker.js   # Service worker for offline functionality
+│   ├── sitemap.xml        # SEO sitemap
+│   └── _headers           # Netlify headers configuration
 ├── src/
 │   ├── components/        # Reusable UI components
 │   ├── pages/            # Page components
@@ -131,10 +176,20 @@ connectlist/
 │   └── utils/            # Helper functions
 ├── netlify/
 │   └── functions/        # Serverless functions
+│       ├── daily-digest.js        # Email digest automation
+│       ├── google-places-proxy.ts # Places API proxy
+│       ├── dynamic-sitemap.ts     # Dynamic sitemap generation
+│       └── email-test.js          # Email testing utilities
 ├── supabase/
 │   ├── migrations/       # Database migrations
 │   └── functions/        # Edge functions
-└── scripts/              # Build and utility scripts
+├── scripts/              # Build and utility scripts
+│   ├── mcp-supabase.js   # MCP Supabase server
+│   ├── mcp-figma.cjs     # MCP Figma integration
+│   └── test-mcp-connection.js # MCP testing utilities
+├── netlify.toml          # Netlify configuration
+├── DOCUMENTATION.md      # Comprehensive project documentation
+└── package.json          # Dependencies and scripts
 ```
 
 ## 🌍 Deployment
@@ -187,12 +242,34 @@ npm run build
 
 ## 📱 Recent Updates
 
-### Mobile Layout Improvements (Latest)
+### Latest Features & Improvements
+
+#### 🚀 Netlify Functions & Email System
+- **Daily Digest Function**: Automated daily email digest system with user activity summaries
+- **Email Service Integration**: SendGrid integration for transactional emails and notifications
+- **Google Places Proxy**: Secure API proxy for location data with photo support
+- **Dynamic Sitemap**: Automated sitemap generation for better SEO
+- **Email Testing**: Comprehensive email testing infrastructure
+
+#### 🔧 MCP (Model Context Protocol) Integration
+- **Supabase MCP Server**: Direct database access and management through MCP
+- **Figma MCP Server**: Design system integration for development workflow
+- **PostgreSQL MCP**: Advanced database operations and analytics
+- **Development Scripts**: Automated MCP server management and testing
+
+#### 📱 Mobile Layout Improvements
 - **Fixed Search Page**: Resolved mobile category menu sticky positioning with proper header offset calculations
 - **Fixed Profile Page**: Updated mobile padding to prevent content overlap with header elements
 - **Fixed Settings Page**: Corrected sticky tab navigation positioning for mobile devices
 - **Standardized Safe Areas**: Implemented consistent CSS variables for mobile safe area calculations across all pages
 - **Enhanced Mobile UX**: All sticky elements now properly account for device safe areas and header heights
+
+#### 🛠️ Infrastructure & DevOps
+- **Netlify CLI Integration**: Streamlined development workflow with `netlify dev`
+- **Production Deployment**: Automated CI/CD pipeline with build optimization
+- **Function Dependencies**: Isolated package management for serverless functions
+- **Environment Configuration**: Enhanced environment variable management
+- **Build Optimization**: Improved build process with chunk size optimization
 
 ## 🔧 Configuration
 

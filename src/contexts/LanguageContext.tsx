@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { detectUserLocation } from '../i18n/locationDetector';
 
 interface LanguageContextType {
@@ -15,7 +15,6 @@ const LanguageContext = createContext<LanguageContextType>({
 export const useLanguage = () => useContext(LanguageContext);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const { i18n } = useTranslation();
   const [language, setLanguageState] = useState<string>(localStorage.getItem('i18nextLng') || 'tr');
   const [isLoading, setIsLoading] = useState<boolean>(true);
 

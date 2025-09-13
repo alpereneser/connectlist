@@ -4,7 +4,6 @@ import { Users2, Plus, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
-import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { AddToListModal } from '../../components/AddToListModal';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
@@ -464,7 +463,6 @@ export function PersonDetails() {
           </div>
         </div>
       </div>
-      <BottomMenu />
 
       {/* Add to List Modal */}
       <AddToListModal

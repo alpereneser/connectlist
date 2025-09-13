@@ -12,7 +12,8 @@ import {
   User, 
   MapPin,
   Plus,
-  MusicNotes
+  MusicNotes,
+  VideoCamera
 } from '@phosphor-icons/react';
 
 interface SubHeaderProps {
@@ -33,14 +34,15 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
 
   // Tab configuration with Phosphor icons
   const tabs = [
-    { id: 'all', label: t('search.categories.all'), icon: ListBullets, count: 0 },
-    { id: 'places', label: t('search.tabs.places'), icon: MapPin, count: 0 },
-    { id: 'musics', label: t('search.tabs.musics'), icon: MusicNotes, count: 0 },
-    { id: 'movies', label: t('search.categories.movies'), icon: FilmStrip, count: 0 },
-    { id: 'series', label: t('search.categories.series'), icon: Television, count: 0 },
-    { id: 'books', label: t('search.categories.books'), icon: Book, count: 0 },
-    { id: 'games', label: t('search.categories.games'), icon: GameController, count: 0 },
-    { id: 'people', label: t('search.tabs.people'), icon: User, count: 0 },
+    { id: 'all', label: t('common.categories.all'), icon: ListBullets, count: 0 },
+    { id: 'places', label: t('common.categories.places'), icon: MapPin, count: 0 },
+    { id: 'musics', label: t('common.categories.musics'), icon: MusicNotes, count: 0 },
+    { id: 'movies', label: t('common.categories.movies'), icon: FilmStrip, count: 0 },
+    { id: 'series', label: t('common.categories.series'), icon: Television, count: 0 },
+    { id: 'books', label: t('common.categories.books'), icon: Book, count: 0 },
+    { id: 'games', label: t('common.categories.games'), icon: GameController, count: 0 },
+    { id: 'videos', label: t('common.categories.videos'), icon: VideoCamera, count: 0 },
+    { id: 'people', label: t('common.categories.people'), icon: User, count: 0 },
   ];
 
   // Mobile detection with orientation support
@@ -175,11 +177,10 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
     <div 
       className={`
         fixed left-0 right-0 z-30
-        bg-white border-b border-gray-200 
-        ${isMobile ? 'top-14' : 'top-16'}
+        bg-white border-b border-gray-200 shadow-sm
       `}
       style={{
-        top: isMobile ? '56px' : '64px' // Header height
+        top: 'calc(var(--safe-area-inset-top) + var(--header-height))'
       }}
       role="navigation"
       aria-label="Kategori navigasyonu"

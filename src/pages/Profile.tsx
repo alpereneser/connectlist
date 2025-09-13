@@ -3,12 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthPopup } from '../components/AuthPopup';
 import { useTranslation } from 'react-i18next';
 import { useRequireAuth } from '../hooks/useRequireAuth';
-import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, GridFour, List, Heart, Eye } from '@phosphor-icons/react';
+import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, Heart } from '@phosphor-icons/react';
 import { FollowModal } from '../components/FollowModal';
 import { ListPreview } from '../components/ListPreview';
 import { ProfileCategories } from '../components/ProfileCategories';
-import { Header } from '../components/Header';
-import { BottomMenu } from '../components/BottomMenu';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { getUserLists, followUser, unfollowUser, checkIfFollowing, getFollowers, getFollowing, checkMutualFollow } from '../lib/api';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -506,8 +504,7 @@ export function Profile() {
         <Helmet>
           <title>{t('common.loading')} - ConnectList</title>
         </Helmet>
-        <Header />
-        <div className="min-h-screen bg-gray-100 pt-16"> {/* Add padding top */}
+        <div className="min-h-screen bg-gray-100 pt-0">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">
               <div className="h-32 bg-gray-200 rounded-lg mb-4"></div>
@@ -517,7 +514,6 @@ export function Profile() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -525,14 +521,13 @@ export function Profile() {
   if (error || !profile) {
     return (
       <>
-        <Helmet>
-          <title>{t('common.error')} - ConnectList</title>
-        </Helmet>
-        <Header />
-        <div className="min-h-screen bg-gray-100 pt-16 flex items-center justify-center">
-          <p className="text-red-500">{error || t('profile.notFound')}</p>
-        </div>
-        <BottomMenu />
+      <Helmet>
+        <title>{t('common.error')} - ConnectList</title>
+      </Helmet>
+      <div className="min-h-screen bg-gray-100 pt-16 flex items-center justify-center">
+        <p className="text-red-500">{error || t('profile.notFound')}</p>
+      </div>
+      
       </>
     );
   }
@@ -548,8 +543,6 @@ export function Profile() {
         {profileImage && <meta property="og:image" content={profileImage} />}
         <meta property="og:type" content="profile" />
       </Helmet>
-
-      <Header />
       {/* ANA DIV BURADA BAŞLIYOR */}
       <div className="min-h-screen bg-white md:bg-gray-100" data-component-name="Profile" style={{
       paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height))',
@@ -563,13 +556,13 @@ export function Profile() {
           )}
 
           <div className="bg-white">
-            <div className="md:pt-[21px] px-6 md:pb-6">
-              {/* Mobile Layout - Instagram Style */}
-              <div className="md:hidden px-4 py-2">
-                {/* Header Row */}
-                <div className="flex items-center justify-between mb-4">
+            <div className="md:pt-[16px] px-4 md:px-6 md:pb-6">
+          {/* Mobile Layout - Instagram Style */}
+          <div className="md:hidden px-2 py-2 mt-0">
+                {/* Header Row - Avatar left, name above stats */}
+                <div className="flex items-center gap-3 mb-3">
                   {/* Avatar */}
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img
                       src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${Date.now()}` : "https://api.dicebear.com/7.x/avataaars/svg"}
                       alt={profile?.full_name}
@@ -580,27 +573,27 @@ export function Profile() {
                     />
                   </div>
 
-                  {/* Stats Row */}
-                  <div className="flex-1 flex justify-around px-6">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{filteredLists.length}</div>
-                      <div className="text-sm text-gray-500">{t('profile.lists')}</div>
+                  {/* Name above stats */}
+                  <div className="flex-1 min-w-0">
+                    <div className="min-w-0 mb-2">
+                      <h1 className="text-sm font-semibold text-gray-900 leading-tight truncate">{profile?.full_name}</h1>
+                      <p className="text-xs text-gray-500 truncate">@{profile?.username}</p>
                     </div>
-                    <button onClick={handleShowFollowers} className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{profile?.followers_count}</div>
-                      <div className="text-sm text-gray-500">{t('profile.followers')}</div>
-                    </button>
-                    <button onClick={handleShowFollowing} className="text-center">
-                      <div className="text-lg font-bold text-gray-900">{profile?.following_count}</div>
-                      <div className="text-sm text-gray-500">{t('profile.following')}</div>
-                            </button>
-                          </div>
-                </div>
-
-                {/* Name & Username */}
-                <div className="mb-3">
-                  <h1 className="text-base font-semibold text-gray-900">{profile?.full_name}</h1>
-                  <p className="text-sm text-gray-500">@{profile?.username}</p>
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <div className="text-base font-semibold text-gray-900 leading-none">{filteredLists.length}</div>
+                        <div className="text-[11px] text-gray-500 leading-none mt-0.5">{t('profile.lists')}</div>
+                      </div>
+                      <button onClick={handleShowFollowers} className="text-center">
+                        <div className="text-base font-semibold text-gray-900 leading-none">{profile?.followers_count}</div>
+                        <div className="text-[11px] text-gray-500 leading-none mt-0.5">{t('profile.followers')}</div>
+                      </button>
+                      <button onClick={handleShowFollowing} className="text-center">
+                        <div className="text-base font-semibold text-gray-900 leading-none">{profile?.following_count}</div>
+                        <div className="text-[11px] text-gray-500 leading-none mt-0.5">{t('profile.following')}</div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Bio */}
@@ -793,45 +786,7 @@ export function Profile() {
             />
           </div>
 
-          {/* Mobile View Toggle */}
-          <div className="md:hidden px-4 mb-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {activeCategory === 'all' ? 'Tüm Listeler' : 
-                 activeCategory === 'movies' ? 'Filmler' :
-                 activeCategory === 'series' ? 'Diziler' :
-                 activeCategory === 'books' ? 'Kitaplar' :
-                 activeCategory === 'games' ? 'Oyunlar' :
-                 activeCategory === 'people' ? 'Kişiler' :
-                 activeCategory === 'videos' ? 'Videolar' :
-                 activeCategory === 'places' ? 'Yerler' : 'Listeler'}
-                <span className="text-sm text-gray-500 ml-2">({filteredLists.length})</span>
-              </h2>
-              
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <button
-                  onClick={() => setMobileViewMode('list')}
-                  className={`p-2 rounded-md transition-all ${
-                    mobileViewMode === 'list'
-                      ? 'bg-white text-orange-500 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  <List size={18} />
-                </button>
-                <button
-                  onClick={() => setMobileViewMode('grid')}
-                  className={`p-2 rounded-md transition-all ${
-                    mobileViewMode === 'grid'
-                      ? 'bg-white text-orange-500 shadow-sm'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  <GridFour size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
+          {/* Mobile View Toggle removed as requested */}
 
           {/* Kullanıcının Listeleri - Mobile */}
           <div ref={mobileListContainerRef} className="md:hidden bg-gray-50 min-h-screen">
@@ -999,22 +954,7 @@ export function Profile() {
               </div>
             )}
             
-                        {/* Footer */}
-                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
-                          <div className="flex items-center space-x-2">
-                            <img
-                              src={list.profiles.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${list.profiles.full_name}`}
-                              alt={list.profiles.full_name}
-                              className="w-7 h-7 rounded-full"
-                            />
-                            <span className="text-sm text-gray-600 font-medium">@{list.profiles.username}</span>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 text-orange-500">
-                            <Eye size={16} />
-                            <span className="text-sm font-semibold">Görüntüle</span>
-                          </div>
-                        </div>
+                        {/* Footer kaldırıldı: profil sayfasında liste sahibi ve ikonlar gereksiz */}
                       </div>
                     )}
                   </div>
@@ -1070,8 +1010,10 @@ export function Profile() {
                       user_id: list.user_id,
                       profiles: list.profiles
                     }}
-                    items={list.items} 
-                    onListClick={() => setLastViewedListId(list.id)} 
+                    items={list.items}
+                    onListClick={() => setLastViewedListId(list.id)}
+                    hideAuthor={true}
+                    hideActions={true}
                   />
                 </div>
               ))
@@ -1099,7 +1041,7 @@ export function Profile() {
           </div>
         </div>
       </div>
-      <BottomMenu />
+      
       <AuthPopup
         isOpen={showAuthPopup}
         onClose={() => setShowAuthPopup(false)}

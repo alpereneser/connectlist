@@ -425,7 +425,6 @@ export function SeriesDetails() {
           </div>
         </div>
       </div>
-      <BottomMenu />
 
       {/* Add to List Modal */}
       <AddToListModal

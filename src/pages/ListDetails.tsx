@@ -208,6 +208,7 @@ export default function ListDetails() {
   const { requireAuth, showAuthPopup, setShowAuthPopup, authMessage } = useRequireAuth();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showItemDeleteConfirm, setShowItemDeleteConfirm] = useState<string | null>(null);
+  const [isDeletingList, setIsDeletingList] = useState(false);
 
   const [comments, setComments] = useState<any[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(true);
@@ -647,7 +648,8 @@ export default function ListDetails() {
   // Liste silme fonksiyonu
   const handleDelete = async () => {
     if (!listId) return;
-    
+    // Show deleting banner
+    setIsDeletingList(true);
 
 
     try {
@@ -690,19 +692,20 @@ export default function ListDetails() {
         console.warn('RLS uyarısı (liste silme - görmezden gelinebilir):', error);
       }
       
-      // 3. Adım: Anasayfaya yönlendir
+      // 3. Adım: Anasayfaya yönlendir (ALL + desc)
       navigate('/', { 
         replace: true, 
         state: { 
           refresh: true, 
           timestamp: new Date().getTime(),
-          forceCategory: 'all',
-          sortDirection: 'desc' // Listeleri sondan başa doğru sırala
+          category: 'all',
+          sortDirection: 'desc'
         } 
       });
     } catch (error) {
       console.error('Liste silme hatası:', error);
       alert(t('common.errors.deleteFailed'));
+      setIsDeletingList(false);
     }
   };
 
@@ -787,8 +790,7 @@ export default function ListDetails() {
   if (isLoading) {
     return (
       <>
-        <Header />
-        <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[64px]">
+        <div className="min-h-screen bg-gray-100" style={{ paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="animate-pulse">
@@ -816,7 +818,6 @@ export default function ListDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -829,8 +830,7 @@ export default function ListDetails() {
           <meta name="description" content={t('common.errors.listNotFoundDescription')} />
           <meta name="robots" content="noindex, follow" />
         </Helmet>
-        <Header />
-        <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[105px]">
+        <div className="min-h-screen bg-gray-100" style={{ paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="p-6 text-center">
@@ -839,7 +839,6 @@ export default function ListDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -855,6 +854,13 @@ export default function ListDetails() {
   
   return (
     <>
+      {isDeletingList && (
+        <div className="fixed left-0 right-0 z-50 flex items-center justify-center" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}>
+          <div className="m-2 px-4 py-2 rounded-full bg-orange-500 text-white text-sm shadow">
+            {i18n.language === 'tr' ? 'Liste siliniyor…' : 'Deleting list…'}
+          </div>
+        </div>
+      )}
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -900,8 +906,7 @@ export default function ListDetails() {
           })}
         </script>
       </Helmet>
-      <Header />
-      <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 pt-[64px]">
+      <div className="min-h-screen bg-gray-100" style={{ paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Liste Başlığı ve Bilgileri */}
@@ -1149,10 +1154,37 @@ export default function ListDetails() {
                         case 'video':
                           window.open(`https://www.youtube.com/watch?v=${item.external_id}`, '_blank');
                           break;
-                        case 'music':
-                          // Müzik için Spotify linkini aç (external_id Spotify track ID'si olarak varsayılır)
-                          window.open(`https://open.spotify.com/track/${item.external_id}`, '_blank');
+                        case 'music': {
+                          // Music items should open in YouTube Music
+                          const eid = item.external_id || '';
+                          let target = '';
+                          if (/^[a-zA-Z0-9_-]{11}$/.test(eid)) {
+                            // Looks like a YouTube video id
+                            target = `https://music.youtube.com/watch?v=${eid}`;
+                          } else if (eid.startsWith('http')) {
+                            // If a full URL was stored previously
+                            if (eid.includes('youtube.com') || eid.includes('youtu.be')) {
+                              // Map to music.youtube.com domain when possible
+                              try {
+                                const u = new URL(eid);
+                                const v = u.searchParams.get('v');
+                                target = v ? `https://music.youtube.com/watch?v=${v}` : eid.replace('www.youtube.com', 'music.youtube.com');
+                              } catch {
+                                target = eid;
+                              }
+                            } else if (eid.includes('spotify.com')) {
+                              // Fallback: open a YouTube Music search by title
+                              target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title)}`;
+                            } else {
+                              target = eid;
+                            }
+                          } else {
+                            // Fallback: search by title
+                            target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title)}`;
+                          }
+                          window.open(target, '_blank');
                           break;
+                        }
                         case 'place':
                           // Mekan için Google Maps linkini aç
                           window.open(`https://www.google.com/maps/place/?q=place_id:${item.external_id}`, '_blank');
@@ -1547,7 +1579,6 @@ export default function ListDetails() {
           <span>{t('listPreview.linkCopied')}</span>
         </div>
       )}
-      <BottomMenu />
     </>
   );
 }

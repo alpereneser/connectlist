@@ -4,7 +4,6 @@ import { Search, Mic, MicOff, Clock, X, TrendingUp, SlidersHorizontal, Calendar,
 import { searchTMDB, searchGames, searchBooks, searchUsers, searchLists, getDefaultPlaceImage } from '../lib/api';
 import { Header } from '../components/Header';
 import { SubHeader } from '../components/SubHeader';
-import { BottomMenu } from '../components/BottomMenu';
 import { useDebounce } from '../hooks/useDebounce';
 import { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY } from '../lib/api';
 
@@ -1782,7 +1781,6 @@ export function MobileSearch() {
         </div>
         )}
       </div>
-      <BottomMenu />
     </>
   );
 }

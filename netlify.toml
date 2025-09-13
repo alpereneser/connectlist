@@ -9,6 +9,9 @@
   targetPort = 5173
   functionsPort = 8888
 
+[functions."daily-digest"]
+  schedule = "@daily"
+
 # Dynamic sitemap routes
 [[redirects]]
   from = "/sitemap-*.xml"

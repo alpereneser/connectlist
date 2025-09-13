@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Header } from '../components/Header';
-import { BottomMenu } from '../components/BottomMenu';
 import { supabaseBrowser } from '../lib/supabase-browser';
 import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications } from '../lib/api';
 import { turkishToEnglish } from '../lib/utils';
@@ -562,7 +560,14 @@ export function Notifications() {
           navigate(`/profile/${notification.data.username}`);
           break;
         case 'message':
-          navigate('/messages');
+          // Eğer gönderenden konuşma başlatmak için kullanıcı id'si/username geldiyse state ile aktar
+          if (notification.data?.sender_id) {
+            navigate('/messages', { state: { userId: notification.data.sender_id } });
+          } else if (notification.data?.username) {
+            navigate('/messages', { state: { username: notification.data.username } });
+          } else {
+            navigate('/messages');
+          }
           break;
       }
     } catch (error) {
@@ -620,15 +625,19 @@ export function Notifications() {
   };
 
   const getNotificationText = (notification: Notification) => {
+    const tr = i18n.language?.toLowerCase().startsWith('tr');
+    const u = notification.data?.username || '';
+    const title = notification.data?.list_title || '';
+    const msg = notification.data?.message_text || '';
     switch (notification.type) {
       case 'like':
-        return `${notification.data.username} listenizi beğendi: ${notification.data.list_title}`;
+        return tr ? `${u} listenizi beğendi: ${title}` : `${u} liked your list: ${title}`;
       case 'comment':
-        return `${notification.data.username} listenize yorum yaptı: ${notification.data.list_title}`;
+        return tr ? `${u} listenize yorum yaptı: ${title}` : `${u} commented on your list: ${title}`;
       case 'follow':
-        return `${notification.data.username} sizi takip etmeye başladı`;
+        return tr ? `${u} sizi takip etmeye başladı` : `${u} started following you`;
       case 'message':
-        return `${notification.data.username} size mesaj gönderdi: ${notification.data.message_text}`;
+        return tr ? `${u} size mesaj gönderdi: ${msg}` : `${u} sent you a message: ${msg}`;
       default:
         return '';
     }
@@ -730,14 +739,12 @@ export function Notifications() {
         {announceMessage}
       </div>
 
-      <Header />
-      
-      {/* Modern Mobile Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="flex items-center justify-between p-4">
+      {/* Page Header below global header (Instagram-like) */}
+      <div className="bg-white border-b sticky z-40" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}>
+        <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-bold text-gray-900">
-              Bildirimler
+            <h1 className="text-base font-semibold text-gray-900">
+              {t('common.notifications.title', 'Notifications')}
             </h1>
             {notifications.filter(n => !n.is_read).length > 0 && (
               <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
@@ -756,7 +763,7 @@ export function Notifications() {
                 }
               }}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Ara"
+              aria-label={t('common.search', 'Search')}
             >
               <Search className="h-5 w-5 text-gray-600" />
             </button>
@@ -767,7 +774,7 @@ export function Notifications() {
               className={`p-2 rounded-full transition-colors ${
                 showFilters ? 'bg-orange-100 text-orange-600' : 'hover:bg-gray-100 text-gray-600'
               }`}
-              aria-label="Filtrele"
+              aria-label={t('common.notifications.filter', 'Filter')}
               aria-pressed={showFilters}
             >
               <Filter className="h-5 w-5" />
@@ -779,7 +786,7 @@ export function Notifications() {
               className={`p-2 rounded-full transition-colors ${
                 isSelectionMode ? 'bg-orange-100 text-orange-600' : 'hover:bg-gray-100 text-gray-600'
               }`}
-              aria-label="Seçim modu"
+              aria-label={t('common.notifications.selectionMode', 'Selection mode')}
               aria-pressed={isSelectionMode}
             >
               <Check className="h-5 w-5" />
@@ -797,16 +804,16 @@ export function Notifications() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Bildirimlerde ara..."
+                placeholder={t('common.notifications.searchPlaceholder', 'Search notifications...')}
                 className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
                 role="searchbox"
-                aria-label="Bildirimlerde ara"
+                aria-label={t('common.notifications.searchPlaceholder', 'Search notifications...')}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200"
-                  aria-label="Aramayı temizle"
+                  aria-label={t('common.notifications.clear', 'Clear')}
                 >
                   <X className="h-4 w-4 text-gray-400" />
                 </button>
@@ -819,15 +826,15 @@ export function Notifications() {
         {showFilters && (
           <div className="px-4 pb-4 border-t bg-gray-50">
             <div className="py-3">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Filtreler</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">{t('common.notifications.filters', 'Filters')}</h3>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { key: 'all', label: 'Tümü', icon: Bell },
-                  { key: 'unread', label: 'Okunmamış', icon: BellOff },
-                  { key: 'like', label: 'Beğeniler', icon: Heart },
-                  { key: 'comment', label: 'Yorumlar', icon: MessageCircle },
-                  { key: 'follow', label: 'Takipçiler', icon: UserPlus },
-                  { key: 'message', label: 'Mesajlar', icon: Mail }
+                  { key: 'all', label: t('common.notifications.all', 'All'), icon: Bell },
+                  { key: 'unread', label: t('common.notifications.unread', 'Unread'), icon: BellOff },
+                  { key: 'like', label: t('common.notifications.likes', 'Likes'), icon: Heart },
+                  { key: 'comment', label: t('common.notifications.comments', 'Comments'), icon: MessageCircle },
+                  { key: 'follow', label: t('common.notifications.followers', 'Follows'), icon: UserPlus },
+                  { key: 'message', label: t('common.notifications.messages', 'Messages'), icon: Mail }
                 ].map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
@@ -855,7 +862,7 @@ export function Notifications() {
                       onChange={(e) => setIsGrouped(e.target.checked)}
                       className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                     />
-                    <span className="text-sm text-gray-600">Grupla</span>
+                    <span className="text-sm text-gray-600">{t('common.notifications.group', 'Group')}</span>
                   </label>
                 </div>
                 
@@ -867,7 +874,7 @@ export function Notifications() {
                   }}
                   className="text-sm text-orange-600 hover:text-orange-700"
                 >
-                  Temizle
+                  {t('common.notifications.clear', 'Clear')}
                 </button>
               </div>
             </div>
@@ -878,7 +885,7 @@ export function Notifications() {
         {isSelectionMode && selectedNotifications.size > 0 && (
           <div className="px-4 py-3 bg-orange-50 border-t flex items-center justify-between">
             <span className="text-sm text-gray-600">
-              {selectedNotifications.size} bildirim seçildi
+              {t('common.notifications.selectedCount', '{{count}} selected', { count: selectedNotifications.size })}
             </span>
             <div className="flex items-center space-x-2">
               <button
@@ -886,14 +893,14 @@ export function Notifications() {
                 className="flex items-center space-x-1 px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors"
               >
                 <Check className="h-4 w-4" />
-                <span>Okundu</span>
+                <span>{t('common.notifications.markRead', 'Read')}</span>
               </button>
               <button
                 onClick={() => handleBulkAction('delete')}
                 className="flex items-center space-x-1 px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
-                <span>Sil</span>
+                <span>{t('common.delete', 'Delete')}</span>
               </button>
             </div>
           </div>
@@ -925,32 +932,34 @@ export function Notifications() {
       {/* Main Content */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto bg-gray-50 pt-12"
         onTouchStart={handlePullStart}
         onTouchMove={handlePullMove}
         onTouchEnd={handlePullEnd}
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="main"
-        aria-label="Bildirimler listesi"
+        aria-label={t('common.notifications.listAria', 'Notifications list')}
       >
-      <div className="min-h-screen bg-gray-100 pt-[15px] pb-16">
-        <div className="bg-white max-w-2xl mx-auto shadow-sm rounded-lg overflow-hidden">
+      <div className="px-4 pb-16">
+        <div className="max-w-2xl mx-auto">
             {isLoading ? (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-                <p className="mt-2 text-gray-500 text-sm">Bildirimler yükleniyor...</p>
+                <p className="mt-2 text-gray-500 text-sm">{t('common.notifications.loading', 'Loading notifications...')}</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-6 text-center">
-                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2">Henüz bildiriminiz yok</p>
-                <p className="text-gray-400 text-sm">Yeni bildirimler burada görünecek</p>
+              <div className="text-center mt-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm border border-gray-200">
+                  <Bell className="h-8 w-8 text-gray-300" />
+                </div>
+                <p className="text-gray-600 text-sm mt-4">{t('common.notifications.noNotifications', 'No notifications yet')}</p>
+                <p className="text-gray-400 text-xs mt-1">{t('common.notifications.noNotificationsHint', 'New notifications will appear here')}</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 bg-white rounded-xl shadow-sm border border-gray-100">
                 {/* Action buttons - only show if there are notifications */}
-                <div className="p-4 bg-gray-50 border-b flex flex-wrap gap-2 justify-between">
+                <div className="px-4 py-3 bg-white border-b flex flex-wrap gap-2 justify-between rounded-t-xl">
                   <div className="flex gap-2">
               <button
                 onClick={handleMarkAllRead}
@@ -962,16 +971,16 @@ export function Notifications() {
                       ) : (
                         <Check className="h-3 w-3" />
                       )}
-                      <span>Tümü Okundu</span>
-              </button>
-              <button
-                onClick={handleDeleteAllNotifications}
+                      <span className="text-xs">{t('common.notifications.markAllRead', 'Mark all as read')}</span>
+                  </button>
+                  <button
+                    onClick={handleDeleteAllNotifications}
                       className="flex items-center space-x-1 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-              >
+                  >
                       <Trash2 className="h-3 w-3" />
-                      <span>Tümünü Sil</span>
-              </button>
-            </div>
+                      <span className="text-xs">{t('common.notifications.deleteAll', 'Delete all')}</span>
+                  </button>
+                </div>
           </div>
 
                 {/* Notifications List */}
@@ -1025,6 +1034,10 @@ export function Notifications() {
                             style={{
                               transform: `translateX(${swipeOffsetValue}px)`
                             }}
+                            role="button"
+                            tabIndex={0}
+                            aria-describedby={`notification-${notification.id}-description`}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNotificationClick(notification); } }}
                             onTouchStart={(e) => handleTouchStart(e, notification.id)}
                             onTouchMove={(e) => handleTouchMove(e, notification.id)}
                             onTouchEnd={() => handleTouchEnd(notification.id)}
@@ -1260,7 +1273,7 @@ export function Notifications() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h2 id="notification-detail-title" className="text-lg font-semibold text-gray-900">
-                Bildirim Detayı
+                {t('common.notifications.detail', 'Notification Detail')}
               </h2>
               <button
                 onClick={() => setShowNotificationDetail(null)}
@@ -1284,10 +1297,10 @@ export function Notifications() {
                   <div className="flex items-center space-x-2 mb-1">
                     {getNotificationIcon(showNotificationDetail.type)}
                     <span className="text-sm font-medium text-gray-900 capitalize">
-                      {showNotificationDetail.type === 'like' ? 'Beğeni' :
-                       showNotificationDetail.type === 'comment' ? 'Yorum' :
-                       showNotificationDetail.type === 'follow' ? 'Takip' :
-                       showNotificationDetail.type === 'message' ? 'Mesaj' : showNotificationDetail.type}
+                      {(showNotificationDetail.type === 'like' ? t('common.notifications.like', 'Like') :
+                        showNotificationDetail.type === 'comment' ? t('common.notifications.comment', 'Comment') :
+                        showNotificationDetail.type === 'follow' ? t('common.notifications.follow', 'Follow') :
+                        showNotificationDetail.type === 'message' ? t('common.notifications.message', 'Message') : showNotificationDetail.type)}
                     </span>
                     {!showNotificationDetail.is_read && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full" />
@@ -1299,7 +1312,7 @@ export function Notifications() {
                   </p>
                   
                   <p className="text-xs text-gray-500">
-                    {new Date(showNotificationDetail.created_at).toLocaleString('tr-TR', {
+                    {new Date(showNotificationDetail.created_at).toLocaleString(i18n.language?.toLowerCase().startsWith('tr') ? 'tr-TR' : 'en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -1314,7 +1327,7 @@ export function Notifications() {
               {/* Additional Info */}
               {showNotificationDetail.data.list_title && (
                 <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-1">İlgili Liste</h4>
+                  <h4 className="text-sm font-medium text-gray-900 mb-1">{t('common.notifications.relatedList', 'Related List')}</h4>
                   <p className="text-sm text-gray-600">{showNotificationDetail.data.list_title}</p>
                 </div>
               )}
@@ -1331,7 +1344,7 @@ export function Notifications() {
                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 >
                   <Check className="h-4 w-4" />
-                  <span>Okundu Olarak İşaretle</span>
+                  <span>{t('common.notifications.markRead', 'Mark as read')}</span>
                 </button>
               )}
               
@@ -1343,7 +1356,7 @@ export function Notifications() {
                 className="flex items-center justify-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 <ChevronRight className="h-4 w-4" />
-                <span>Git</span>
+                <span>{t('common.notifications.go', 'Go')}</span>
               </button>
               
               <button
@@ -1354,14 +1367,13 @@ export function Notifications() {
                 className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
-                <span>Sil</span>
+                <span>{t('common.delete', 'Delete')}</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <BottomMenu />
     </div>
   );
 }

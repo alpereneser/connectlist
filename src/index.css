@@ -8,7 +8,8 @@
 :root {
   --header-height: 64px;
   --subheader-height: 64px;
-  --bottom-menu-height: 60px;
+  --bottom-menu-height: 84px;
+  --mobile-searchbar-height: 48px;
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);

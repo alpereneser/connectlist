@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async'; // Import Helmet
 import { Header } from '../../components/Header';
 import { Breadcrumb } from '../../components/Breadcrumb';
-import { BottomMenu } from '../../components/BottomMenu';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
 import { getGameDetails } from '../../lib/api';
 import { AddToListModal } from '../../components/AddToListModal';
@@ -238,7 +237,6 @@ export function GameDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -257,7 +255,6 @@ export function GameDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -685,7 +682,6 @@ export function GameDetails() {
           </div>
         </div>
       </div>
-      <BottomMenu />
 
       {/* Listeye Ekleyenler Modalı */}
       {showListUsers && (

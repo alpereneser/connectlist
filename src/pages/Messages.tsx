@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { BottomMenu } from '../components/BottomMenu';
+// Header/BottomMenu global olarak App içinde render ediliyor
 import { Send, Search, Trash2, AlertCircle } from 'lucide-react';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { getFollowing, startConversation, sendMessage, deleteMessage, markMessagesAsRead, checkMutualFollow } from '../lib/api';
@@ -56,7 +55,7 @@ export function Messages() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isMutualFollower, setIsMutualFollower] = useState(false);
+  const [isMutualFollower, setIsMutualFollower] = useState(true); // Arama için varsayılan olarak true
 
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -587,37 +586,42 @@ export function Messages() {
 
   return (
     <>
-      <Header />
       {error && (
-        <div className="fixed top-[95px] left-0 right-0 bg-red-50 p-4 flex items-center justify-center gap-2 text-red-600 z-50">
+        <div
+          className="fixed left-0 right-0 bg-red-50 p-4 flex items-center justify-center gap-2 text-red-600 z-50"
+          style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}
+        >
           <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
-      <div className="h-[calc(100vh-10px)] bg-gray-100 pt-0 pb-0 md:pt-[10px] md:pb-8">
+      <div className="content-height-no-subheader md:content-height-no-subheader bg-gray-100">
         <div className="h-full max-w-7xl mx-auto md:px-4">
           <div className="bg-white h-full md:rounded-lg md:shadow-sm overflow-hidden">
-            <div className="h-full grid md:grid-cols-12 md:divide-x">
+            <div className="h-full grid md:grid-cols-12 md:divide-x overflow-hidden">
               {/* Conversations List */}
               <div className={`col-span-12 md:col-span-4 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'} overflow-hidden`}>
-                <div className="sticky top-0 bg-white z-10 border-b">
+                <div className="sticky top-0 bg-white z-10 border-b shadow-sm">
                   <div className="flex items-center justify-between p-4">
                     <h2 className="text-xl font-bold">Mesajlar</h2>
-                    <button className="text-orange-500 hover:text-orange-600 text-sm font-medium">
+                    <button 
+                      onClick={() => setShowFollowingSearch(true)}
+                      className="flex items-center gap-2 text-orange-500 hover:text-orange-600 text-sm font-medium"
+                    >
+                      <Search size={16} />
                       Yeni Mesaj
                     </button>
                   </div>
                   <div className="relative mt-4">
                     <input
                       type="text"
-                      disabled={!isMutualFollower}
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
                         setShowFollowingSearch(true);
                       }}
                       onFocus={() => setShowFollowingSearch(true)}
-                      placeholder={isMutualFollower ? "Takip ettikleriniz arasında arayın..." : "Mesajlaşmak için karşılıklı takipleşmeniz gerekiyor"}
+                      placeholder="Takip ettikleriniz arasında arayın..."
                       className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                     />
                     <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -665,7 +669,13 @@ export function Messages() {
                       return (
                         <button
                           key={conversation.id}
-                          onClick={() => setSelectedConversation(conversation)}
+                          onClick={() => {
+                            if (window.innerWidth < 768) {
+                              navigate(`/messages/${conversation.id}`);
+                            } else {
+                              setSelectedConversation(conversation);
+                            }
+                          }}
                           className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                             selectedConversation?.id === conversation.id ? 'bg-gray-50' : ''
                           }`}
@@ -677,10 +687,15 @@ export function Messages() {
                             decoding="async"
                             className="w-10 h-10 rounded-full object-cover"
                           />
-                          <div className="flex-1 text-left">
-                            <h3 className="text-sm font-medium">{otherUser.full_name}</h3>
+                          <div className="flex-1 text-left min-w-0">
+                            <h3 className="text-sm font-medium truncate">{otherUser.full_name}</h3>
                             <p className="text-sm text-gray-500 truncate">
-                              {conversation.last_message_text || 'Henüz mesaj yok'}
+                              {conversation.last_message_text ? 
+                                (conversation.last_message_text.length > 30 ? 
+                                  conversation.last_message_text.substring(0, 30) + '...' : 
+                                  conversation.last_message_text
+                                ) : 'Henüz mesaj yok'
+                              }
                             </p>
                           </div>
                           {conversation.last_message_at && (
@@ -757,15 +772,15 @@ export function Messages() {
                               }`}
                             >
                               <div
-                                className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                                className={`max-w-[85%] md:max-w-[70%] rounded-lg px-3 py-2 break-words overflow-hidden ${
                                   message.sender_id === currentUserId
                                     ? 'bg-orange-500 text-white rounded-br-none shadow-sm'
                                     : 'bg-gray-100 shadow-sm'
                                 } ${message.is_sending ? 'opacity-70' : ''}`}
                               >
                                 <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1">
-                                    <p>{message.text}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="break-words whitespace-pre-wrap">{message.text}</p>
                                     <div className={`text-xs mt-1 flex items-center ${
                                       message.sender_id === currentUserId
                                         ? 'text-orange-100'
@@ -836,7 +851,7 @@ export function Messages() {
                     </div>
 
                     {/* Message Input */}
-                    <form onSubmit={handleSendMessage} className="p-2 md:p-4 border-t bg-white sticky bottom-0 left-0 right-0 z-10">
+                    <form onSubmit={handleSendMessage} className="p-2 md:p-4 border-t bg-white sticky bottom-0 left-0 right-0 z-10 shadow-[0_-1px_6px_rgba(0,0,0,0.06)]">
                       <div className="flex items-center gap-4">
                         <input
                           type="text"
@@ -876,7 +891,6 @@ export function Messages() {
           </div>
         </div>
       </div>
-      <BottomMenu />
       
       {/* Silme Onay Modal */}
       {showDeleteConfirm && (

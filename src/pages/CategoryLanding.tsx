@@ -318,7 +318,6 @@ export function CategoryLanding() {
         </div>
       </div>
 
-      <BottomMenu />
     </>
   );
 } 

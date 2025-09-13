@@ -92,3 +92,17 @@ createRoot(root).render(
 
 // Service Worker'ları tamamen kaldırdık
 // Bu, Supabase bağlantı sorunlarını çözmek için gerekli
+
+// Production'da (canlı alan adı) PWA deneyimi için Service Worker kaydı
+if (
+  'serviceWorker' in navigator &&
+  window.location.hostname.endsWith('connectlist.me')
+) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch(() => {
+        // sessiz hata
+      });
+  });
+}

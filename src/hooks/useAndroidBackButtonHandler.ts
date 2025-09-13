@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { App as CapacitorApp, BackButtonListenerEvent } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 // Uygulamanın Android geri tuşuyla çıkış yapacağı ana yolları tanımlayın.
 // Bu yolları kendi uygulamanızın yapısına göre düzenleyin.
@@ -11,7 +12,7 @@ export const useAndroidBackButtonHandler = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const platform = CapacitorApp.getPlatform();
+    const platform = typeof Capacitor?.getPlatform === 'function' ? Capacitor.getPlatform() : 'web';
 
     if (platform !== 'android') {
       // Bu handler sadece Android platformunda çalışsın
@@ -33,11 +34,13 @@ export const useAndroidBackButtonHandler = () => {
     };
 
     // Geri tuşu olay dinleyicisini ekle
-    const listener = CapacitorApp.addListener('backButton', handleBackButton);
+    const listener = CapacitorApp.addListener ? CapacitorApp.addListener('backButton', handleBackButton) : { remove: () => {} } as any;
 
     // Component unmount olduğunda veya bağımlılıklar değiştiğinde dinleyiciyi kaldır
     return () => {
-      listener.remove();
+      if (listener && typeof (listener as any).remove === 'function') {
+        (listener as any).remove();
+      }
     };
   }, [navigate, location.pathname]); // Hook'un yeniden çalışması için bağımlılıklar
 };

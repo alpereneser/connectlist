@@ -33,6 +33,7 @@ const SelectCategory = lazy(() => import('./pages/SelectCategory').then(module =
 const CreateList = lazy(() => import('./pages/CreateList').then(module => ({ default: module.CreateList })));
 const ListDetails = lazy(() => import('./pages/ListDetails').then(module => ({ default: module.ListDetails })));
 const Messages = lazy(() => import('./pages/Messages'));
+const MessageDetail = lazy(() => import('./pages/MessageDetail'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(module => ({ default: module.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService').then(module => ({ default: module.TermsOfService })));
 const MovieDetails = lazy(() => import('./pages/details/MovieDetails').then(module => ({ default: module.MovieDetails })));
@@ -92,6 +93,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     if (location.state) {
       // Kategori değişikliği varsa
       if (location.state.category !== undefined) {
+        setIsLoading(true);
         setActiveCategory(location.state.category); 
       }
       
@@ -102,6 +104,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
 
       // Yenileme isteği varsa
       if (location.state.refresh) {
+        setIsLoading(true);
         setLists([]);
         setPage(0);
         setHasMore(true);
@@ -262,21 +265,9 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     <div ref={listContainerRef} className="min-h-screen bg-gray-100"> 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[10px] pb-8"> 
         {isLoading ? (
-          <div className="animate-pulse space-y-4 md:mt-0 mt-[-5px]">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg p-6">
-                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-6"></div>
-                <div className="flex space-x-4">
-                  {[...Array(3)].map((_, j) => (
-                    <div key={j} className="w-[200px]">
-                      <div className="aspect-[2/3] bg-gray-200 rounded-lg mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center py-10 md:mt-0 mt-[-5px] text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent mb-3"></div>
+            <LoadingQuote />
           </div>
         ) : (
           <div className="flex flex-col space-y-6 md:mt-0 mt-[-5px]">
@@ -297,10 +288,17 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
             )}
             {!hasMore && lists.length === 0 && (
               <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                <p className="text-gray-500 text-lg">
-                  {activeCategory === 'all' ? t('listPreview.noLists') : 
-                   t('listPreview.noCategoryLists', { category: t(`common.categories.${activeCategory}`) })}
+                <p className="text-gray-600 text-base mb-3">
+                  {activeCategory === 'all'
+                    ? t('listPreview.noLists')
+                    : t('listPreview.noCategoryLists', { category: t(`common.categories.${activeCategory}`) })}
                 </p>
+                <a
+                  href="/select-category"
+                  className="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                >
+                  {t('common.createList')}
+                </a>
               </div>
             )}
           </div>
@@ -312,6 +310,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   
@@ -358,25 +357,28 @@ function App() {
   const isAuthPage = location.pathname.startsWith('/auth');
   const isMobileSearchPage = location.pathname.startsWith('/mobile-search');
   const isSearchPage = location.pathname.startsWith('/search');
+  const isNotificationsPage = location.pathname.startsWith('/notifications');
+  const isMessagesPage = location.pathname === '/messages';
+  const isMessageDetailPage = location.pathname.startsWith('/messages/') && location.pathname !== '/messages';
+  const isCreateListPage = location.pathname.startsWith('/create-list');
   const isMobile = window.innerWidth < 768;
   const isHomePage = location.pathname === '/';
 
   const getMainPaddingTop = () => {
-    if (isAuthPage || isMobileSearchPage || (isSearchPage && isMobile)) {
-      return 'pt-0'; // No padding for auth, mobile search, or mobile search pages
+    if (isAuthPage || isMobileSearchPage || (isSearchPage && isMobile) || isMessageDetailPage || isMessagesPage) {
+      return 'pt-0'; // No padding for auth, mobile search, message pages
+    }
+
+    if (isCreateListPage) {
+      return 'pt-0'; // No padding for CreateList page since it has its own Header
     }
 
     if (isMobile) {
-      // Mobil'de Header + SubHeader fixed olduğu için padding gerekli
-      if (isHomePage) {
-        return 'pt-[116px]'; // Header (56px) + SubHeader (60px) için padding
-      }
-      return 'pt-14'; // Mobile: Header yüksekliği kadar padding (56px)
-    } else { // Desktop
-      if (isHomePage) {
-        return 'pt-32'; // Desktop: Header (64px) + SubHeader (64px) için padding
-      }
-      return 'pt-16'; // Desktop: Header yüksekliği kadar padding (64px)
+      // Mobile: Header (56) + SubHeader (60) = 116px
+      return 'pt-[116px]';
+    } else {
+      // Desktop: Header (64) + SubHeader (64) = 128px
+      return 'pt-32';
     }
   };
 
@@ -384,23 +386,35 @@ function App() {
     <>
       <div className="flex flex-col min-h-screen bg-gray-50">
         {/* Header: Auth sayfalarında gizle */}
-        {!isAuthPage && (
+        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && (
           <Header 
-            onLogoClick={isHomePage ? () => {
+            onLogoClick={() => {
+              // Always force ALL + desc ordering on logo click
+              setIsLoading(true);
+              navigate('/', {
+                replace: true,
+                state: {
+                  category: 'all',
+                  sortDirection: 'desc',
+                  refresh: true,
+                },
+              });
+              // Local state fallback to keep UI responsive
               setActiveCategory('all');
               setLists([]);
               setPage(0);
               setHasMore(true);
               scrollToTop();
-            } : undefined}
+            }}
           />
         )}
         
-        {/* SubHeader: Auth, MobileSearch ve mobil Search sayfalarında gizle */}
-        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && isHomePage && (
+        {/* SubHeader: Auth, MobileSearch, CreateList ve mobil Search sayfalarında gizle */}
+        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isMessagesPage && !isNotificationsPage && !isCreateListPage && !(isSearchPage && isMobile) && isHomePage && (
           <SubHeader 
             activeCategory={activeCategory}
             onCategoryChange={(category) => {
+              setIsLoading(true);
               setActiveCategory(category);
               setLists([]);
               setPage(0);
@@ -409,7 +423,7 @@ function App() {
             }}
           />
         )}
-        {!isAuthPage && !isMobileSearchPage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
+        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isNotificationsPage && !isCreateListPage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
         
         {/* Main content area with conditional padding */}
         <main className={`flex-grow w-full ${getMainPaddingTop()}`}>
@@ -457,6 +471,14 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated!}>
                   <Messages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/messages/:conversationId"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated!}>
+                  <MessageDetail />
                 </ProtectedRoute>
               }
             />
@@ -545,10 +567,25 @@ function App() {
 
 
         {/* Mobil anasayfada BottomMenu'yu göster */}
-        {!isAuthPage && <BottomMenu />}
+        {!isAuthPage && !isMessageDetailPage && <BottomMenu />}
         <InstallPrompt />
       </div>
     </>
+  );
+}
+
+// Basit özlü söz komponenti
+function LoadingQuote() {
+  const quotes = [
+    'İyi fikirler paylaşınca çoğalır.',
+    'Keşfetmek, ilk adımı atmaktır.',
+    'Listeler fikirlerin haritasıdır.',
+    'Bir öneri, yeni bir başlangıçtır.',
+    'Bugün keşfedeceğin şey, yarının ilhamı olur.',
+  ];
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  return (
+    <p className="text-sm text-gray-600 max-w-sm">{quote}</p>
   );
 }
 

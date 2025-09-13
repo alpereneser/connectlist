@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { Header } from '../components/Header';
-import { BottomMenu } from '../components/BottomMenu';
 import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks, searchPlaces } from '../lib/api';
 import { getDefaultPlaceImage } from '../lib/api';
 import { Movie, Show, Person, Game, Book as BookType, User } from '../types/search';
@@ -111,6 +110,8 @@ export function Search() {
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   // Auth mesajı için state (kullanılmasa da ileride kullanılabilir)
   const [authMessage] = useState('');
+  // Mobil arama bar yüksekliğini dinamik ölçmek için ref
+  const searchBarRef = useRef<HTMLDivElement | null>(null);
 
   // Arama işlemini useCallback ile sarıyoruz
   const performSearch = useCallback(async () => {
@@ -223,6 +224,19 @@ export function Search() {
     }
   }, [searchParams]);
   
+  // Mobil arama bar yüksekliğini ölç ve CSS değişkenine yaz
+  useEffect(() => {
+    const updateSearchbarVar = () => {
+      if (searchBarRef.current) {
+        const h = searchBarRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--mobile-searchbar-height', `${h}px`);
+      }
+    };
+    updateSearchbarVar();
+    window.addEventListener('resize', updateSearchbarVar);
+    return () => window.removeEventListener('resize', updateSearchbarVar);
+  }, []);
+
   useEffect(() => {
     // Sayfa yüklendiğinde en üste kaydır
     window.scrollTo(0, 0);
@@ -1187,7 +1201,7 @@ export function Search() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pt-[10px] mt-0 md:pt-[55px] overflow-auto fixed inset-x-0" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))', bottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
         <div className="space-y-4">
           {/* Arama Input - Sadece mobil görünümde */}
-          <div className="md:hidden bg-white border-b border-gray-200 mb-2 sticky z-50" style={{ top: 'calc(var(--safe-area-inset-top) + var(--subheader-height))' }}>
+          <div ref={searchBarRef} className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-2 sticky z-50" style={{ top: '0' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1219,7 +1233,7 @@ export function Search() {
           
           {/* 2. Kategori Menüsü - Sadece mobil görünümde */}
           {query ? (
-            <div className="md:hidden bg-gray-100 border-b border-gray-200 sticky z-40" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height) + var(--subheader-height))' }}>
+            <div className="md:hidden bg-gray-100 border-b border-gray-200 shadow-sm sticky z-40" style={{ top: 'var(--mobile-searchbar-height)' }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide py-0 my-0">
@@ -1246,7 +1260,7 @@ export function Search() {
               </div>
             </div>
           ) : (
-            <div className="md:hidden bg-white border-b border-gray-200 mb-4 sticky z-30" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height) + var(--subheader-height))' }}>
+            <div className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-4 sticky z-30" style={{ top: 'var(--mobile-searchbar-height)' }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0 overflow-x-auto scrollbar-hide">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide">
@@ -1351,7 +1365,6 @@ export function Search() {
         </div>
       </main>
 
-      <BottomMenu />
       
       {showAuthPopup && (
         <AuthPopup

@@ -128,6 +128,15 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Dev ortamında eski service worker ve cache'i temizle (HMR çakışmalarını önler)
+      if (location.hostname === 'localhost' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+        if (window.caches) {
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+        }
+      }
+    </script>
+    <script>
       // Supabase görsellerini önbelleği atlatarak yükleme
       // Bu fonksiyon kaldırıldı çünkü Service Worker ile çakışıyor
     </script>

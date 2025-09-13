@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import logger from '../lib/logger';
 import { MagnifyingGlass, Bell, ChatCircle, CaretDown, CaretLeft } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next'; 
 import { supabaseBrowser as supabase } from '../lib/supabase-browser'; 
@@ -28,7 +29,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const setError = useCallback((error: string | null) => {
-    if (error) console.error('Profile error:', error);
+    if (error) logger.error('Profile error:', error);
   }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -36,7 +37,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   const [notificationCount, setNotificationCount] = useState(0);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const setIsMarkingAllRead = (value: boolean) => {
-    if (value) console.log('Marking notifications as read...');
+    if (value) logger.log('Marking notifications as read...');
   };
   const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [authMessage] = useState('');
@@ -195,7 +196,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
         .eq('is_read', false); // Okunmamışları filtrele
         
       if (countError) {
-        console.error('Error counting unread notifications:', countError);
+        logger.error('Error counting unread notifications:', countError);
         setNotificationCount(0);
         return;
       }
@@ -210,7 +211,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
         triggerHaptic('light');
       }
     } catch (error) {
-      console.error('Error in checkNotifications:', error);
+      logger.error('Error in checkNotifications:', error);
       setNotificationCount(0);
     }
   }, [notificationCount, announceToScreenReader, triggerHaptic]);
@@ -225,25 +226,24 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
       }
 
       try {
-        // Önce kullanıcının herhangi bir mesajı olup olmadığını kontrol et
-        const { data: allMessages, error: allMsgError } = await supabase
-          .from('decrypted_messages')
-          .select('id')
-          .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+        // Önce kullanıcının herhangi bir konuşması olup olmadığını kontrol et
+        const { data: convCheck, error: convCheckError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', session.user.id)
           .limit(1);
 
-        if (allMsgError) {
-          console.error('Error checking if user has any messages:', allMsgError);
+        if (convCheckError) {
+          logger.error('Error checking if user has any messages:', convCheckError);
           setHasUnreadMessages(false);
           setPreviousUnreadCount(0);
           return;
         }
 
-        // Eğer hiç mesajı yoksa bildirim gösterme
-        if (!allMessages || allMessages.length === 0) {
+        if (!convCheck || convCheck.length === 0) {
           setHasUnreadMessages(false);
           setPreviousUnreadCount(0);
-          console.log('User has no messages at all, hiding notification badge');
+          logger.log('User has no conversations, hiding notification badge');
           return;
         }
 
@@ -254,7 +254,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
           .eq('user_id', session.user.id);
 
         if (convError) {
-          console.error('Error checking conversations:', convError);
+          logger.error('Error checking conversations:', convError);
           setHasUnreadMessages(false);
           return;
         }
@@ -275,7 +275,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
           .order('created_at', { ascending: false });
 
         if (msgError) {
-          console.error('Error checking messages:', msgError);
+          logger.error('Error checking messages:', msgError);
           setHasUnreadMessages(false);
           return;
         }
@@ -293,8 +293,8 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
         setHasUnreadMessages(hasUnread);
         setPreviousUnreadCount(currentUnreadCount);
         
-        console.log('Unread messages check:', {
-          hasAnyMessages: allMessages.length > 0,
+        logger.log('Unread messages check:', {
+          hasAnyMessages: true,
           conversationCount: conversations.length,
           unreadCount: currentUnreadCount,
           hasUnread,
@@ -302,7 +302,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
         });
         
       } catch (error) {
-        console.error('Exception in checkUnreadMessages:', error);
+        logger.error('Exception in checkUnreadMessages:', error);
         setHasUnreadMessages(false);
         setPreviousUnreadCount(0);
       }
@@ -320,7 +320,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
         schema: 'public',
         table: 'decrypted_messages'
       }, (payload) => {
-        console.log('Message change detected in header:', payload);
+        logger.log('Message change detected in header:', payload);
         // Kısa bir gecikme ile kontrol et (veritabanı güncellemesinin tamamlanması için)
         setTimeout(() => {
         checkUnreadMessages();
@@ -332,7 +332,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
     const broadcastSubscription = supabase
       .channel('public:messages_read_header')
       .on('broadcast', { event: 'messages_read' }, (payload) => {
-        console.log('Messages read broadcast received in header:', payload);
+        logger.log('Messages read broadcast received in header:', payload);
         checkUnreadMessages();
       })
       .subscribe();
@@ -371,36 +371,36 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
     const { data: { session } } = await supabase.auth.getSession();
     
     // Hata ayıklama: Oturum durumunu konsola yazdır
-    console.log('Current session:', session ? 'Logged in' : 'Not logged in', session);
+    logger.log('Current session:', session ? 'Logged in' : 'Not logged in', session);
     
     try {
       if (session?.user?.id) {
-        console.log('Fetching profile for user:', session.user.id);
+        logger.log('Fetching profile for user:', session.user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('username, full_name, avatar')
           .eq('id', session.user.id);
 
         if (error) {
-          console.error('Error fetching profile:', error);
+          logger.error('Error fetching profile:', error);
           setError(error.message);
           return;
         }
 
         // Eğer veri varsa ve en az bir sonuç döndüyse
         if (data && data.length > 0) {
-          console.log('Profile found:', data[0]);
+          logger.log('Profile found:', data[0]);
           setProfile(data[0]);
         } else {
-          console.warn('Profil bulunamadı:', session.user.id);
+          logger.warn('Profil bulunamadı:', session.user.id);
           setProfile(null);
         }
       } else {
-        console.log('No active session, setting profile to null');
+        logger.log('No active session, setting profile to null');
         setProfile(null);
       }
     } catch (error) {
-      console.error('Exception in fetchProfile:', error);
+      logger.error('Exception in fetchProfile:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -417,7 +417,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   useEffect(() => {
     // Oturum durumu değiştiğinde çağrılacak fonksiyon
     const handleAuthChange = (event: string, session: { user: { id: string } } | null) => {
-      console.log('Auth state changed:', event, session ? 'User logged in' : 'User logged out');
+      logger.log('Auth state changed:', event, session ? 'User logged in' : 'User logged out');
       fetchProfile(); // Profil bilgilerini güncelle
     };
 
@@ -427,9 +427,9 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
     // Başlangıçta mevcut oturum durumunu kontrol et
     const checkCurrentSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initial session check:', session ? 'User is logged in' : 'User is not logged in');
+      logger.log('Initial session check:', session ? 'User is logged in' : 'User is not logged in');
       if (session) {
-        console.log('User ID:', session.user.id);
+        logger.log('User ID:', session.user.id);
         fetchProfile();
       }
     };
@@ -446,9 +446,9 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
   useEffect(() => {
     const intervalId = setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session check (interval):', session ? 'Logged in' : 'Not logged in');
+      logger.log('Session check (interval):', session ? 'Logged in' : 'Not logged in');
       if (session && !profile) {
-        console.log('Session exists but profile is null, fetching profile...');
+        logger.log('Session exists but profile is null, fetching profile...');
         fetchProfile();
       }
     }, 5000);
@@ -582,7 +582,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       replace: true,
                       state: { 
                         refresh: true,
-                        sortDirection: 'asc',
+                        sortDirection: 'desc',
                         category: 'all'
                       }
                     });
@@ -891,7 +891,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
       {/* Mobile Search Overlay - When search is focused */}
       {isMobile && isSearchFocused && (
         <div 
-          className="fixed inset-0 z-60 bg-black bg-opacity-50"
+          className="fixed inset-0 z-[60] bg-black bg-opacity-50"
           style={{ height: searchInputHeight }}
         />
       )}

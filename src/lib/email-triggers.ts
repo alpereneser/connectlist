@@ -33,7 +33,7 @@ async function getUserInfo(userId: string) {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('email, full_name, username, avatar')
+      .select('email, full_name, username, avatar, language')
       .eq('id', userId)
       .single();
       
@@ -79,7 +79,8 @@ export async function triggerFollowerNotification(followedId: string, followerId
       followedUser.full_name,
       followerUser.full_name,
       followerUser.username,
-      followerUser.avatar
+      followerUser.avatar,
+      (followedUser as any).language === 'en' ? 'en' : 'tr'
     );
     
     return result;
@@ -159,7 +160,8 @@ export async function triggerListItemAddedNotification(listId: string, newItemId
           title: itemData.title,
           description: itemData.description,
           image_url: itemData.image_url
-        }
+        },
+        (user as any).language === 'en' ? 'en' : 'tr'
       );
       
       sentCount++;
@@ -266,7 +268,8 @@ export async function triggerCommentNotification(
       listData.slug,
       listData.profiles.username,
       commentData.content,
-      isReply
+      isReply,
+      (recipient as any).language === 'en' ? 'en' : 'tr'
     );
     
     return result;
@@ -327,7 +330,8 @@ export async function triggerMessageNotification(messageId: string) {
       sender.username,
       sender.avatar,
       messageData.text,
-      messageData.conversation_id
+      messageData.conversation_id,
+      (recipient as any).language === 'en' ? 'en' : 'tr'
     );
     
     return result;
@@ -378,7 +382,8 @@ export async function triggerNewListNotification(listId: string) {
         listData.profiles.full_name,
         listData.profiles.username,
         listData.description,
-        listData.created_at
+        listData.created_at,
+        'tr'
       );
       sentCount++;
     }
@@ -386,6 +391,45 @@ export async function triggerNewListNotification(listId: string) {
     return { success: true, sent: sentCount };
   } catch (error) {
     console.error('Yeni liste bildirimi gönderilirken hata:', error);
+    return { success: false, error };
+  }
+}
+
+// Takip edilen biri bir listesini güncellediğinde takipçilerine mail bildirimi
+export async function triggerListUpdatedNotification(listId: string) {
+  try {
+    const { data: listData, error: listError } = await supabase
+      .from('lists')
+      .select('id, title, slug, user_id, profiles(full_name, username)')
+      .eq('id', listId)
+      .single();
+    if (listError || !listData) return { success: false, reason: 'list_not_found' };
+
+    const { data: followersData, error: followersError } = await supabase
+      .from('followers')
+      .select('follower_id, profiles(email, full_name, language)')
+      .eq('followed_id', listData.user_id);
+    if (followersError) return { success: false, reason: 'followers_error' };
+
+    let sent = 0;
+    for (const follower of followersData || []) {
+      const email = follower.profiles?.email;
+      const name = follower.profiles?.full_name || '';
+      const lang = follower.profiles?.language === 'en' ? 'en' : 'tr';
+      if (!email) continue;
+      await (await import('./email-service')).sendListUpdatedNotification(
+        email,
+        name,
+        listData.title,
+        listData.slug,
+        listData.profiles.username,
+        lang as any
+      );
+      sent++;
+    }
+    return { success: true, sent };
+  } catch (error) {
+    console.error('List updated notification error:', error);
     return { success: false, error };
   }
 }

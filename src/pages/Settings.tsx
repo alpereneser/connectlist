@@ -1,13 +1,19 @@
 import { z } from 'zod';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { useDebounce } from '../hooks/useDebounce';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle } from 'lucide-react';
+import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle, LogOut } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Header } from '../components/Header';
+import { supabaseBrowser as supabase } from '../lib/supabase-browser';
+import { useHapticFeedback } from '../hooks/useHapticFeedback';
 
 const Settings = ({ profile: userProfile, deletePassword, setShowDeleteConfirm, setDeletePassword }) => {
+  const { t } = useTranslation();
+  const { triggerHaptic } = useHapticFeedback();
+  const [announceText, setAnnounceText] = useState('');
   const [profile, setProfile] = useState<Profile>({
     full_name: '',
     username: '',

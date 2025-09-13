@@ -191,7 +191,6 @@ export function PlaceDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -216,7 +215,6 @@ export function PlaceDetails() {
             </div>
           </div>
         </div>
-        <BottomMenu />
       </>
     );
   }
@@ -531,7 +529,6 @@ export function PlaceDetails() {
         </div>
       </div>
       
-      <BottomMenu />
       
       {/* Fotoğraf Galerisi Modal */}
       {showPhotoGallery && (

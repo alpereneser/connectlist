@@ -37,9 +37,11 @@ interface ListPreviewProps {
   onListClick?: () => void;
   currentUserId?: string;
   isOwnProfile?: boolean;
+  hideAuthor?: boolean;
+  hideActions?: boolean;
 }
 
-export function ListPreview({ list, items, onListClick, currentUserId, isOwnProfile }: ListPreviewProps) {
+export function ListPreview({ list, items, onListClick, currentUserId, isOwnProfile, hideAuthor = false, hideActions = false }: ListPreviewProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [scrollPosition, setScrollPosition] = useState(0);
@@ -245,33 +247,35 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         {/* Mobil ve Desktop için farklı layout */}
         <div className="block md:hidden space-y-2">
           {/* Kullanıcı Bilgileri */}
-          <div className="flex items-center gap-3">
-            <img
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/profile/${list.profiles.username}`);
-              }}
-              src={`${list.profiles?.avatar}${list.profiles?.avatar?.includes('?') ? '&' : '?'}t=1`}
-              alt={list.profiles.full_name}
-              className="w-8 h-8 rounded-full cursor-pointer"
-            />
-            <div>
-              <span 
+          {!hideAuthor && (
+            <div className="flex items-center gap-3">
+              <img
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/profile/${list.profiles.username}`);
                 }}
-                className="text-[15px] font-bold hover:underline cursor-pointer"
-              >
-                {list.profiles.full_name}
-              </span>
-              <div className="flex items-center gap-1 text-[13px] text-gray-500">
-                <span>@{list.profiles.username}</span>
-                <span>•</span>
-                <span className="font-bold">{list.created_at ? formatDate(list.created_at) : ''}</span>
+                src={`${list.profiles?.avatar}${list.profiles?.avatar?.includes('?') ? '&' : '?'}t=1`}
+                alt={list.profiles.full_name}
+                className="w-8 h-8 rounded-full cursor-pointer"
+              />
+              <div>
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/profile/${list.profiles.username}`);
+                  }}
+                  className="text-[15px] font-bold hover:underline cursor-pointer"
+                >
+                  {list.profiles.full_name}
+                </span>
+                <div className="flex items-center gap-1 text-[13px] text-gray-500">
+                  <span>@{list.profiles.username}</span>
+                  <span>•</span>
+                  <span className="font-bold">{list.created_at ? formatDate(list.created_at) : ''}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           
           {/* Liste Başlığı */}
           <h2
@@ -293,47 +297,64 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden md:flex md:flex-row md:items-center gap-3">
-          <img
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/profile/${list.profiles.username}`);
-            }}
-            src={list.profiles?.avatar}
-            alt={list.profiles.full_name}
-            className="w-10 h-10 rounded-full cursor-pointer"
-          />
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/profile/${list.profiles.username}`);
-                }}
-                className="font-medium hover:underline cursor-pointer"
-              >
-                {list.profiles.full_name}
-              </span>
-              <span className="text-gray-500">{t('listPreview.createdList')}</span>
-              <span 
-                onClick={() => {
-                  if (onListClick) onListClick();
-                  navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
-                }}
-                className="font-medium hover:underline cursor-pointer"
-              >
-                {list.title}
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-              <span>@{list.profiles.username}</span>
-              <span>•</span>
-              <span>{categoryNames[list.category as keyof typeof categoryNames]}</span>
-              <span>•</span>
-              <span>{t('listPreview.createdAt')}: {list.created_at ? formatDate(list.created_at) : ''}</span>
+        {!hideAuthor ? (
+          <div className="hidden md:flex md:flex-row md:items-center gap-3">
+            <img
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/profile/${list.profiles.username}`);
+              }}
+              src={list.profiles?.avatar}
+              alt={list.profiles.full_name}
+              className="w-10 h-10 rounded-full cursor-pointer"
+            />
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/profile/${list.profiles.username}`);
+                  }}
+                  className="font-medium hover:underline cursor-pointer"
+                >
+                  {list.profiles.full_name}
+                </span>
+                <span className="text-gray-500">{t('listPreview.createdList')}</span>
+                <span 
+                  onClick={() => {
+                    if (onListClick) onListClick();
+                    navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+                  }}
+                  className="font-medium hover:underline cursor-pointer"
+                >
+                  {list.title}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                <span>@{list.profiles.username}</span>
+                <span>•</span>
+                <span>{categoryNames[list.category as keyof typeof categoryNames]}</span>
+                <span>•</span>
+                <span>{t('listPreview.createdAt')}: {list.created_at ? formatDate(list.created_at) : ''}</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="hidden md:block">
+            <h2
+              onClick={() => {
+                if (onListClick) onListClick();
+                navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+              }}
+              className="text-lg font-semibold hover:underline cursor-pointer"
+            >
+              {list.title}
+            </h2>
+            {list.description && (
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{list.description}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Liste İçerikleri */}
@@ -348,6 +369,10 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
             <div 
               key={item.id}
               className={`flex-none ${item.type === 'video' ? 'w-[180px] md:w-[280px]' : 'w-[120px] md:w-[200px]'}`}
+              role="button"
+              tabIndex={0}
+              aria-label={`${item.title}`}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as any).click(); } }}
               onClick={() => {
                 switch (item.type) {
                   case 'movie':
@@ -458,30 +483,32 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
       </div>
 
       {/* Like ve Comment Butonları */}
-      <div className="list-actions flex items-center gap-3 px-3 md:px-6 py-2 md:py-3 border-t">
-        <button
-          onClick={handleLikeClick}
-          className={`flex items-center gap-1 text-gray-600 hover:text-red-500 ${
-            isLiked ? 'text-red-500' : ''
-          }`}
-        >
-          <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-          <span className="text-sm">{optimisticLikesCount}</span>
-        </button>
-        <button
-          onClick={handleCommentClick}
-          className="flex items-center gap-1 text-gray-600 hover:text-purple-500"
-        >
-          <MessageCircle size={16} />
-          <span className="text-sm">{optimisticCommentCount}</span>
-        </button>
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-1 text-gray-600 hover:text-blue-500"
-        >
-          <Share2 size={16} />
-        </button>
-      </div>
+      {!hideActions && (
+        <div className="list-actions flex items-center gap-3 px-3 md:px-6 py-2 md:py-3 border-t">
+          <button
+            onClick={handleLikeClick}
+            className={`flex items-center gap-1 text-gray-600 hover:text-red-500 ${
+              isLiked ? 'text-red-500' : ''
+            }`}
+          >
+            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-sm">{optimisticLikesCount}</span>
+          </button>
+          <button
+            onClick={handleCommentClick}
+            className="flex items-center gap-1 text-gray-600 hover:text-purple-500"
+          >
+            <MessageCircle size={16} />
+            <span className="text-sm">{optimisticCommentCount}</span>
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1 text-gray-600 hover:text-blue-500"
+          >
+            <Share2 size={16} />
+          </button>
+        </div>
+      )}
       
       <AuthPopup
         isOpen={showAuthPopup}

@@ -348,7 +348,6 @@ export function BookDetails() {
           </div>
         </div>
       </div>
-      <BottomMenu />
 
       {/* Add to List Modal */}
       <AddToListModal

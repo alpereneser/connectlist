@@ -498,7 +498,6 @@ export function Admin() {
           )}
         </div>
       </div>
-      <BottomMenu />
     </>
   );
 }

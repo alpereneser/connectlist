@@ -4,7 +4,6 @@ import { Plus, Users, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
-import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { useMovieDetails } from '../../hooks/useMovieDetails';
 import { useWhoAdded } from '../../hooks/useWhoAdded';
@@ -125,7 +124,6 @@ export function MovieDetails() {
         </Helmet>
         <Header />
         <LoadingSpinner />
-        <BottomMenu />
       </>
     );
   }
@@ -138,7 +136,6 @@ export function MovieDetails() {
         </Helmet>
         <Header />
         <ErrorDisplay message={String(fetchError || t('details.movieNotFound'))} onRetry={refetch} />
-        <BottomMenu />
       </>
     );
   }
@@ -577,7 +574,6 @@ export function MovieDetails() {
         </div>
         )}
       </div>
-      <BottomMenu />
 
       <AddToListModal
         isOpen={showAddToListModal}
