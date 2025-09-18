@@ -8,7 +8,7 @@
 :root {
   --header-height: 64px;
   --subheader-height: 64px;
-  --bottom-menu-height: 84px;
+  --bottom-menu-height: 74px;
   --mobile-searchbar-height: 48px;
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
@@ -176,6 +176,48 @@
   top: 20px;
 }
 
+/* Mobile keyboard handling */
+@media (max-width: 767px) {
+  /* Prevent viewport changes when keyboard opens */
+  .keyboard-stable {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  
+  /* Input focus handling */
+  .input-focus-container {
+    position: relative;
+    z-index: 1000;
+  }
+  
+  /* Keyboard open state */
+  .keyboard-open {
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden;
+  }
+  
+  /* Prevent body scroll when keyboard is open */
+  body.keyboard-open {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  /* Input container adjustments */
+  .search-input-container {
+    position: relative;
+    z-index: 100;
+  }
+  
+  /* Ensure inputs don't get hidden behind keyboard */
+  .search-input-focused {
+    transform: translateY(-50px);
+    transition: transform 0.3s ease;
+  }
+}
+
 /* Mobile animations */
 @media (max-width: 767px) {
   .animate-in {
@@ -330,14 +372,117 @@
   transform: scale(0.92);
 }
 
-/* Dark mode support for PWA */
+/* Dark mode support */
+.dark {
+  --background-color: #0f172a;
+  --surface-color: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --card-background: #1e293b;
+  --hover-background: #334155;
+  --input-background: #334155;
+  --input-border: #475569;
+}
+
+.dark body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+}
+
+/* Dark mode component styles */
+.dark .bg-white {
+  background-color: var(--card-background) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--surface-color) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--hover-background) !important;
+}
+
+.dark .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-gray-700 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-500 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: var(--border-color) !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: var(--hover-background) !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--hover-background) !important;
+}
+
+/* Dark mode input styles */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark textarea {
+  background-color: var(--input-background) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="password"]:focus,
+.dark textarea:focus {
+  border-color: #f97316 !important;
+  box-shadow: 0 0 0 1px #f97316 !important;
+}
+
+/* Dark mode shadow adjustments */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Dark mode scrollbar */
+.dark .scrollbar-hide::-webkit-scrollbar-track {
+  background: var(--surface-color);
+}
+
+.dark .scrollbar-hide::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+/* Auto dark mode support */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background-color: #111827;
-    --surface-color: #1f2937;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
-    --border-color: #374151;
+    --background-color: #0f172a;
+    --surface-color: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
   }
 }
 
@@ -433,11 +578,13 @@
   .ios-fix {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
+    user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
   
   input {
     -webkit-appearance: none;
+    appearance: none;
     border-radius: 0;
   }
 }

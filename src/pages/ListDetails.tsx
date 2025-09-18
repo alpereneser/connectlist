@@ -964,7 +964,23 @@ export default function ListDetails() {
               {/* Geri Butonu */}
               <div className="flex items-center px-6 pt-4 pb-2">
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => {
+                    const saved = sessionStorage.getItem('scroll:returnTo');
+                    if (saved) {
+                      try {
+                        const { path, y } = JSON.parse(saved);
+                        navigate(path);
+                        setTimeout(() => {
+                          window.scrollTo({ top: y, behavior: 'auto' });
+                        }, 100);
+                        sessionStorage.removeItem('scroll:returnTo');
+                      } catch (e) {
+                        navigate(-1);
+                      }
+                    } else {
+                      navigate(-1);
+                    }
+                  }}
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
                   <ArrowLeft size={18} className="text-gray-600" />
@@ -1083,7 +1099,23 @@ export default function ListDetails() {
               {/* Geri Butonu */}
               <div className="flex items-center mb-4">
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => {
+                    const saved = sessionStorage.getItem('scroll:returnTo');
+                    if (saved) {
+                      try {
+                        const { path, y } = JSON.parse(saved);
+                        navigate(path);
+                        setTimeout(() => {
+                          window.scrollTo({ top: y, behavior: 'auto' });
+                        }, 100);
+                        sessionStorage.removeItem('scroll:returnTo');
+                      } catch (e) {
+                        navigate(-1);
+                      }
+                    } else {
+                      navigate(-1);
+                    }
+                  }}
                   className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
                   <ArrowLeft size={20} className="text-gray-600" />

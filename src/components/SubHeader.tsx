@@ -135,10 +135,10 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                     className={`
                       relative flex items-center gap-2 whitespace-nowrap
                       ${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-3 text-sm'}
-                      font-medium transition-colors duration-200
+                      font-medium transition-all duration-200
                       border-b-2
                       ${isActive ? 'border-orange-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-200'}
-                      focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500
+                      focus:outline-none active:bg-gray-100 active:scale-95
                       ${isMobile ? 'flex-shrink-0' : ''}
                     `}
                     role="tab"
@@ -158,7 +158,7 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
               <div className="ml-auto flex items-center gap-3 min-h-[40px]">
                 <button
                   onClick={handleDiscover}
-                  className="flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-orange-500 hover:text-orange-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                  className="flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-all duration-200 hover:border-orange-500 hover:text-orange-500 focus:outline-none active:bg-gray-100 active:scale-95"
                   title={t('common.discover')}
                 >
                   <Eye className="h-4 w-4" weight="regular" aria-hidden="true" />
@@ -166,7 +166,7 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                 </button>
                 <button
                   onClick={handleCreateList}
-                  className="flex items-center gap-2 rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                  className="flex items-center gap-2 rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-orange-600 focus:outline-none active:bg-orange-700 active:scale-95"
                   title={t('common.createList')}
                 >
                   <Plus className="h-4 w-4" weight="regular" aria-hidden="true" />

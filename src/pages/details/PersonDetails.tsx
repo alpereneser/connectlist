@@ -10,6 +10,7 @@ import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
 import { getPersonDetails } from '../../lib/api';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
+import ContentComments from '../../components/ContentComments';
 
 interface PersonDetails {
   id: string;
@@ -115,13 +116,13 @@ export function PersonDetails() {
 
       if (error) throw error;
 
-      const users = data.map(item => ({
-        username: item.lists.profiles.username,
-        full_name: item.lists.profiles.full_name,
-        avatar: item.lists.profiles.avatar,
-        list_title: item.lists.title,
-        list_id: item.lists.id
-      }));
+      const users = data?.map((item: any) => ({
+        username: item.lists?.profiles?.username,
+        full_name: item.lists?.profiles?.full_name,
+        avatar: item.lists?.profiles?.avatar,
+        list_title: item.lists?.title,
+        list_id: item.lists?.id
+      })) || [];
 
       setListUsers(users);
       setShowListUsers(true);
@@ -460,6 +461,15 @@ export function PersonDetails() {
                 )}
               </div>
             </div>
+          </div>
+          
+          {/* Comments Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ContentComments
+              contentType="person"
+              contentId={person?.id?.toString() || ''}
+              contentTitle={person?.name || ''}
+            />
           </div>
         </div>
       </div>

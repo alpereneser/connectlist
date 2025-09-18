@@ -10,6 +10,7 @@ import { getGameDetails } from '../../lib/api';
 import { AddToListModal } from '../../components/AddToListModal';
 import { useRequireAuth } from '../../hooks/useRequireAuth'; // Add this import
 import { AuthPopup } from '../../components/AuthPopup'; // Add this import
+import ContentComments from '../../components/ContentComments';
 
 interface GameDetails {
   id: string;
@@ -679,6 +680,15 @@ export function GameDetails() {
                 </div>
               )}
             </div>
+          </div>
+          
+          {/* Comments Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ContentComments
+              contentType="game"
+              contentId={game?.id || ''}
+              contentTitle={game?.name || ''}
+            />
           </div>
         </div>
       </div>

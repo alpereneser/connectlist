@@ -4,7 +4,6 @@ import { Plus, Users, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
-import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { AddToListModal } from '../../components/AddToListModal';
 import { useSeriesDetails } from '../../hooks/useSeriesDetails';
@@ -13,6 +12,7 @@ import { WhoAddedModal } from '../../components/WhoAddedModal';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
+import ContentComments from '../../components/ContentComments';
 
 interface SeriesDetails {
   id: string;
@@ -422,6 +422,15 @@ export function SeriesDetails() {
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Comments Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <ContentComments
+              contentType="series"
+              contentId={series.id}
+              contentTitle={series.title}
+            />
           </div>
         </div>
       </div>

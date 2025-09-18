@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import logger from '../lib/logger';
 import { MagnifyingGlass, Bell, ChatCircle, CaretDown, CaretLeft } from '@phosphor-icons/react';
+import { Mic, MicOff } from 'lucide-react';
+import { useVoiceSearch } from '../hooks/useVoiceSearch';
+import i18n from '../i18n';
 import { useTranslation } from 'react-i18next'; 
 import { supabaseBrowser as supabase } from '../lib/supabase-browser'; 
 import { SearchResults } from './SearchResults';
@@ -52,6 +55,35 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
 
   // Accessibility and Mobile UX States
   const [announceText, setAnnounceText] = useState<string>('');
+
+  // Voice search hook
+  const {
+    isListening,
+    isSupported: isVoiceSupported,
+    transcript,
+    toggleListening
+  } = useVoiceSearch({
+    onResult: (transcript) => {
+      setSearchQuery(transcript);
+      // Automatically search when voice input is received
+      if (transcript.trim()) {
+        const searchPath = `/search?q=${encodeURIComponent(transcript.trim())}`;
+        if (location.pathname === '/search') {
+          navigate(searchPath, { replace: true });
+        } else {
+          navigate(searchPath);
+        }
+        setShowResults(false);
+        setSearchQuery('');
+        announceToScreenReader(`${transcript} için arama yapıldı`);
+      }
+    },
+    onError: (error) => {
+      console.error('Voice search error:', error);
+      announceToScreenReader(`Ses arama hatası: ${error}`);
+    },
+    language: i18n.language === 'tr' ? 'tr-TR' : 'en-US'
+  });
 
 
   // Ana sayfa kontrolü
@@ -549,7 +581,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                     navigate(-1);
                     announceToScreenReader('Önceki sayfaya gidiliyor');
                   }} 
-                  className="p-2 mr-1 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full active:scale-95"
+                  className="p-2 mr-1 text-gray-500 hover:text-gray-700 focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150 rounded-full"
                   aria-label="Önceki sayfaya git"
                   title="Geri"
                   tabIndex={0}
@@ -562,7 +594,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
             {/* Logo - Mobile optimized */}
             <Link 
               to="/" 
-              className={`flex items-center ${isMobile ? 'flex-1 justify-center' : 'md:flex-none'} cursor-pointer focus:outline-none transition-all duration-200 ease-in-out hover:opacity-80 focus:opacity-80 rounded-lg p-1 -m-1`}
+              className={`flex items-center ${isMobile ? 'flex-1 justify-center' : 'md:flex-none'} cursor-pointer focus:outline-none transition-all duration-200 ease-in-out hover:opacity-80 hover:bg-gray-50 active:opacity-60 active:scale-95 rounded-lg p-1 -m-1`}
               aria-label="ConnectList ana sayfaya git"
               tabIndex={0}
             > 
@@ -598,12 +630,12 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
               {/* Mobile Search Icon */}
               <Link 
                 to="/search" 
-                className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-full active:scale-95"
+                className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150 rounded-full cursor-pointer"
                 aria-label="Arama sayfasına git"
                 title="Ara"
                 tabIndex={0}
                 onClick={() => {
-                  triggerHaptic('light');
+                  triggerHaptic('medium');
                   announceToScreenReader('Arama sayfasına yönlendirildi');
                 }}
               >
@@ -621,7 +653,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                   <input
                     ref={searchInputRef}
                     type="text"
-                    value={searchQuery}
+                    value={isListening ? transcript || searchQuery : searchQuery}
                     onChange={handleSearchInputChange}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
                     onFocus={() => {
@@ -644,15 +676,38 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                         setIsSearchFocused(false);
                       }, 200); // Delay'i artırdık ki kullanıcı sonuçlara tıklayabilsin
                     }}
-                    placeholder={t('common.searchPlaceholder')}
-                    className="search-input block w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-[13px]"
+                    placeholder={isListening ? 'Dinleniyor...' : t('common.searchPlaceholder')}
+                    className={`search-input block w-full pl-9 pr-10 py-1.5 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-[13px] ${
+                      isListening ? 'bg-red-50 border-red-300' : ''
+                    }`}
                     aria-label="Arama kutusu"
                     aria-describedby="search-help"
                     aria-expanded={showResults}
                     aria-autocomplete="list"
                     role="combobox"
                     tabIndex={0}
+                    readOnly={isListening}
                   />
+                  {/* Voice Search Button */}
+                  {isVoiceSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleListening}
+                      className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors ${
+                        isListening
+                          ? 'text-red-500 hover:text-red-600'
+                          : 'text-gray-400 hover:text-orange-500'
+                      }`}
+                      title={isListening ? 'Ses kaydını durdur' : 'Sesli arama'}
+                      aria-label={isListening ? 'Ses kaydını durdur' : 'Sesli arama başlat'}
+                    >
+                      {isListening ? (
+                        <MicOff className="h-4 w-4 animate-pulse" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                   <div id="search-help" className="sr-only">
                     Arama yapmak için yazın ve Enter'a basın. Sonuçlar otomatik olarak görünecektir.
                   </div>
@@ -676,7 +731,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                   {/* Messages */}
                   <Link
                     to="/messages"
-                    className="relative p-2 text-gray-600 hover:text-gray-900 hidden md:flex focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
+                    className="relative p-2 text-gray-600 hover:text-orange-500 rounded-full hover:bg-gray-100 hidden md:flex focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150 cursor-pointer"
                     aria-label={hasUnreadMessages ? "Mesajlar - okunmamış mesaj var" : "Mesajlar"}
                     title="Mesajlar"
                     tabIndex={0}
@@ -707,7 +762,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                             : `Bildirimler açıldı. ${notificationCount} okunmamış bildirim`
                         );
                       }}
-                      className="relative p-2 text-gray-600 hover:text-orange-500 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                      className="relative p-2 text-gray-600 hover:text-orange-500 rounded-full hover:bg-gray-100 focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150"
                       aria-label={`Bildirimler ${showNotifications ? 'kapat' : 'aç'}. ${notificationCount} okunmamış bildirim`}
                       aria-expanded={showNotifications}
                       aria-haspopup="true"
@@ -764,7 +819,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                             : 'Profil menüsü açıldı'
                         );
                       }}
-                      className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg p-1"
+                      className="flex items-center space-x-3 focus:outline-none active:bg-gray-100 active:scale-95 transition-all duration-150 rounded-lg p-1"
                       disabled={isLoading}
                       aria-label={`Profil menüsü ${isDropdownOpen ? 'kapat' : 'aç'}. ${profile?.full_name || 'Kullanıcı'}`}
                       aria-expanded={isDropdownOpen}
@@ -811,11 +866,11 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       >
                         <Link
                           to={`/profile/${profile?.username}`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 active:bg-gray-200 active:scale-[0.98] transition-all duration-150"
                           role="menuitem"
                           tabIndex={0}
                           onClick={() => {
-                            triggerHaptic('light');
+                            triggerHaptic('medium');
                             setIsDropdownOpen(false);
                             announceToScreenReader('Profilime yönlendirildi');
                           }}
@@ -824,11 +879,11 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                         </Link>
                         <Link
                           to="/settings"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 active:bg-gray-200 active:scale-[0.98] transition-all duration-150"
                           role="menuitem"
                           tabIndex={0}
                           onClick={() => {
-                            triggerHaptic('light');
+                            triggerHaptic('medium');
                             setIsDropdownOpen(false);
                             announceToScreenReader('Ayarlar sayfasına yönlendirildi');
                           }}
@@ -837,10 +892,11 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                         </Link>
                         <button
                           onClick={() => {
+                            triggerHaptic('heavy');
                             setIsDropdownOpen(false);
                             handleSignOut();
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 focus:outline-none focus:bg-red-50 active:bg-red-100 active:scale-[0.98] transition-all duration-150 border-t border-gray-100 mt-1"
                           role="menuitem"
                           tabIndex={0}
                         >
@@ -854,25 +910,25 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                 /* Giriş yapmamış kullanıcılar için giriş/kayıt butonları */
                 <div className="flex items-center space-x-3" role="group" aria-label="Kimlik doğrulama">
                   <Link
-                    to="/auth/login"
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded"
-                    aria-label="Giriş yap"
-                    tabIndex={0}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      announceToScreenReader('Giriş sayfasına yönlendirildi');
+                      to="/auth/login"
+                      className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 focus:outline-none active:bg-gray-100 active:scale-95 transition-all duration-150 rounded-lg"
+                      aria-label="Giriş yap"
+                      tabIndex={0}
+                      onClick={() => {
+                        triggerHaptic('medium');
+                        announceToScreenReader('Giriş sayfasına yönlendirildi');
                     }}
                   >
                     {t('common.auth.login')}
                   </Link>
                   <Link
-                    to="/auth/register"
-                    className="px-4 py-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                    aria-label="Kayıt ol"
-                    tabIndex={0}
-                    onClick={() => {
-                      triggerHaptic('light');
-                      announceToScreenReader('Kayıt sayfasına yönlendirildi');
+                      to="/auth/register"
+                      className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none active:bg-orange-700 active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md"
+                      aria-label="Kayıt ol"
+                      tabIndex={0}
+                      onClick={() => {
+                        triggerHaptic('medium');
+                        announceToScreenReader('Kayıt sayfasına yönlendirildi');
                     }}
                   >
                     {t('common.auth.register')}

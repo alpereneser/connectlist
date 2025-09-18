@@ -9,7 +9,8 @@ import { Movie, Show, Person, Game, Book as BookType, User } from '../types/sear
 import { List } from '../types/supabase';
 import { AuthPopup } from '../components/AuthPopup';
 import { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY } from '../lib/api'; 
-import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, MapPin, Music } from 'lucide-react';
+import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, MapPin, Music, Mic, MicOff } from 'lucide-react';
+import { useVoiceSearch } from '../hooks/useVoiceSearch';
 
 // TMDB sonuçları için genişletilmiş tipler
 interface TMDBMovie extends Movie {
@@ -113,6 +114,26 @@ export function Search() {
   // Mobil arama bar yüksekliğini dinamik ölçmek için ref
   const searchBarRef = useRef<HTMLDivElement | null>(null);
 
+  // Voice search hook
+  const {
+    isListening,
+    isSupported: isVoiceSupported,
+    transcript,
+    toggleListening
+  } = useVoiceSearch({
+    onResult: (transcript) => {
+      setQuery(transcript);
+      // Automatically search when voice input is received
+      if (transcript.trim()) {
+        navigate(`/search?q=${encodeURIComponent(transcript.trim())}`);
+      }
+    },
+    onError: (error) => {
+      console.error('Voice search error:', error);
+    },
+    language: i18n.language === 'tr' ? 'tr-TR' : 'en-US'
+  });
+
   // Arama işlemini useCallback ile sarıyoruz
   const performSearch = useCallback(async () => {
     // Sayfa yüklendiğinde en üste kaydır
@@ -166,10 +187,13 @@ export function Search() {
         console.error('Error searching books:', error);
       }
       
-      try {
-        placesResults = await searchPlaces(query, i18n.language);
-      } catch (error) {
-        console.error('Error searching places:', error);
+      // Mobile cihazlarda places araması yapma
+      if (window.innerWidth >= 768) {
+        try {
+          placesResults = await searchPlaces(query, i18n.language);
+        } catch (error) {
+          console.error('Error searching places:', error);
+        }
       }
       
       try {
@@ -203,7 +227,7 @@ export function Search() {
         lists: listsResults,
         movies: tmdbResults.filter((item) => item.media_type === 'movie') as TMDBMovie[],
         shows: tmdbResults.filter((item) => item.media_type === 'tv') as TMDBShow[],
-        people: tmdbResults.filter((item) => item.media_type === 'person') as TMDBPerson[],
+        people: window.innerWidth >= 768 ? tmdbResults.filter((item) => item.media_type === 'person') as TMDBPerson[] : [],
         games: gamesResults,
         books: booksResults,
         places: placesResults,
@@ -639,14 +663,13 @@ export function Search() {
   };
 
   const tabs = useMemo(() => [
-    { id: 'all', label: t('common.categories.all'), icon: Home, count: results.users.length + results.lists.length + results.movies.length + results.shows.length + results.people.length + results.games.length + results.books.length + results.places.length + results.musics.length },
+    { id: 'all', label: t('common.categories.all'), icon: Home, count: results.users.length + results.lists.length + results.movies.length + results.shows.length + results.games.length + results.books.length + results.musics.length },
     { id: 'users', label: t('profile.users'), icon: Users2, count: results.users.length },
     { id: 'lists', label: t('common.lists.all') || 'Listeler', icon: ListChecks, count: results.lists.length },
     { id: 'movies', label: t('common.categories.movies'), icon: Film, count: results.movies.length },
     { id: 'series', label: t('common.categories.series'), icon: Tv, count: results.shows.length },
     { id: 'books', label: t('common.categories.books'), icon: Book, count: results.books.length },
     { id: 'games', label: t('common.categories.games'), icon: Gamepad2, count: results.games.length },
-    { id: 'places', label: t('common.categories.places'), icon: MapPin, count: results.places.length },
     { id: 'musics', label: t('common.categories.musics'), icon: Music, count: results.musics.length },
   ], [t, results]);
 
@@ -1132,71 +1155,7 @@ export function Search() {
         </div>
       )}
       
-      {/* Web ölçülerinde kategori seçimi - arama yapılmadığında */}
-      {!query && (
-        <div className="hidden md:block bg-white border-b border-gray-200 fixed top-16 left-0 right-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-[55px]">
-              <div className="flex h-full items-center space-x-4 overflow-x-auto scrollbar-hide">
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'all' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('all')}
-                >
-                  <Home className="w-4 h-4" />
-                  <span>{t('common.categories.all')}</span>
-                </button>
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'movie' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('movie')}
-                >
-                  <Film className="w-4 h-4" />
-                  <span>{t('common.categories.movies')}</span>
-                </button>
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'series' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('series')}
-                >
-                  <Tv className="w-4 h-4" />
-                  <span>{t('common.categories.series')}</span>
-                </button>
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'game' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('game')}
-                >
-                  <Gamepad2 className="w-4 h-4" />
-                  <span>{t('common.categories.games')}</span>
-                </button>
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'book' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('book')}
-                >
-                  <Book className="w-4 h-4" />
-                  <span>{t('common.categories.books')}</span>
-                </button>
-                <button
-                  className={`flex h-full items-center space-x-2 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === 'place' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setSelectedCategory('place')}
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span>{t('common.categories.places')}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
       
       <main className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-0 pt-[5px] md:pt-[10px] mt-0 md:pt-[55px] overflow-auto fixed inset-x-0" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))', bottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
         <div className="space-y-4">
@@ -1221,12 +1180,34 @@ export function Search() {
                 }}>
                   <input
                     type="text"
-                    value={query}
+                    value={isListening ? transcript || query : query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t('common.searchPlaceholder')}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm"
+                    placeholder={isListening ? 'Dinleniyor...' : t('common.searchPlaceholder')}
+                    className={`block w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-sm ${
+                      isListening ? 'bg-red-50 border-red-300' : ''
+                    }`}
+                    readOnly={isListening}
                   />
                 </form>
+                {/* Voice Search Button */}
+                {isVoiceSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors ${
+                      isListening
+                        ? 'text-red-500 hover:text-red-600'
+                        : 'text-gray-400 hover:text-orange-500'
+                    }`}
+                    title={isListening ? 'Ses kaydını durdur' : 'Sesli arama'}
+                  >
+                    {isListening ? (
+                      <MicOff className="h-5 w-5 animate-pulse" />
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1299,13 +1280,7 @@ export function Search() {
                       <Book className="w-4 h-4" />
                       <span>{t('common.categories.books')}</span>
                     </button>
-                    <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'place' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
-                      onClick={() => setSelectedCategory('place')}
-                    >
-                      <MapPin className="w-4 h-4" />
-                      <span>{t('common.categories.places')}</span>
-                    </button>
+
                   </div>
                 </div>
               </div>

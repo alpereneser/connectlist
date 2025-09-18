@@ -6,7 +6,9 @@ import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin, Music } from 'lucide-r
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { AuthPopup } from './AuthPopup';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import { DEFAULT_HOME_CATEGORY } from '../constants/categories';
+import { useHapticFeedback } from '../hooks/useHapticFeedback';
 
 interface BottomMenuProps {
   hidden?: boolean;
@@ -18,6 +20,8 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
   const { user, loading: isLoadingAuth } = useAuth();
   const pathname = location.pathname;
   const { t } = useTranslation();
+  const { scrollDirection, isScrolledToTop } = useScrollDirection({ threshold: 15, debounceMs: 150 });
+  const { triggerHaptic } = useHapticFeedback();
   
   // State variables
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
@@ -188,7 +192,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
 
   const profileOrLoginLink = user ? (
     <button
-      onClick={() => navigate('/profile/me')}
+      onClick={() => {
+        triggerHaptic('light');
+        navigate('/profile/me');
+      }}
       onTouchStart={handleProfilePress}
       onTouchEnd={handleProfileRelease}
       onMouseDown={handleProfilePress}
@@ -202,7 +209,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
     </button>
   ) : (
     <button
-      onClick={() => navigate('/auth/register')}
+      onClick={() => {
+        triggerHaptic('light');
+        navigate('/auth/register');
+      }}
       className={`p-2 rounded-full hover:bg-gray-100 ${isActive('/auth/register') ? 'text-orange-500' : 'text-gray-600'}`}
     >
       <UserPlus weight={isActive('/auth/register') ? 'fill' : 'regular'} size={24} />
@@ -234,11 +244,20 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
     return null;
   }
 
+  // Determine if menu should be hidden based on scroll direction
+  const shouldHideMenu = scrollDirection === 'down' && !isScrolledToTop;
+
   console.log("[BottomMenu] Rendering decision - isLoadingAuth:", isLoadingAuth, "User:", user);
 
   return (
     <>
-      <div className={`fixed-bottom-safe bg-white border-t border-gray-200 z-50 md:hidden h-[84px] safe-x ${hidden ? 'hidden' : ''}`}>
+      <div 
+        className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden h-[74px] transition-transform duration-300 ease-in-out ${hidden ? 'hidden' : ''}`} 
+        style={{ 
+          paddingBottom: 'var(--safe-area-inset-bottom)',
+          transform: shouldHideMenu ? 'translateY(100%)' : 'translateY(0)'
+        }}
+      >
         {isLoadingAuth ? (
           // Yükleniyor durumu veya boşluk
           <div className="flex justify-around items-center h-full">
@@ -248,7 +267,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
           // Giriş yapılmış menü
           <div className="flex justify-around items-center h-full">
             <button
-              onClick={handleHomeClick}
+              onClick={() => {
+                triggerHaptic('light');
+                handleHomeClick();
+              }}
               className={`p-2 rounded-full hover:bg-gray-100 ${
                 isActive('/') ? 'text-orange-500' : 'text-gray-600'
               }`}
@@ -257,7 +279,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             </button>
             
             <button
-              onClick={() => navigate('/messages')}
+              onClick={() => {
+                triggerHaptic('light');
+                navigate('/messages');
+              }}
               className={`p-2 rounded-full hover:bg-gray-100 ${
                 isActive('/messages') ? 'text-orange-500' : 'text-gray-600'
               }`}
@@ -272,6 +297,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
 
             <button
               onClick={() => {
+                triggerHaptic('medium');
                 if (user) {
                   // Open iOS-style category sheet instead of navigating
                   // to SelectCategory page
@@ -291,7 +317,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             </button>
 
             <button
-              onClick={handleNotificationClick}
+              onClick={() => {
+                triggerHaptic('light');
+                handleNotificationClick();
+              }}
               className={`p-2 rounded-full hover:bg-gray-100 ${
                 isActive('/notifications') ? 'text-orange-500' : 'text-gray-600'
               }`}
@@ -310,7 +339,10 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
           // Giriş yapılmamış menü
           <div className="flex justify-around items-center h-full">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                triggerHaptic('light');
+                navigate('/');
+              }}
               className={`p-2 rounded-full hover:bg-gray-100 ${isActive('/') ? 'text-orange-500' : 'text-gray-600'}`}
             >
               <House weight={isActive('/') ? 'fill' : 'regular'} size={24} />
@@ -318,6 +350,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             
             <button
               onClick={() => {
+                triggerHaptic('light');
                 if (user) {
                   navigate('/messages');
                 } else {
@@ -336,13 +369,17 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
             </button>
 
             <button onClick={() => {
+              triggerHaptic('medium');
               setAuthMessage('Liste oluşturmak için giriş yapmalısınız');
               setShowAuthPopup(true);
             }} className="p-2 rounded-full hover:bg-gray-100 text-gray-600">
               <Plus weight="regular" size={24} />
             </button>
             
-            <button onClick={handleNotificationClick} className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600">
+            <button onClick={() => {
+              triggerHaptic('light');
+              handleNotificationClick();
+            }} className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600">
               <Bell weight="regular" size={24} />
               {hasUnreadNotifications && (
                 <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>

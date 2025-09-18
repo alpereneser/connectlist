@@ -10,6 +10,8 @@ import { ProfileCategories } from '../components/ProfileCategories';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { getUserLists, followUser, unfollowUser, checkIfFollowing, getFollowers, getFollowing, checkMutualFollow } from '../lib/api';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import PullToRefresh from '../components/PullToRefresh';
 import { Helmet } from 'react-helmet-async';
 
 interface FollowUser {
@@ -94,6 +96,29 @@ export function Profile() {
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [currentSessionUserId, setCurrentSessionUserId] = useState<string | null>(null);
   const [mobileViewMode] = useState<'grid' | 'list'>('list');
+
+  // Pull to refresh handler
+  const handleRefresh = async () => {
+    if (!profile?.id) return;
+    
+    // Refresh user lists
+    setIsLoadingLists(true);
+    setListsCurrentPage(0);
+    try {
+      const userLists = await getUserLists(profile.id, 0, LISTS_PAGE_SIZE);
+      setLists(userLists);
+      setHasMoreLists(userLists.length === LISTS_PAGE_SIZE);
+    } catch (error) {
+      console.error('Error refreshing user lists:', error);
+    } finally {
+      setIsLoadingLists(false);
+    }
+  };
+
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 80
+  });
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -826,7 +851,23 @@ export function Profile() {
           {/* Mobile View Toggle removed as requested */}
 
           {/* Kullanıcının Listeleri - Mobile */}
-          <div ref={mobileListContainerRef} className="md:hidden bg-gray-50 min-h-screen">
+          <div ref={(el) => {
+            if (mobileListContainerRef.current !== el) {
+              Object.defineProperty(mobileListContainerRef, 'current', {
+                value: el,
+                writable: true,
+                configurable: true
+              });
+            }
+            pullToRefresh.bindToContainer(el);
+          }} className="md:hidden bg-gray-50 min-h-screen relative">
+            <PullToRefresh
+              isPulling={pullToRefresh.isPulling}
+              pullDistance={pullToRefresh.pullDistance}
+              isRefreshing={pullToRefresh.isRefreshing}
+              canRefresh={pullToRefresh.canRefresh}
+              pullProgress={pullToRefresh.pullProgress}
+            />
             {isLoadingLists ? (
               <div className="p-2">
                 <div className={`animate-pulse ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-4'}`}>
@@ -1013,7 +1054,23 @@ export function Profile() {
           </div>
           
           {/* Desktop için listeler */}
-          <div ref={listContainerRef} className="space-y-6 hidden md:block">
+          <div ref={(el) => {
+            if (listContainerRef.current !== el) {
+              Object.defineProperty(listContainerRef, 'current', {
+                value: el,
+                writable: true,
+                configurable: true
+              });
+            }
+            pullToRefresh.bindToContainer(el);
+          }} className="space-y-6 hidden md:block relative">
+            <PullToRefresh
+              isPulling={pullToRefresh.isPulling}
+              pullDistance={pullToRefresh.pullDistance}
+              isRefreshing={pullToRefresh.isRefreshing}
+              canRefresh={pullToRefresh.canRefresh}
+              pullProgress={pullToRefresh.pullProgress}
+            />
             {isLoadingLists ? (
               <div className="animate-pulse space-y-6">
                 {[...Array(6)].map((_, i) => (

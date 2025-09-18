@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { AuthPopup } from './AuthPopup';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 import { CommentModal } from './CommentModal';
+import { LazyImage } from './LazyImage';
 import { useLikeMutation } from '../hooks/useLikeMutation';
 import { createSlug } from '../lib/utils';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
@@ -473,9 +474,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
                     <div className="text-[12px] md:text-sm text-gray-500 line-clamp-1">{item.title}</div>
                   </div>
                 ) : (
-                  <img
-                    loading="lazy"
-                    decoding="async"
+                  <LazyImage
                     src={(item.type === 'person' && !item.image_url) ? 
                       `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.title)}&backgroundColor=orange` : 
                      item.image_url}

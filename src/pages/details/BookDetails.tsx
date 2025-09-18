@@ -5,13 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
 import { AddToListModal } from '../../components/AddToListModal';
-import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
 import { getBookDetails } from '../../lib/api';
-import { createSlug } from '../../lib/utils';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
+import ContentComments from '../../components/ContentComments';
 
 interface BookDetails {
   id: string;
@@ -97,12 +96,10 @@ export function BookDetails() {
         .map((item: any) => {
           const listData = item?.lists;
           const profileData = listData?.profiles;
-          // Eğer gerekli veri yoksa null döndür
           if (!listData || !profileData || !profileData.username) {
             console.warn('Skipping item due to missing data:', item);
             return null;
           }
-          // Veri varsa nesneyi oluştur
           return {
             username: profileData.username,
             full_name: profileData.full_name,
@@ -111,7 +108,7 @@ export function BookDetails() {
             list_id: listData.id
           };
         })
-        .filter((user): user is ListUser => user !== null); // null değerleri filtrele ve tipi doğrula
+        .filter((user): user is ListUser => user !== null);
 
       setListUsers(users);
       setShowListUsers(true);
@@ -201,15 +198,12 @@ export function BookDetails() {
 
   const handleAttemptAddToList = async () => {
     try {
-      // Kullanıcının oturum durumunu kontrol et
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // Oturum açıksa doğrudan modal'ı göster
         console.log('Oturum açık, kullanıcı ID:', session.user.id);
         setShowAddToListModal(true);
       } else {
-        // Oturum açık değilse requireAuth ile oturum açma popup'ını göster
         console.log('Oturum açık değil, popup gösteriliyor');
         const isLoggedIn = await requireAuth(t('details.addToListAuthAction'));
         if (isLoggedIn) {
@@ -239,19 +233,80 @@ export function BookDetails() {
 
       <Header />
       <div className="min-h-screen bg-white md:bg-gray-100 pb-16 md:pb-0 pt-[95px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-          <div className="mb-6">
-            <Breadcrumb
-              items={[
-                { label: t('common.categories.books'), href: '/search?category=books' },
-                { label: book.title }
-              ]}
-            />
+        <div className="mb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <Breadcrumb
+            items={[
+              { label: t('common.categories.books'), href: '/search?category=books' },
+              { label: book.title }
+            ]}
+          />
+        </div>
+        
+        <div className="bg-white min-h-screen">
+          <div className="hidden md:block">
+            <div className="relative h-96 bg-gradient-to-r from-gray-900 to-gray-700">
+              <div className="absolute inset-0">
+                <img
+                  src={book.image_links.large || book.image_links.medium || book.image_links.small}
+                  alt={book.title}
+                  className="w-full h-full object-cover opacity-30"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30" />
+              </div>
+              
+              <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+                <div className="flex gap-8">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={book.image_links.large || book.image_links.medium || book.image_links.small}
+                      alt={book.title}
+                      className="w-64 rounded-lg shadow-2xl aspect-[2/3] object-cover"
+                    />
+                  </div>
+                  
+                  <div className="flex-1 text-white">
+                    <h1 className="text-4xl font-bold mb-4">{book.title}</h1>
+                    <div className="flex items-center gap-4 text-lg mb-6">
+                      <span>{book.authors.join(', ')}</span>
+                      <span>•</span>
+                      <span>{new Date(book.published_date).getFullYear()}</span>
+                    </div>
+                    {book.categories && book.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {book.categories.map(category => (
+                          <span
+                            key={category}
+                            className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm"
+                          >
+                            {category}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleAttemptAddToList}
+                        className="flex items-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 shadow-lg"
+                      >
+                        <Plus size={20} className="mr-2" />
+                        {t('details.addToList')}
+                      </button>
+                      <button
+                        onClick={fetchListUsers}
+                        className="flex items-center bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+                      >
+                        <Users size={20} className="mr-2" />
+                        {t('details.whoAdded')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+          
           <div className="md:hidden">
-            {/* Mobile Header */}
-            <div className="flex gap-4">
-              {/* Mobile Cover */}
+            <div className="flex gap-4 p-4">
               <div className="w-1/3">
                 <img
                   src={book.image_links.large || book.image_links.medium || book.image_links.small}
@@ -260,7 +315,6 @@ export function BookDetails() {
                 />
               </div>
               
-              {/* Mobile Info */}
               <div className="w-2/3">
                 <h1 className="text-base font-bold mb-1">{book.title}</h1>
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600 mb-2">
@@ -284,12 +338,9 @@ export function BookDetails() {
             </div>
           </div>
 
-          {/* Content */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-              {/* Main Content */}
               <div className="md:col-span-2 space-y-3 md:space-y-6">
-                {/* Overview */}
                 <div>
                   <h2 className="text-base font-bold mb-1 md:text-lg md:mb-2">{t('details.about')}</h2>
                   <div
@@ -298,7 +349,6 @@ export function BookDetails() {
                   />
                 </div>
 
-                {/* Book Info */}
                 <div className="bg-gray-50 md:bg-white rounded-lg md:shadow-sm p-4 md:p-6">
                   <h3 className="font-bold text-base md:text-lg mb-3 md:mb-4">{t('details.info.book.title')}</h3>
                   <dl className="space-y-4">
@@ -324,10 +374,8 @@ export function BookDetails() {
                 </div>
               </div>
               
-              {/* Sidebar */}
-              <div className="space-y-4 md:space-y-6">
-                {/* Action Buttons */}
-                <div className="mt-4 flex flex-wrap gap-3 items-center">
+              <div className="space-y-4 md:space-y-6 md:hidden">
+                <div className="flex flex-wrap gap-3 items-center px-4">
                   <button
                     onClick={handleAttemptAddToList}
                     className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
@@ -347,9 +395,16 @@ export function BookDetails() {
             </div>
           </div>
         </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ContentComments
+            contentType="book"
+            contentId={book.id}
+            contentTitle={book.title}
+          />
+        </div>
       </div>
 
-      {/* Add to List Modal */}
       <AddToListModal
         isOpen={showAddToListModal}
         onClose={() => setShowAddToListModal(false)}
@@ -361,7 +416,6 @@ export function BookDetails() {
         contentDescription={book.description}
       />
 
-      {/* Who Added Modal */}
       {showListUsers && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg w-full max-w-md">
@@ -414,11 +468,11 @@ export function BookDetails() {
           <h3 className="text-lg font-semibold mb-2">{t('details.listsContainingItem')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {listsContainingBook.map((item: any) => { 
-              const listData = item.lists; // lists nesnesini al
-              if (!listData) return null; // lists yoksa atla
-              const profileData = listData.profiles; // profiles nesnesini al
+              const listData = item.lists;
+              if (!listData) return null;
+              const profileData = listData.profiles;
               return (
-                <Link key={listData.id} to={`/${profileData?.username}/${createSlug(listData.title)}`} className="block bg-white p-3 rounded shadow hover:shadow-md transition-shadow">
+                <Link key={listData.id} to={`/${profileData?.username}/list/${listData.id}`} className="block bg-white p-3 rounded shadow hover:shadow-md transition-shadow">
                   <div className="flex items-center mb-2">
                     <img src={profileData?.avatar || '/default-avatar.png'} alt={profileData?.full_name || profileData?.username} className="w-6 h-6 rounded-full mr-2"/>
                     <span className="text-sm font-medium">{profileData?.username}</span>

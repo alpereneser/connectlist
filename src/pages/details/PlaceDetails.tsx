@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
-import { BottomMenu } from '../../components/BottomMenu';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { AddToListModal } from '../../components/AddToListModal';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
@@ -14,6 +13,7 @@ import { useWhoAdded } from '../../hooks/useWhoAdded';
 import { WhoAddedModal } from '../../components/WhoAddedModal';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
+import ContentComments from '../../components/ContentComments';
 
 interface PlaceDetails {
   id: string;
@@ -442,6 +442,15 @@ export function PlaceDetails() {
                   </div>
                 </div>
               )}
+            </div>
+            
+            {/* Comments Section */}
+            <div className="col-span-1 lg:col-span-2">
+              <ContentComments
+                contentType="place"
+                contentId={place?.id || ''}
+                contentTitle={place?.name || ''}
+              />
             </div>
             
             {/* Sağ kolon - Sidebar */}

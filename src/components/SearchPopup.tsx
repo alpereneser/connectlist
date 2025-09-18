@@ -84,13 +84,26 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
-  // Auto-focus on mobile
+  // Auto-focus on mobile and keyboard management
   useEffect(() => {
     if (isOpen && isMobile && searchInputRef.current) {
       setTimeout(() => {
         searchInputRef.current?.focus();
+        // Add keyboard handling
+        document.body.classList.add('keyboard-stable');
       }, 100);
     }
+    
+    // Cleanup on close
+    if (!isOpen) {
+      document.body.classList.remove('keyboard-stable', 'keyboard-open');
+    }
+    
+    return () => {
+      if (isOpen) {
+        document.body.classList.remove('keyboard-stable', 'keyboard-open');
+      }
+    };
   }, [isOpen, isMobile]);
   
   // Touch handling for mobile

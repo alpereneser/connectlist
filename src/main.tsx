@@ -93,16 +93,43 @@ createRoot(root).render(
 // Service Worker'ları tamamen kaldırdık
 // Bu, Supabase bağlantı sorunlarını çözmek için gerekli
 
-// Production'da (canlı alan adı) PWA deneyimi için Service Worker kaydı
-if (
-  'serviceWorker' in navigator &&
-  window.location.hostname.endsWith('connectlist.me')
-) {
+// PWA deneyimi için Service Worker kaydı
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    // Production'da sw.js, development'ta serviceWorker.js kullan
+    const swPath = window.location.hostname.endsWith('connectlist.me') 
+      ? '/sw.js' 
+      : '/serviceWorker.js';
+    
     navigator.serviceWorker
-      .register('/sw.js')
-      .catch(() => {
-        // sessiz hata
+      .register(swPath)
+      .then((registration) => {
+        console.log('Service Worker kayıt başarılı:', registration.scope);
+        
+        // Güncelleme kontrolü
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Yeni sürüm mevcut, kullanıcıya bildir
+                if (confirm('Yeni bir sürüm mevcut. Sayfayı yenilemek ister misiniz?')) {
+                  window.location.reload();
+                }
+              }
+            });
+          }
+        });
+      })
+      .catch((error) => {
+        console.log('Service Worker kayıt hatası:', error);
       });
+  });
+  
+  // Service Worker mesajlarını dinle
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'CACHE_UPDATED') {
+      console.log('Önbellek güncellendi');
+    }
   });
 }

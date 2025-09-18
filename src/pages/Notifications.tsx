@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser } from '../lib/supabase-browser';
 import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteAllNotifications } from '../lib/api';
+import { LazyImage } from '../components/LazyImage';
 import { turkishToEnglish } from '../lib/utils';
 import { 
   Check, 
@@ -37,13 +38,12 @@ interface NotificationGroup {
 
 export function Notifications() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Core State
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
   
   // Mobile Gestures & Interactions
   const [swipedNotification, setSwipedNotification] = useState<string | null>(null);
@@ -64,8 +64,8 @@ export function Notifications() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [notificationCache, setNotificationCache] = useState<Map<string, Notification>>(new Map());
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+
   
   // Modals & UI State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -100,87 +100,7 @@ export function Notifications() {
     setTimeout(() => setAnnounceMessage(''), 1000);
   };
 
-  // Lazy Loading Image Component
-  const LazyImage: React.FC<{
-    src: string;
-    alt: string;
-    className?: string;
-    fallbackSrc?: string;
-  }> = ({ src, alt, className = '', fallbackSrc }) => {
-    const [imageSrc, setImageSrc] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
 
-    useEffect(() => {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && !imageSrc) {
-              setImageSrc(src);
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.1 }
-      );
-
-      if (imgRef.current) {
-        observer.observe(imgRef.current);
-      }
-
-      return () => observer.disconnect();
-    }, [src, imageSrc]);
-
-    const handleImageLoad = () => {
-      setIsLoading(false);
-      setHasError(false);
-    };
-
-    const handleImageError = () => {
-      setIsLoading(false);
-      setHasError(true);
-      setImageErrors(prev => new Set([...prev, src]));
-      
-      if (fallbackSrc && imageSrc !== fallbackSrc) {
-        setImageSrc(fallbackSrc);
-        setHasError(false);
-      }
-    };
-
-    const getPlaceholderAvatar = (username: string) => {
-      return `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}&backgroundColor=f3f4f6`;
-    };
-
-    return (
-      <div ref={imgRef} className={`relative overflow-hidden ${className}`}>
-        {isLoading && (
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent"></div>
-          </div>
-        )}
-        
-        {imageSrc && (
-          <img
-            src={hasError ? getPlaceholderAvatar(alt) : imageSrc}
-            alt={alt}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              isLoading ? 'opacity-0' : 'opacity-100'
-            }`}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading="lazy"
-          />
-        )}
-        
-        {!imageSrc && (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <div className="text-gray-400 text-xs">{alt.slice(0, 2).toUpperCase()}</div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
@@ -393,27 +313,7 @@ export function Notifications() {
     }
   };
 
-  // Cache Management
-  const getCachedNotification = (id: string): Notification | undefined => {
-    return notificationCache.get(id);
-  };
 
-  const setCachedNotification = (notification: Notification) => {
-    setNotificationCache(prev => {
-      const newCache = new Map(prev);
-      newCache.set(notification.id, notification);
-      
-      // Limit cache size
-      if (newCache.size > 100) {
-        const firstKey = newCache.keys().next().value;
-        if (firstKey) {
-          newCache.delete(firstKey);
-        }
-      }
-      
-      return newCache;
-    });
-  };
 
   // Enhanced notification actions
   const handleMarkAsRead = async (notificationId: string) => {
@@ -592,37 +492,17 @@ export function Notifications() {
   };
 
   const confirmDeleteAllNotifications = async () => {
-    setIsDeletingAll(true);
     try {
       await deleteAllNotifications();
       setNotifications([]);
       setShowDeleteAllConfirm(false);
     } catch (error) {
       console.error('Error deleting all notifications:', error);
-    } finally {
-      setIsDeletingAll(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
 
-    if (seconds < 60) {
-      return 'şimdi';
-    } else if (minutes < 60) {
-      return `${minutes}d`;
-    } else if (hours < 24) {
-      return `${hours}s`;
-    } else {
-      return `${days}g`;
-    }
-  };
+
 
   const getNotificationText = (notification: Notification) => {
     const tr = i18n.language?.toLowerCase().startsWith('tr');
@@ -1053,11 +933,7 @@ export function Notifications() {
                                 triggerHapticFeedback('light');
                               } else {
                                 handleNotificationClick(notification);
-                              }
-                            }}
-                            tabIndex={0}
-                            role="button"
-                            aria-describedby={`notification-${notification.id}-description`}
+                              }}}
                             aria-pressed={isSelectionMode ? selectedNotifications.has(notification.id) : undefined}
                           >
                             {/* Selection Checkbox */}
@@ -1068,7 +944,6 @@ export function Notifications() {
                                   checked={selectedNotifications.has(notification.id)}
                                   onChange={() => {}}
                                   className="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
-                                  tabIndex={-1}
                                 />
                               </div>
                             )}

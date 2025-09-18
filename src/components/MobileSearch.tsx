@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { X, MagnifyingGlass, ArrowLeft } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { SearchResults } from '../components/SearchResults';
@@ -7,7 +7,6 @@ import { useDebounce } from '../hooks/useDebounce';
 
 export function MobileSearch() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   
   // Search states
@@ -43,9 +42,13 @@ export function MobileSearch() {
       if (heightDiff > 150) { // Keyboard is likely open
         setIsKeyboardOpen(true);
         setKeyboardHeight(heightDiff);
+        // Add body class to prevent scrolling
+        document.body.classList.add('keyboard-open');
       } else {
         setIsKeyboardOpen(false);
         setKeyboardHeight(0);
+        // Remove body class
+        document.body.classList.remove('keyboard-open');
       }
       
       setViewportHeight(currentHeight);
@@ -65,6 +68,8 @@ export function MobileSearch() {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleOrientationChange);
+      // Cleanup body class on unmount
+      document.body.classList.remove('keyboard-open');
     };
   }, [viewportHeight]);
 
@@ -261,13 +266,13 @@ export function MobileSearch() {
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
                 placeholder={t('common.searchPlaceholder')}
-                className="
-                  w-full pl-10 pr-10 py-3 text-base
+                className={`search-input-container ${
+                  isSearchFocused ? 'search-input-focused' : ''
+                } w-full pl-10 pr-10 py-3 text-base
                   bg-gray-100 border-0 rounded-xl
                   focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent
                   placeholder-gray-500
-                  ios-fix android-fix
-                "
+                  ios-fix android-fix`}
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -386,4 +391,4 @@ export function MobileSearch() {
       )}
     </div>
   );
-} 
+}

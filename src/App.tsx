@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from './lib/supabase-browser';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useAndroidBackButtonHandler } from './hooks/useAndroidBackButtonHandler';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Header } from './components/Header';
 import { SubHeader } from './components/SubHeader';
 import { BottomMenu } from './components/BottomMenu';
@@ -14,7 +15,10 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { InstallPrompt } from './components/InstallPrompt';
 import { CommentModal } from './components/CommentModal';
 import { ListPreview } from './components/ListPreview';
+import { OfflineNotification, PWAInstallPrompt } from './components/OfflineNotification';
 import { getLists } from './lib/api';
+import { usePullToRefresh } from './hooks/usePullToRefresh';
+import PullToRefresh from './components/PullToRefresh';
 
 // Lazy load all route components for better performance
 const Login = lazy(() => import('./pages/auth/Login').then(module => ({ default: module.Login })));
@@ -71,6 +75,19 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [isMobile, setIsMobile] = useState(false);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  // Pull-to-refresh hook
+  const handleRefresh = async () => {
+    setLists([]);
+    setPage(0);
+    setHasMore(true);
+    await fetchLists();
+  };
+
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: handleRefresh,
+    enabled: isMobile && !isLoading
+  });
 
   // Ekran boyutunu kontrol et
   useEffect(() => {
@@ -264,7 +281,23 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
 
   // Tüm cihazlar için standart liste görünümü
   return (
-    <div ref={listContainerRef} className="min-h-screen bg-gray-100"> 
+    <>
+      <PullToRefresh
+        isPulling={pullToRefresh.isPulling}
+        pullDistance={pullToRefresh.pullDistance}
+        isRefreshing={pullToRefresh.isRefreshing}
+        canRefresh={pullToRefresh.canRefresh}
+        pullProgress={pullToRefresh.pullProgress}
+      />
+      <div 
+        ref={(el) => {
+          if (listContainerRef.current !== el) {
+            (listContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+          }
+          pullToRefresh.bindToContainer(el);
+        }} 
+        className="min-h-screen bg-gray-100"
+      > 
       <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 pt-2 md:pt-[10px] pb-4 md:pb-8"> 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-8 md:py-10 text-center">
@@ -306,7 +339,8 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -406,7 +440,7 @@ function App() {
   };
 
   return (
-    <>
+    <ThemeProvider>
       <div className="flex flex-col min-h-screen bg-gray-50">
         {/* Header: Auth sayfalarında gizle */}
         {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && (
@@ -589,11 +623,15 @@ function App() {
         </main>
 
 
+        {/* Offline ve PWA bildirimleri */}
+        <OfflineNotification />
+        <PWAInstallPrompt />
+        
         {/* Mobil anasayfada BottomMenu'yu göster */}
         {!isAuthPage && !isMessageDetailPage && <BottomMenu />}
         <InstallPrompt />
       </div>
-    </>
+    </ThemeProvider>
   );
 }
 

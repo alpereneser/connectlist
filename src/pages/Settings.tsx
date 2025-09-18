@@ -2,10 +2,11 @@ import { z } from 'zod';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useForm } from 'react-hook-form';
 import { useDebounce } from '../hooks/useDebounce';
 import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle, LogOut, Camera, Send } from 'lucide-react';
+import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle, LogOut, Camera, Send, Moon, Sun } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Header } from '../components/Header';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
@@ -51,6 +52,7 @@ type SupportForm = {
 const Settings = () => {
   const { t, i18n } = useTranslation();
   const { setLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { triggerHaptic } = useHapticFeedback();
   const navigate = useNavigate();
   const [announceText, setAnnounceText] = useState('');
@@ -1232,6 +1234,49 @@ const Settings = () => {
                             </div>
                           )}
                         </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dark Mode Toggle */}
+                  <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+                    <h2 className="text-lg md:text-xl font-bold mb-4 text-gray-900">{t('settings.appearance', 'Görünüm')}</h2>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                            {theme === 'dark' ? (
+                              <Moon size={16} className="text-gray-600" />
+                            ) : (
+                              <Sun size={16} className="text-yellow-600" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">
+                              {theme === 'dark' ? t('settings.darkMode', 'Karanlık Mod') : t('settings.lightMode', 'Açık Mod')}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {t('settings.themeDescription', 'Uygulamanın görünümünü değiştirin')}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            triggerHaptic('light');
+                            toggleTheme();
+                          }}
+                          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                          style={{
+                            backgroundColor: theme === 'dark' ? '#f97316' : '#d1d5db'
+                          }}
+                        >
+                          <span
+                            className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                            style={{
+                              transform: theme === 'dark' ? 'translateX(1.5rem)' : 'translateX(0.25rem)'
+                            }}
+                          />
+                        </button>
                       </div>
                     </div>
                   </div>

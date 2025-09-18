@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Mic, MicOff, Clock, X, TrendingUp, SlidersHorizontal, Calendar, Globe, ArrowUpDown } from 'lucide-react';
+import { Search, Mic, MicOff, X, TrendingUp, SlidersHorizontal, Calendar, Globe, ArrowUpDown } from 'lucide-react';
 import { searchTMDB, searchGames, searchBooks, searchUsers, searchLists, getDefaultPlaceImage } from '../lib/api';
 import { Header } from '../components/Header';
 import { SubHeader } from '../components/SubHeader';
+import { LazyImage } from '../components/LazyImage';
 import { useDebounce } from '../hooks/useDebounce';
 import { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY } from '../lib/api';
 
@@ -100,7 +101,6 @@ export function MobileSearch() {
   
   // Touch handling
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
-  const [isSwiping, setIsSwiping] = useState(false);
   
   // Advanced Features
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
@@ -115,7 +115,6 @@ export function MobileSearch() {
 
   // Performance & Optimization
   const [searchCache, setSearchCache] = useState<Map<string, SearchResult[]>>(new Map());
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const [searchPage, setSearchPage] = useState(1);
   const [hasMoreResults, setHasMoreResults] = useState(true);
   const [loadingMoreResults, setLoadingMoreResults] = useState(false);
@@ -124,10 +123,8 @@ export function MobileSearch() {
 
   // Accessibility & Focus Management
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState<number>(-1);
-  const [isSearchInputFocused, setIsSearchInputFocused] = useState(false);
   const [announceMessage, setAnnounceMessage] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     // Sayfa yüklendiğinde en üste kaydır
@@ -212,88 +209,7 @@ export function MobileSearch() {
     return [];
   };
 
-  // Lazy loading image component with error handling
-  const LazyImage: React.FC<{
-    src: string;
-    alt: string;
-    className?: string;
-    fallbackSrc?: string;
-  }> = ({ src, alt, className = '', fallbackSrc }) => {
-    const [imageSrc, setImageSrc] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [hasError, setHasError] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && !imageSrc) {
-              setImageSrc(src);
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.1 }
-      );
-
-      if (imgRef.current) {
-        observer.observe(imgRef.current);
-      }
-
-      return () => observer.disconnect();
-    }, [src, imageSrc]);
-
-    const handleImageLoad = () => {
-      setIsLoading(false);
-      setHasError(false);
-    };
-
-    const handleImageError = () => {
-      setIsLoading(false);
-      setHasError(true);
-      setImageErrors(prev => new Set([...prev, src]));
-      
-      // Try fallback image
-      if (fallbackSrc && imageSrc !== fallbackSrc) {
-        setImageSrc(fallbackSrc);
-        setHasError(false);
-      }
-    };
-
-    const getPlaceholderImage = (title: string) => {
-      return `https://via.placeholder.com/400x600/f3f4f6/9ca3af?text=${encodeURIComponent(title.slice(0, 2).toUpperCase())}`;
-    };
-
-    return (
-      <div ref={imgRef} className={`relative overflow-hidden ${className}`}>
-        {isLoading && (
-          <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-orange-500 border-t-transparent"></div>
-          </div>
-        )}
-        
-        {imageSrc && (
-          <img
-            src={hasError ? getPlaceholderImage(alt) : imageSrc}
-            alt={alt}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              isLoading ? 'opacity-0' : 'opacity-100'
-            }`}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading="lazy"
-          />
-        )}
-        
-        {!imageSrc && (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <div className="text-gray-400 text-xs text-center p-2">{alt}</div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   // Apply filters to search results
   const applyFilters = (results: SearchResult[]): SearchResult[] => {
@@ -309,7 +225,6 @@ export function MobileSearch() {
     if (filters.dateRange !== 'all') {
       // This would require date information in the results
       // For now, we'll simulate filtering by keeping only newer items
-      const now = new Date();
       const cutoffDates: Record<string, number> = {
         today: 1,
         week: 7,
@@ -444,11 +359,7 @@ export function MobileSearch() {
     }
   };
 
-  const clearSearchHistory = () => {
-    setSearchHistory([]);
-    localStorage.removeItem('searchHistory');
-    triggerHapticFeedback('light');
-  };
+
 
   // Voice search
   const startVoiceSearch = () => {
@@ -821,8 +732,6 @@ export function MobileSearch() {
         return;
       }
 
-      const currentPage = searchPage;
-      
       setLoadingMoreResults(true);
 
       try {
@@ -880,7 +789,6 @@ export function MobileSearch() {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY
     });
-    setIsSwiping(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -903,7 +811,6 @@ export function MobileSearch() {
       setIsPulling(false);
       setPullDistance(0);
     }
-    setIsSwiping(false);
   };
 
   // Load discover content on mount
@@ -1214,7 +1121,6 @@ export function MobileSearch() {
 
   // Focus management for search input
   const handleSearchInputFocus = () => {
-    setIsSearchInputFocused(true);
     if (searchQuery.trim()) {
       generateSearchSuggestions(searchQuery);
     } else if (searchHistory.length > 0) {
@@ -1224,7 +1130,6 @@ export function MobileSearch() {
   };
 
   const handleSearchInputBlur = () => {
-    setIsSearchInputFocused(false);
     // Delay hiding suggestions to allow clicking
     setTimeout(() => {
       setShowSuggestions(false);
@@ -1244,17 +1149,7 @@ export function MobileSearch() {
     startVoiceSearch();
   };
 
-  // Enhanced search function with accessibility
-  const handleSearchWithAccessibility = (query: string) => {
-    setSearchQuery(query);
-    setShowSuggestions(false);
-    setShowSearchHistory(false);
-    setFocusedSuggestionIndex(-1);
-    
-    if (query.trim()) {
-      announceToScreenReader(`Aranıyor: ${query}`);
-    }
-  };
+
 
   return (
     <>
@@ -1635,7 +1530,7 @@ export function MobileSearch() {
                 {/* Search Results Grid */}
                 {getFilteredSearchResults().length > 0 && (
                   <div className="space-y-3" role="list" aria-label="Arama sonuçları">
-                    {getFilteredSearchResults().map((item, index) => (
+                    {getFilteredSearchResults().map((item) => (
                       <div
                         key={`${item.id}-${item.type}`}
                         onClick={() => {
@@ -1738,7 +1633,7 @@ export function MobileSearch() {
                   <p className="text-gray-500">Popüler içerikleri keşfet</p>
                 </div>
                 <div className="grid grid-cols-5 gap-3 w-full max-w-lg">
-              {discoverContent.slice(0, 20).map((item, index) => (
+              {discoverContent.slice(0, 20).map((item) => (
                 <div
                   key={`${item.type}-${item.id}`}
                       onClick={() => {
