@@ -13,7 +13,7 @@ i18n
     type: 'languageDetector',
     async: true,
     init: () => {},
-    detect: async (callback) => {
+    detect: async (callback: (lng: string) => void) => {
       // Önce localStorage'da kaydedilmiş bir dil tercihi var mı kontrol et
       const savedLanguage = localStorage.getItem('i18nextLng');
       if (savedLanguage) {
@@ -31,7 +31,7 @@ i18n
         callback(navigator.language.split('-')[0]);
       }
     },
-    cacheUserLanguage: (lng) => {
+    cacheUserLanguage: (lng: string) => {
       localStorage.setItem('i18nextLng', lng);
     }
   })

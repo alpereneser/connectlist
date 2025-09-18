@@ -4,7 +4,8 @@ import { Plus, Users, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
-import { Breadcrumb } from '../../components/Breadcrumb';
+import ContentComments from '../../components/ContentComments';
+
 import { useMovieDetails } from '../../hooks/useMovieDetails';
 import { useWhoAdded } from '../../hooks/useWhoAdded';
 import { WhoAddedModal } from '../../components/WhoAddedModal';
@@ -91,8 +92,7 @@ export function MovieDetails() {
     return SEOContentOptimizer.generateContentFAQ('movie', movie, i18n.language);
   }, [movie, i18n.language]);
 
-  // Mobil check
-  const isMobile = window.innerWidth < 768;
+
 
   const handleAttemptAddToList = async () => {
     try {
@@ -198,156 +198,175 @@ export function MovieDetails() {
       </Helmet>
 
       <Header />
-      <div className={`min-h-screen bg-white md:bg-gray-100 pb-16 md:pb-0 ${isMobile ? 'pt-0' : 'pt-[95px]'}`}>
-        {isMobile ? (
-          // Mobile Tam Ekran Layout
-          <div className="relative">
-            {/* Mobil Hero Section - Tam Ekran */}
-            <div className="relative h-screen flex flex-col">
-              {/* Background Image */}
-              <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path || movie.poster_path})`
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-              </div>
-              
-              {/* Content Over Image */}
-              <div className="relative z-10 flex-1 flex flex-col">
-                {/* Safe Area Padding Top */}
-                <div className="pt-16" />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
+        <div className="relative">
+          {/* Background Image */}
+          <div 
+            className="h-[500px] bg-cover bg-center relative"
+            style={{
+              backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path || movie.poster_path})`
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+          </div>
+          
+          {/* Hero Content */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="flex items-center gap-8">
+                {/* Movie Poster */}
+                <div className="flex-shrink-0">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                    alt={movie.title}
+                    className="w-64 h-96 object-cover rounded-lg shadow-2xl"
+                  />
+                </div>
                 
-                {/* Ana İçerik */}
-                <div className="flex-1 flex flex-col justify-end p-6 pb-32">
-                  {/* Kim Listesine Eklemiş + Listene Ekle Butonları */}
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center bg-black/50 backdrop-blur-sm rounded-full px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                          alt={movie.title}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                        <span className="text-white text-sm font-medium">
-                          {movie.title}
-                        </span>
-                      </div>
-                      <button 
-                        onClick={handleAttemptAddToList}
-                        className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
-                      >
-                        <Plus size={16} />
-                        Listeme Ekle
-                      </button>
+                {/* Movie Info */}
+                <div className="text-white flex-1">
+                  <h1 className="text-5xl font-bold mb-4">{movie.title}</h1>
+                  
+                  {/* Movie Meta */}
+                  <div className="flex items-center gap-4 text-lg mb-4">
+                    <span>{new Date(movie.release_date).getFullYear()}</span>
+                    <span>•</span>
+                    <span>{Math.floor(movie.runtime / 60)}s {movie.runtime % 60}d</span>
+                    <span>•</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow-400">★</span>
+                      <span>{movie.vote_average?.toFixed(1)}</span>
                     </div>
-                  </div>
-
-                  {/* Film Posteri */}
-                  <div className="flex justify-center mb-6">
-                    <img
-                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                      alt={movie.title}
-                      className="w-48 aspect-[2/3] object-cover rounded-xl shadow-2xl"
-                    />
                   </div>
                   
-                  {/* Film Bilgileri */}
-                  <div className="text-center text-white">
-                    <h1 className="text-2xl font-bold mb-2">{movie.title}</h1>
-                    <div className="flex justify-center items-center gap-2 text-sm text-white/80 mb-3">
-                      <span>{new Date(movie.release_date).getFullYear()}</span>
-                      <span>•</span>
-                      <span>{Math.floor(movie.runtime / 60)}s {movie.runtime % 60}d</span>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400">★</span>
-                        <span>{movie.vote_average?.toFixed(1)}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Türler */}
-                    <div className="flex justify-center flex-wrap gap-2 mb-4">
-                      {movie.genres.map((genre: { id: number; name: string }) => (
-                        <span
-                          key={genre.id + '-' + genre.name}
-                          className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs"
-                        >
-                          {genre.name}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-center gap-3">
-                      <button
-                        onClick={fetchListUsers}
-                        className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+                  {/* Genres */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {movie.genres.map((genre: { id: number; name: string }) => (
+                      <span
+                        key={genre.id + '-' + genre.name}
+                        className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm"
                       >
-                        <Users size={16} />
-                        Kim Eklemiş
-                      </button>
-                    </div>
+                        {genre.name}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleAttemptAddToList}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                    >
+                      <Plus size={20} />
+                      Listeme Ekle
+                    </button>
+                    <button
+                      onClick={fetchListUsers}
+                      className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+                    >
+                      <Users size={20} />
+                      Kim Eklemiş
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Mobil İçerik - Kaydırılabilir */}
-            <div className="bg-white">
-              {/* Film Açıklaması */}
-              <div className="p-6">
-                <h2 className="text-lg font-bold mb-3">{t('details.about')}</h2>
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Film Hakkında Detaylar */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-bold mb-4">Film Hakkında Detaylar</h2>
                 <p className="text-gray-700 leading-relaxed">{movie.overview}</p>
               </div>
 
               {/* Oyuncular */}
-              <div className="p-6 pt-0">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold">{t('details.cast')}</h2>
-                  {movie.cast_members.length > 6 && !showAllCast && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold">Oyuncular</h2>
+                  {movie.cast_members.length > 8 && !showAllCast && (
                     <button
                       onClick={() => setShowAllCast(true)}
-                      className="text-orange-500 hover:text-orange-600 text-sm font-medium flex items-center gap-1"
+                      className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2"
                     >
                       <Eye size={16} />
-                      <span>Tümünü Gör ({movie.cast_members.length})</span>
+                      Tümünü Gör ({movie.cast_members.length})
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {(showAllCast ? movie.cast_members : movie.cast_members.slice(0, 6)).map((person: { id: number; name: string; character: string; profile_path: string }) => (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {(showAllCast ? movie.cast_members : movie.cast_members.slice(0, 8)).map((person: { id: number; name: string; character: string; profile_path: string }) => (
                     <div
                       key={person.id + '-' + person.name}
                       onClick={() => navigate(`/person/${person.id}`)}
-                      className="bg-gray-50 rounded-lg overflow-hidden cursor-pointer"
+                      className="text-center cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
                     >
                       <img
                         src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
                         alt={person.name}
-                        className="w-full aspect-square object-cover"
+                        className="w-full aspect-square object-cover rounded-lg mb-3"
                       />
-                      <div className="p-2">
-                        <h3 className="font-medium text-xs line-clamp-1">{person.name}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-1">{person.character}</p>
-                      </div>
+                      <h3 className="font-medium text-sm mb-1">{person.name}</h3>
+                      <p className="text-xs text-gray-500">{person.character}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Yapım Ekibi */}
-              <div className="p-6 pt-0 pb-20">
-                <h2 className="text-lg font-bold mb-4">{t('details.crew')}</h2>
+              {/* Yorumlar */}
+              <ContentComments
+                contentType="movie"
+                contentId={movie.id}
+                contentTitle={movie.title}
+              />
+            </div>
+
+            {/* Right Column - Sidebar */}
+            <div className="space-y-6">
+              {/* Film Bilgileri */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="font-bold mb-4">Film Bilgileri</h3>
                 <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-gray-500">Çıkış Tarihi</span>
+                    <p className="font-medium">{new Date(movie.release_date).toLocaleDateString('tr-TR')}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Süre</span>
+                    <p className="font-medium">{Math.floor(movie.runtime / 60)} saat {movie.runtime % 60} dakika</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">IMDB Puanı</span>
+                    <p className="font-medium flex items-center gap-1">
+                      <span className="text-yellow-400">★</span>
+                      {movie.vote_average?.toFixed(1)}/10
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Oy Sayısı</span>
+                    <p className="font-medium">{movie.vote_count?.toLocaleString()} oy</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Yapım Ekibi */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="font-bold mb-4">Yapım Ekibi</h3>
+                <div className="space-y-4">
                   {movie.crew_members
                     .filter((person: { job: string }) => ['Director', 'Screenplay', 'Story'].includes(person.job))
+                    .slice(0, 5)
                     .map((person: { id: number; name: string; job: string; profile_path: string }) => (
                       <div
                         key={person.id + '-' + person.name}
                         onClick={() => navigate(`/person/${person.id}`)}
-                        className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg cursor-pointer"
+                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
                       >
                         <img
                           src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
@@ -355,7 +374,7 @@ export function MovieDetails() {
                           className="w-12 h-12 rounded-full object-cover"
                         />
                         <div>
-                          <h3 className="font-medium text-sm">{person.name}</h3>
+                          <h4 className="font-medium text-sm">{person.name}</h4>
                           <p className="text-xs text-gray-500">{person.job}</p>
                         </div>
                       </div>
@@ -364,215 +383,7 @@ export function MovieDetails() {
               </div>
             </div>
           </div>
-        ) : (
-          // Desktop Layout (Mevcut)
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
-          <div className="mb-6">
-            <Breadcrumb
-              items={[
-                { label: t('common.categories.movies'), href: '/search?category=movies' },
-                { label: movie.title }
-              ]}
-            />
-          </div>
-          <div className="md:hidden">
-            {/* Mobile Header */}
-            <div className="flex gap-4">
-              {/* Mobile Poster */}
-              <div className="w-1/3">
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                  alt={movie.title}
-                  className="w-full rounded-lg aspect-[2/3] object-cover"
-                />
-              </div>
-              {/* Mobile Info */}
-              <div className="w-2/3">
-                <h1 className="text-base font-bold mb-1">{movie.title}</h1>
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600 mb-2">
-                  <span>{new Date(movie.release_date).getFullYear()}</span>
-                  <span>•</span>
-                  <span>{Math.floor(movie.runtime / 60)}s {movie.runtime % 60}d</span>
-                  <span>•</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-yellow-400">★</span>
-                    <span>{movie.vote_average?.toFixed(1)}</span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {movie.genres.map((genre: { id: number; name: string }) => (
-                    <span
-                      key={genre.id + '-' + genre.name}
-                      className="px-2 py-0.5 bg-gray-100 rounded-full text-[10px] text-gray-600"
-                    >
-                      {genre.name}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-1.5 mb-3">
-                  <div>
-                    <button
-                      onClick={handleAttemptAddToList}
-                      className="flex items-center justify-center gap-1 bg-white border border-gray-200 text-gray-700 h-[26px] px-2 rounded-lg hover:bg-orange-500 hover:text-white hover:border-orange-500 text-[10px]"
-                    >
-                      <Plus size={12} />
-                      <span>{t('listPreview.addToList')}</span>
-                    </button>
-                  </div>
-                  <button
-                    onClick={fetchListUsers}
-                    className="flex items-center justify-center gap-1 bg-gray-100 text-gray-700 h-[26px] px-2 rounded-lg hover:bg-gray-200 text-[10px]"
-                  >
-                    <Users size={12} />
-                    <span>{t('listPreview.whoAdded')}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Desktop Backdrop */}
-          <div className="hidden md:block">
-            <div 
-              className="h-[400px] bg-cover bg-center relative"
-              style={{
-                backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`
-              }}
-            >
-              <div className="absolute inset-0 bg-black bg-opacity-50" />
-              <div className="absolute inset-0 flex items-end">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                  <div className="flex items-end gap-8">
-                    <img
-                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                      alt={movie.title}
-                      className="w-64 rounded-lg shadow-lg relative z-10"
-                    />
-                    <div className="text-white flex-1 mb-4">
-                      <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
-                      <div className="flex items-center gap-4 text-lg">
-                        <span>{movie.release_date ? new Date(movie.release_date).getFullYear() : ''}</span>
-                        <span>•</span>
-                        <span>{Math.floor(movie.runtime / 60)}s {movie.runtime % 60}d</span>
-                        <span>•</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-yellow-400">★</span>
-                          <span>{movie.vote_average?.toFixed(1)}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-4">
-                        {movie.genres.map((genre: { id: number; name: string }) => (
-                          <span
-                            key={genre.id + '-' + genre.name}
-                            className="px-3 py-1 bg-white/20 rounded-full text-sm"
-                          >
-                            {genre.name}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-3 items-center">
-                        <button
-                          onClick={handleAttemptAddToList}
-                          className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
-                        >
-                          <Plus size={18} className="mr-2" />
-                          <span>{t('details.addToList')}</span>
-                        </button>
-                        <button
-                          onClick={fetchListUsers}
-                          className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
-                        >
-                          <Users size={18} className="mr-2" />
-                          <span>{t('details.whoAdded')}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Content */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-              <div className="md:col-span-2 space-y-3 md:space-y-6">
-                {/* Overview */}
-                <div>
-                  <h2 className="text-base font-bold mb-1 md:text-lg md:mb-2">{t('details.about')}</h2>
-                  <p className="text-xs md:text-sm text-gray-600">{movie.overview}</p>
-                </div>
-                {/* Cast */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-base font-bold md:text-lg">{t('details.cast')}</h2>
-                    {movie.cast_members.length > 8 && !showAllCast && (
-                      <button
-                        onClick={() => setShowAllCast(true)}
-                        className="text-orange-500 hover:text-orange-600 text-sm font-medium flex items-center gap-2"
-                      >
-                        <Eye size={14} className="md:w-4 md:h-4" />
-                        <span>{t('details.viewAll')} ({movie.cast_members.length})</span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-4 md:grid-cols-4 gap-2 md:gap-4 relative">
-                    {(showAllCast ? movie.cast_members : movie.cast_members.slice(0, 8)).map((person: { id: number; name: string; character: string; profile_path: string }) => (
-                      <div
-                        key={person.id + '-' + person.name}
-                        onClick={() => navigate(`/person/${person.id}`)}
-                        className="bg-gray-50 md:bg-white rounded-lg md:shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                      >
-                        <img
-                          src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                          alt={person.name}
-                          className="w-full aspect-square object-cover"
-                        />
-                        <div className="p-1 md:p-4">
-                          <h3 className="font-medium text-[10px] md:text-base line-clamp-1">{person.name}</h3>
-                          <p className="text-[9px] md:text-sm text-gray-500 line-clamp-1">{person.character}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Crew */}
-                <div>
-                  <h2 className="text-base font-bold mb-1 md:text-lg md:mb-2">{t('details.crew')}</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-4">
-                    {movie.crew_members
-                      .filter((person: { job: string }) => ['Director', 'Screenplay', 'Story'].includes(person.job))
-                      .map((person: { id: number; name: string; job: string; profile_path: string }) => (
-                        <div
-                          key={person.id + '-' + person.name}
-                          onClick={() => navigate(`/person/${person.id}`)}
-                          className="flex items-center gap-1.5 md:gap-4 bg-gray-50 md:bg-white p-1.5 md:p-4 rounded-lg md:shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                        >
-                          <img
-                            src={`https://image.tmdb.org/t/p/w185${person.profile_path}`}
-                            alt={person.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          <div>
-                            <h3 className="font-medium text-xs md:text-base">{person.name}</h3>
-                            <p className="text-[9px] md:text-sm text-gray-500">{person.job}</p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </div>
-              {/* Sidebar */}
-              <div className="space-y-4 md:space-y-6">
-                {/* Boş sidebar */}
-                <div className="bg-gray-50 md:bg-white rounded-lg md:shadow-sm p-4 md:p-6 space-y-3 md:space-y-4">
-                  {/* Butonlar üst kısma taşındı */}
-                </div>
-              </div>
-              {/* Reklam Alanı */}
-              {/* Reklam alanı kaldırıldı */}
-            </div>
-          </div>
         </div>
-        )}
       </div>
 
       <AddToListModal

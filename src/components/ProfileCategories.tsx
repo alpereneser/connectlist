@@ -1,4 +1,4 @@
-import { Film, Tv, Book, Users2, Youtube, Gamepad2, Home, MapPin, Music } from 'lucide-react';
+import { Film, Tv, Book, Youtube, Gamepad2, Home, Music } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRef } from 'react';
@@ -18,14 +18,12 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
     { id: 'series', label: t('common.categories.series'), icon: Tv },
     { id: 'books', label: t('common.categories.books'), icon: Book },
     { id: 'games', label: t('common.categories.games'), icon: Gamepad2 },
-    { id: 'people', label: t('common.categories.people'), icon: Users2 },
     { id: 'videos', label: t('common.categories.videos'), icon: Youtube },
-    { id: 'places', label: t('common.categories.places'), icon: MapPin },
     { id: 'musics', label: t('common.categories.musics'), icon: Music },
   ], [t]);
 
   return (
-    <div className="bg-white md:h-[80px]">
+    <div className="bg-white">
       {/* Mobile Categories - pill buttons with icons */}
       <div className="md:hidden border-t border-b border-gray-200 bg-white py-2">
         <div
@@ -55,8 +53,8 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
       </div>
 
       {/* Desktop Categories - larger with icons */}
-      <div className="hidden md:block h-full border-t border-b border-gray-200">
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-center px-4 h-full items-center">
+      <div className="hidden md:block border-t border-b border-gray-200">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-center px-4 py-2 items-center">
           {categories.map((category) => {
             const Icon = category.icon;
             const isActive = activeCategory === category.id;
@@ -80,3 +78,4 @@ export function ProfileCategories({ activeCategory, onCategoryChange }: ProfileC
     </div>
   );
 }
+

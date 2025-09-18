@@ -34,6 +34,41 @@ async function checkUsernameAvailability(username: string): Promise<boolean> {
   }
 }
 
+async function checkEmailAvailability(email: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.auth.admin.listUsers();
+    
+    if (error) {
+      console.error('Error checking email:', error);
+      // Admin API kullanamıyorsak, alternatif yöntem deneyelim
+      try {
+        // Supabase auth ile e-posta kontrolü
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: 'dummy-password-for-check'
+        });
+        
+        // Eğer "Invalid login credentials" hatası alırsak, e-posta kayıtlı değil
+        if (signInError?.message?.includes('Invalid login credentials')) {
+          return true; // E-posta kullanılabilir
+        }
+        
+        // Eğer başka bir hata alırsak (örn. "Email not confirmed"), e-posta kayıtlı
+        return false;
+      } catch {
+        return true; // Hata durumunda kullanılabilir varsay
+      }
+    }
+    
+    // Admin API çalışıyorsa, kullanıcı listesinde e-postayı ara
+    const emailExists = data.users.some(user => user.email === email);
+    return !emailExists;
+  } catch (error) {
+    console.error('Error checking email:', error);
+    return true; // Hata durumunda kullanılabilir varsay
+  }
+}
+
 // Referans kodu kontrolü şu anda kullanılmıyor
 // Bu fonksiyon ileride referans kodu sistemi eklendiğinde kullanılabilir
 /* 
@@ -64,6 +99,8 @@ export function Register() {
   const [error, setError] = useState<string | null>(null);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<RegisterForm>({
@@ -71,6 +108,7 @@ export function Register() {
   });
 
   const username = watch('username');
+  const email = watch('email');
 
   useEffect(() => {
     const checkUsername = async () => {
@@ -88,6 +126,23 @@ export function Register() {
     const timer = setTimeout(checkUsername, 500);
     return () => clearTimeout(timer);
   }, [username]);
+
+  useEffect(() => {
+    const checkEmail = async () => {
+      if (!email || !email.includes('@')) {
+        setEmailAvailable(null);
+        return;
+      }
+
+      setIsCheckingEmail(true);
+      const isAvailable = await checkEmailAvailability(email);
+      setEmailAvailable(isAvailable);
+      setIsCheckingEmail(false);
+    };
+
+    const timer = setTimeout(checkEmail, 500);
+    return () => clearTimeout(timer);
+  }, [email]);
 
   const onSubmit = async (data: RegisterForm) => {
     setError(null);
@@ -262,6 +317,26 @@ export function Register() {
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
             )}
+            {email && email.includes('@') && (
+              <div className="mt-1">
+                {isCheckingEmail ? (
+                  <p className="text-gray-500 text-sm">{t('auth.checkingEmail')}</p>
+                ) : (
+                  <div>
+                    {emailAvailable === true && (
+                      <p className="text-green-600 text-xs mt-1">
+                        {t('auth.emailAvailableCheck')}
+                      </p>
+                    )}
+                    {emailAvailable === false && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {t('auth.emailTakenCheck')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <input
@@ -272,6 +347,17 @@ export function Register() {
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
+          </div>
+          <div>
+            <input
+              {...register('confirmPassword')}
+              type="password"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder:text-gray-400"
+              placeholder={t('auth.confirmPassword')}
+            />
+            {errors.confirmPassword && (
+              <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>
             )}
           </div>
           <div className="flex items-center">

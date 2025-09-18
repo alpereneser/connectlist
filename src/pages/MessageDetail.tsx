@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Send, ChevronLeft, MoreHorizontal, Trash2, Info, Phone, Video } from 'lucide-react';
+import { Send, ChevronLeft, Trash2, Info, Phone, Video } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { markMessagesAsRead, sendMessage } from '../lib/api';
@@ -58,7 +58,8 @@ export function MessageDetail() {
         .eq('id', conversationId)
         .single();
       if (!error && data) {
-        const other = data.participants?.find((p: any) => p.user_id !== currentUserId)?.profiles;
+        const otherParticipant = data.participants?.find((p: any) => p.user_id !== currentUserId);
+        const other = otherParticipant?.profiles as { full_name: string; username: string; avatar: string } | undefined;
         if (isMounted && other) setOtherUser({ full_name: other.full_name, username: other.username, avatar: other.avatar });
       }
     };
@@ -123,7 +124,7 @@ export function MessageDetail() {
 
     try {
       const msg = await sendMessage(conversationId, text);
-      setMessages(prev => prev.map(m => (m.id === tempId ? { ...msg, is_sending: false } : m)));
+      setMessages(prev => prev.map(m => (m.id === tempId ? { ...msg, conversation_id: conversationId, is_sending: false } : m)));
     } catch (err) {
       setMessages(prev => prev.map(m => (m.id === tempId ? { ...m, is_sending: false, has_error: true } : m)));
     }
@@ -179,37 +180,37 @@ export function MessageDetail() {
 
   return (
     <>
-    <div className="fixed inset-0 z-[60] bg-white" role="dialog" aria-label="Messages">
-      {/* Instagram-style Header */}
-      <div className="fixed left-0 right-0 bg-white border-b border-gray-200" style={{ top: 'var(--safe-area-inset-top)' }}>
+    <div className="fixed inset-0 z-[60] bg-gray-50" role="dialog" aria-label="Messages">
+      {/* Modern Header */}
+      <div className="fixed left-0 right-0 bg-white border-b border-gray-200 shadow-sm" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="h-16 flex items-center px-4 justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-1 hover:bg-gray-100 rounded-full transition-colors" aria-label="Geri">
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Geri">
               <ChevronLeft size={24} className="text-gray-700" />
             </button>
             {otherUser && (
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <img src={otherUser.avatar} alt={otherUser.full_name} className="w-10 h-10 rounded-full object-cover border-2 border-gray-200" />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                  <img src={otherUser.avatar} alt={otherUser.full_name} className="w-12 h-12 rounded-full object-cover" />
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
                 <div className="leading-tight">
                   <div className="text-base font-semibold text-gray-900">{otherUser.full_name}</div>
-                  <div className="text-xs text-gray-500">Aktif</div>
+                  <div className="text-sm text-green-500 font-medium">Çevrimiçi</div>
                 </div>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Sesli arama">
-              <Phone size={20} className="text-gray-700" />
+          <div className="flex items-center gap-3">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" aria-label="Sesli arama">
+              <Phone size={20} />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Görüntülü arama">
-              <Video size={20} className="text-gray-700" />
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" aria-label="Görüntülü arama">
+              <Video size={20} />
             </button>
             <div className="relative">
-              <button onClick={() => setShowMenu(v => !v)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="More">
-                <Info size={20} className="text-gray-700" />
+              <button onClick={() => setShowMenu(v => !v)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" aria-label="More">
+                <Info size={20} />
               </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
@@ -246,19 +247,19 @@ export function MessageDetail() {
               const isLastInGroup = !messages[index + 1] || messages[index + 1].sender_id !== m.sender_id;
               
               return (
-                <div key={m.id} className={`mb-1 flex ${isOwn ? 'justify-end' : 'justify-start'} group`}>
+                <div key={m.id} className={`mb-1 flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'} group`}>
                   {!isOwn && (
-                    <div className="w-8 mr-2 flex-shrink-0">
+                    <div className="w-8 h-8 flex-shrink-0">
                       {showAvatar && otherUser && (
-                        <img src={otherUser.avatar} alt={otherUser.full_name} className="w-6 h-6 rounded-full object-cover" />
+                        <img src={otherUser.avatar} alt={otherUser.full_name} className="w-8 h-8 rounded-full object-cover" />
                       )}
                     </div>
                   )}
-                  <div className={`relative max-w-[70%] ${isOwn ? 'ml-12' : 'mr-12'}`}>
-                    <div className={`px-4 py-2 text-sm leading-relaxed ${
+                  <div className={`relative max-w-xs lg:max-w-md`}>
+                    <div className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${
                       isOwn 
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl rounded-br-md' 
-                        : 'bg-gray-100 text-gray-900 rounded-2xl rounded-bl-md'
+                        ? 'bg-blue-500 text-white rounded-2xl rounded-br-md' 
+                        : 'bg-white text-gray-900 border border-gray-200 rounded-2xl rounded-bl-md'
                     } ${isLastInGroup ? 'mb-2' : 'mb-0.5'}`}>
                       <div className="break-words">{m.text}</div>
                       {m.is_sending && (
@@ -279,7 +280,7 @@ export function MessageDetail() {
                       </button>
                     )}
                     {isLastInGroup && (
-                      <div className={`text-xs text-gray-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+                      <div className={`text-xs mt-1 ${isOwn ? 'text-blue-100 text-right' : 'text-gray-500 text-left'}`}>
                         {new Date(m.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     )}
@@ -323,22 +324,35 @@ export function MessageDetail() {
         style={{ bottom: 'var(--safe-area-inset-bottom)' }}
       >
         <div className="px-4 py-3 flex items-end gap-3">
+          <button type="button" className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
           <div className="flex-1 relative">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => { setNewMessage(e.target.value); handleTyping(); }}
               placeholder="Mesaj yazın..."
-              className="w-full px-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white border border-transparent focus:border-blue-500 transition-all duration-200 text-sm"
+              className="w-full px-4 py-3 pr-12 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white border border-transparent focus:border-blue-500 transition-all duration-200 text-sm"
               style={{ minHeight: '44px', maxHeight: '120px', resize: 'none' }}
             />
+            <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+            </button>
           </div>
           <button 
             type="submit" 
             disabled={!newMessage.trim()} 
-            className={`p-3 rounded-full transition-all duration-200 ${
+            className={`p-3 rounded-full transition-all duration-200 shadow-lg ${
               newMessage.trim() 
-                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105' 
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-xl transform hover:scale-105' 
                 : 'bg-gray-200 text-gray-400'
             }`}
           >

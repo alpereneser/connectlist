@@ -70,6 +70,10 @@ export function Profile() {
   const [lists, setLists] = useState<DetailedList[]>([]); 
   const [activeCategory, setActiveCategory] = useState('all');
   const [isLoadingLists, setIsLoadingLists] = useState(true);
+  const [isLoadingMoreLists, setIsLoadingMoreLists] = useState(false);
+  const [hasMoreLists, setHasMoreLists] = useState(true);
+  const [listsCurrentPage, setListsCurrentPage] = useState(0);
+  const LISTS_PAGE_SIZE = 10;
   const [isCurrentUser, setIsCurrentUser] = useState(false); 
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoadingFollow, setIsLoadingFollow] = useState(false);
@@ -89,7 +93,7 @@ export function Profile() {
   const likedListsContainerRef = useRef<HTMLDivElement>(null);
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [currentSessionUserId, setCurrentSessionUserId] = useState<string | null>(null);
-  const [mobileViewMode, setMobileViewMode] = useState<'grid' | 'list'>('list');
+  const [mobileViewMode] = useState<'grid' | 'list'>('list');
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -481,9 +485,11 @@ export function Profile() {
       if (!profile?.id) return;
 
       setIsLoadingLists(true);
+      setListsCurrentPage(0);
       try {
-        const userLists = await getUserLists(profile.id);
+        const userLists = await getUserLists(profile.id, 0, LISTS_PAGE_SIZE);
         setLists(userLists);
+        setHasMoreLists(userLists.length === LISTS_PAGE_SIZE);
       } catch (error) {
         console.error('Error fetching user lists:', error);
       } finally {
@@ -493,6 +499,37 @@ export function Profile() {
 
     fetchUserLists();
   }, [profile?.id]);
+
+  const loadMoreLists = async () => {
+    if (!profile?.id || isLoadingMoreLists || !hasMoreLists) return;
+    
+    setIsLoadingMoreLists(true);
+    try {
+      const nextPage = listsCurrentPage + 1;
+      const moreLists = await getUserLists(profile.id, nextPage, LISTS_PAGE_SIZE);
+      
+      setLists(prev => [...prev, ...moreLists]);
+      setListsCurrentPage(nextPage);
+      setHasMoreLists(moreLists.length === LISTS_PAGE_SIZE);
+    } catch (error) {
+      console.error('Error loading more lists:', error);
+    } finally {
+      setIsLoadingMoreLists(false);
+    }
+  };
+
+  // Scroll event listener for infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || isLoadingMoreLists) {
+        return;
+      }
+      loadMoreLists();
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [listsCurrentPage, hasMoreLists, isLoadingMoreLists, profile?.id]);
 
   const filteredLists = activeCategory === 'all'
     ? lists
@@ -545,20 +582,20 @@ export function Profile() {
       </Helmet>
       {/* ANA DIV BURADA BAŞLIYOR */}
       <div className="min-h-screen bg-white md:bg-gray-100" data-component-name="Profile" style={{
-      paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height))',
+      paddingTop: '10px',
       paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))'
       }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 md:py-8">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-0 md:py-0">
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
               {error}
             </div>
           )}
 
-          <div className="bg-white">
-            <div className="md:pt-[16px] px-4 md:px-6 md:pb-6">
+          <div className="bg-white pt-[5px]">
+            <div className="md:pt-0 px-2 md:px-6 md:pb-6">
           {/* Mobile Layout - Instagram Style */}
-          <div className="md:hidden px-2 py-2 mt-0">
+          <div className="md:hidden px-1 py-2 mt-0">
                 {/* Header Row - Avatar left, name above stats */}
                 <div className="flex items-center gap-3 mb-3">
                   {/* Avatar */}
@@ -791,7 +828,7 @@ export function Profile() {
           {/* Kullanıcının Listeleri - Mobile */}
           <div ref={mobileListContainerRef} className="md:hidden bg-gray-50 min-h-screen">
             {isLoadingLists ? (
-              <div className="p-4">
+              <div className="p-2">
                 <div className={`animate-pulse ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-4'}`}>
                   {[...Array(mobileViewMode === 'grid' ? 4 : 3)].map((_, i) => (
                     <div key={i} className={`bg-white rounded-2xl shadow-sm ${mobileViewMode === 'grid' ? 'p-4' : 'p-6'}`}>
@@ -823,7 +860,7 @@ export function Profile() {
                 </div>
               </div>
             ) : filteredLists.length > 0 ? (
-              <div className={`p-4 ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-4'}`}>
+              <div className={`p-2 ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-2' : 'space-y-3'}`}>
                 {filteredLists.map((list) => (
                   <div 
                     key={list.id}
@@ -836,7 +873,7 @@ export function Profile() {
                   >
                     {mobileViewMode === 'grid' ? (
                       /* Grid View - Compact */
-                      <div className="p-4">
+                      <div className="p-3">
                         {/* Main Preview */}
                         {list.items.length > 0 && (
                           <div className="w-full h-32 rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
@@ -885,7 +922,7 @@ export function Profile() {
                       </div>
                     ) : (
                       /* List View - Detailed */
-                      <div className="p-6">
+                      <div className="p-4">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center space-x-3">
@@ -961,7 +998,7 @@ export function Profile() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16 px-4">
+              <div className="text-center py-12 px-2">
                 <div className="text-8xl mb-6">📝</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">
                   {activeCategory === 'all' ? 'Henüz liste yok' : 'Bu kategoride liste yok'}
@@ -1024,6 +1061,13 @@ export function Profile() {
                     ? 'Henüz liste oluşturmamışsınız'
                     : `${activeCategory} kategorisinde listeniz bulunmuyor`}
                 </p>
+              </div>
+            )}
+            
+            {/* Loading indicator for infinite scroll */}
+            {isLoadingMoreLists && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
               </div>
             )}
             

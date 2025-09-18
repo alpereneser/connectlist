@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '../../components/AuthLayout';
 import { useEffect } from 'react';
 import { createBrowserClient } from '../../lib/supabase-browser';
+import { DEFAULT_HOME_CATEGORY } from '../../constants/categories';
 
 type LoginForm = z.infer<typeof loginSchema>;
 
@@ -61,7 +62,7 @@ export function Login() {
         state: {
           refresh: true,
           sortDirection: 'desc',
-          category: 'all'
+          category: DEFAULT_HOME_CATEGORY
         }
       });
     } catch (error) {
@@ -135,3 +136,4 @@ export function Login() {
     </AuthLayout>
   );
 }
+

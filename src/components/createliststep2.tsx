@@ -22,11 +22,11 @@ interface CreateListStep2Props {
   category: string;
   selectedItems: ListItem[];
   onBack: () => void;
-  onComplete: () => void;
+  onComplete: (newListId: string) => void;
 }
 
 export function CreateListStep2({ category, selectedItems, onBack, onComplete }: CreateListStep2Props) {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -50,15 +50,26 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
     setError('');
 
     try {
-      await createList({
+      const newList = await createList({
         title: title.trim(),
         description: description.trim(),
         category,
-        items: selectedItems,
-        user_id: user.id
+        // Map UI items to API payload shape
+        items: selectedItems.map((it) => ({
+          external_id: it.id,
+          title: it.title,
+          image_url: it.image,
+          type: it.type,
+          year: it.year,
+          description: it.description,
+        }))
       });
       
-      onComplete();
+      if (newList && (newList as any).id) {
+        onComplete((newList as any).id);
+      } else {
+        onComplete('');
+      }
     } catch (err) {
       console.error('Error creating list:', err);
       setError(i18n.language === 'tr' ? 'Liste oluşturulurken hata oluştu' : 'Error creating list');
@@ -76,18 +87,18 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
       people: i18n.language === 'tr' ? 'Kişi' : 'Person',
       videos: i18n.language === 'tr' ? 'Video' : 'Video',
       places: i18n.language === 'tr' ? 'Mekan' : 'Place',
-      music: i18n.language === 'tr' ? 'Müzik' : 'Music'
+      music: i18n.language === 'tr' ? 'Müzik' : 'Music',
+      musics: i18n.language === 'tr' ? 'Müzik' : 'Music'
     };
     return categoryMap[category || ''] || category;
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Liste Bilgileri */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-4xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 md:p-6">
+            <div className="flex items-center gap-3 mb-4 md:mb-6">
               <button
                 type="button"
                 onClick={onBack}
@@ -95,12 +106,12 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
               >
                 <ArrowLeft size={20} />
               </button>
-              <h1 className="text-xl font-semibold">
+              <h1 className="text-lg md:text-xl font-semibold">
                 {i18n.language === 'tr' ? `Yeni ${getCategoryTitle()} Listesi Oluştur` : `Create New ${getCategoryTitle()} List`}
               </h1>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                   {i18n.language === 'tr' ? 'Liste Başlığı' : 'List Title'}
@@ -111,7 +122,7 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={i18n.language === 'tr' ? 'Listeye bir başlık verin' : 'Give your list a title'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base"
                   maxLength={100}
                   required
                 />
@@ -129,7 +140,7 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={i18n.language === 'tr' ? 'Listeniz hakkında kısa bir açıklama yazın' : 'Write a short description about your list'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm md:text-base"
                   rows={3}
                   maxLength={500}
                 />
@@ -137,27 +148,26 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
             </div>
           </div>
 
-          {/* Seçilen İçerikler Önizleme */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-medium mb-4">
+          <div className="bg-white rounded-lg shadow-sm p-3 md:p-6">
+            <h2 className="text-base md:text-lg font-medium mb-3 md:mb-4">
               {i18n.language === 'tr' ? 'Önizleme' : 'Preview'}
               <span className="ml-2 text-sm text-gray-500">({selectedItems.length} {i18n.language === 'tr' ? 'öğe' : 'items'})</span>
             </h2>
             
             {selectedItems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-6 md:py-8 text-gray-500">
                 <p>{i18n.language === 'tr' ? 'Henüz içerik eklenmedi' : 'No content added yet'}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
                 {selectedItems.map((item) => (
-                  <div key={item.id} className="bg-gray-50 rounded-lg p-3">
+                  <div key={item.id} className="bg-gray-50 rounded-lg p-2 md:p-3">
                     <img 
                       src={item.image} 
                       alt={item.title} 
-                      className="w-full h-32 object-cover rounded-md mb-2"
+                      className="w-full h-24 md:h-32 object-cover rounded-md mb-1 md:mb-2"
                     />
-                    <h3 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h3>
+                    <h3 className="font-medium text-xs md:text-sm line-clamp-2 mb-1">{item.title}</h3>
                     {item.type === 'place' ? (
                       <div className="text-xs text-gray-500">
                         {item.city && <span>{item.city}</span>}
@@ -173,14 +183,12 @@ export function CreateListStep2({ category, selectedItems, onBack, onComplete }:
             )}
           </div>
 
-          {/* Hata Mesajı */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Aksiyon Butonları */}
           <div className="flex gap-4">
             <button
               type="button"

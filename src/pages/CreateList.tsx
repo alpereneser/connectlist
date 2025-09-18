@@ -44,8 +44,12 @@ export function CreateList() {
     setCurrentStep(1);
   };
 
-  const handleComplete = () => {
-    navigate('/profile');
+  const handleComplete = (newListId: string) => {
+    if (newListId) {
+      navigate(`/list/${newListId}`);
+    } else {
+      navigate('/profile');
+    }
   };
 
   return (
@@ -54,21 +58,21 @@ export function CreateList() {
       <div className="pt-[64px]">
         {/* Progress Indicator */}
         <div className="bg-white border-b">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-center space-x-4">
+          <div className="max-w-4xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-3 md:py-4">
+            <div className="flex items-center justify-center space-x-2 md:space-x-4">
               <div className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   currentStep >= 1 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
                   1
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
+                <span className={`ml-1 md:ml-2 text-xs md:text-sm font-medium ${
                   currentStep >= 1 ? 'text-orange-600' : 'text-gray-500'
                 }`}>
                   {i18n.language === 'tr' ? 'İçerik Seç' : 'Select Content'}
                 </span>
               </div>
-              <div className={`w-12 h-0.5 ${
+              <div className={`w-8 md:w-12 h-0.5 ${
                 currentStep >= 2 ? 'bg-orange-500' : 'bg-gray-200'
               }`}></div>
               <div className="flex items-center">
@@ -77,7 +81,7 @@ export function CreateList() {
                 }`}>
                   2
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
+                <span className={`ml-1 md:ml-2 text-xs md:text-sm font-medium ${
                   currentStep >= 2 ? 'text-orange-600' : 'text-gray-500'
                 }`}>
                   {i18n.language === 'tr' ? 'Liste Oluştur' : 'Create List'}

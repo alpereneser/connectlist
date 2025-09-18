@@ -19,6 +19,7 @@ interface ListPreviewProps {
     likes_count: number;
     items_count: number;
     created_at?: string;
+    updated_at?: string;
     category?: string;
     profiles: {
       username: string;
@@ -203,6 +204,36 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
     }
   };
 
+  const isRecentlyUpdated = () => {
+    if (!list.updated_at || !list.created_at) return false;
+    const updatedDate = new Date(list.updated_at);
+    const createdDate = new Date(list.created_at);
+    const now = new Date();
+    
+    // Liste güncellenmiş mi kontrol et (oluşturulma tarihinden farklı)
+    const wasUpdated = updatedDate.getTime() > createdDate.getTime() + 1000; // 1 saniye tolerans
+    
+    // Son 24 saat içinde güncellenmiş mi
+    const timeDiff = now.getTime() - updatedDate.getTime();
+    const hoursAgo = timeDiff / (1000 * 60 * 60);
+    
+    return wasUpdated && hoursAgo <= 24;
+  };
+
+  const getUpdateText = () => {
+    if (!list.updated_at) return '';
+    const updatedDate = new Date(list.updated_at);
+    const now = new Date();
+    const timeDiff = now.getTime() - updatedDate.getTime();
+    const hoursAgo = timeDiff / (1000 * 60 * 60);
+    
+    if (hoursAgo <= 1) {
+      return t('common.justUpdated');
+    } else {
+      return `${t('common.updated')} ${formatDate(list.updated_at)}`;
+    }
+  };
+
   const handleScroll = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
 
@@ -278,15 +309,26 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
           )}
           
           {/* Liste Başlığı */}
-          <h2
-            onClick={() => {
-              if (onListClick) onListClick();
-              navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
-            }}
-            className="text-[15px] font-bold hover:underline cursor-pointer scale-90 origin-left mb-[2px]"
-          >
-            {list.title}
-          </h2>
+          <div className="space-y-1">
+            <h2
+              onClick={() => {
+                if (onListClick) onListClick();
+                try { sessionStorage.setItem('scroll:returnTo', JSON.stringify({ path: window.location.pathname, y: window.scrollY })); } catch (e) {}
+                navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+              }}
+              className="text-[15px] font-bold hover:underline cursor-pointer scale-90 origin-left mb-[2px]"
+            >
+              {list.title}
+            </h2>
+            {isRecentlyUpdated() && (
+              <div className="flex items-center gap-1 scale-90 origin-left">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[12px] text-green-600 font-medium">
+                  {getUpdateText()}
+                </span>
+              </div>
+            )}
+          </div>
           
           {/* Liste Açıklaması */}
           {list.description && (
@@ -323,6 +365,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
                 <span 
                   onClick={() => {
                     if (onListClick) onListClick();
+                    try { sessionStorage.setItem('scroll:returnTo', JSON.stringify({ path: window.location.pathname, y: window.scrollY })); } catch (e) {}
                     navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
                   }}
                   className="font-medium hover:underline cursor-pointer"
@@ -336,23 +379,45 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
                 <span>{categoryNames[list.category as keyof typeof categoryNames]}</span>
                 <span>•</span>
                 <span>{t('listPreview.createdAt')}: {list.created_at ? formatDate(list.created_at) : ''}</span>
+                {isRecentlyUpdated() && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-green-600 font-medium">
+                        {getUpdateText()}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         ) : (
           <div className="hidden md:block">
-            <h2
-              onClick={() => {
-                if (onListClick) onListClick();
-                navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
-              }}
-              className="text-lg font-semibold hover:underline cursor-pointer"
-            >
-              {list.title}
-            </h2>
-            {list.description && (
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{list.description}</p>
-            )}
+            <div className="space-y-2">
+              <h2
+                onClick={() => {
+                  if (onListClick) onListClick();
+                  try { sessionStorage.setItem('scroll:returnTo', JSON.stringify({ path: window.location.pathname, y: window.scrollY })); } catch (e) {}
+                  navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+                }}
+                className="text-lg font-semibold hover:underline cursor-pointer"
+              >
+                {list.title}
+              </h2>
+              {isRecentlyUpdated() && (
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-600 font-medium">
+                    {getUpdateText()}
+                  </span>
+                </div>
+              )}
+              {list.description && (
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{list.description}</p>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -557,3 +622,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
     </div>
   );
 }
+
+
+
+

@@ -664,7 +664,7 @@ export function Search() {
         return results.lists.length ? (
           <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
             <div className="p-4 md:p-6">
-              <div className="space-y-4">
+              <div className="space-y-2 md:space-y-4">
                 {results.lists.map((list) => (
                   <div
                     key={list.id}
@@ -1198,11 +1198,11 @@ export function Search() {
         </div>
       )}
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pt-[10px] mt-0 md:pt-[55px] overflow-auto fixed inset-x-0" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))', bottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
+      <main className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-0 pt-[5px] md:pt-[10px] mt-0 md:pt-[55px] overflow-auto fixed inset-x-0" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))', bottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))' }}>
         <div className="space-y-4">
           {/* Arama Input - Sadece mobil görünümde */}
-          <div ref={searchBarRef} className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-2 sticky z-50" style={{ top: '0' }}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div ref={searchBarRef} className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-1 md:mb-2 sticky z-50" style={{ top: '0' }}>
+            <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-2 md:py-3">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   {isLoading ? (
@@ -1234,7 +1234,7 @@ export function Search() {
           {/* 2. Kategori Menüsü - Sadece mobil görünümde */}
           {query ? (
             <div className="md:hidden bg-gray-100 border-b border-gray-200 shadow-sm sticky z-40" style={{ top: 'var(--mobile-searchbar-height)' }}>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide py-0 my-0">
                     {tabs.map((tab) => {
@@ -1260,8 +1260,8 @@ export function Search() {
               </div>
             </div>
           ) : (
-            <div className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-4 sticky z-30" style={{ top: 'var(--mobile-searchbar-height)' }}>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="md:hidden bg-white border-b border-gray-200 shadow-sm mb-2 md:mb-4 sticky z-30" style={{ top: 'var(--mobile-searchbar-height)' }}>
+              <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-[45px] py-0 my-0 overflow-x-auto scrollbar-hide">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide">
                     <button
@@ -1321,7 +1321,7 @@ export function Search() {
             ) : query ? (
               renderResults()
             ) : (
-              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-4 pb-[80px] overflow-y-auto">
+              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-2 md:gap-4 pb-[80px] overflow-y-auto">
                 {visibleContent.map((item, index) => (
                   <div 
                     key={`${item.type}-${item.id}-${index}`} 

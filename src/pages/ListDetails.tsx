@@ -3,18 +3,19 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 import { Helmet } from 'react-helmet-async';
-import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Link as LinkIcon, Plus, Send, MapPin, Music } from 'lucide-react';
+import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Link as LinkIcon, Plus, Send, MapPin, Music, ArrowLeft } from 'lucide-react';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { turkishToEnglish } from '../lib/utils';
 import { AuthPopup } from '../components/AuthPopup';
 import { useRequireAuth } from '../hooks/useRequireAuth';
-import { Header } from '../components/Header';
-import { BottomMenu } from '../components/BottomMenu';
+
 import { SearchPopup } from '../components/SearchPopup';
 import { CommentModal } from '../components/CommentModal';
 import { useListDetails } from '../hooks/useListDetails';
 import { useListMutations } from '../hooks/useListMutations';
 import { useLikeMutation } from '../hooks/useLikeMutation';
+import { useDebounce } from '../hooks/useDebounce';
+import { DEFAULT_HOME_CATEGORY } from '../constants/categories';
 
 const formatDate = (dateString: string, t: TFunction, i18nLanguage: string) => {
   if (!dateString) return '';
@@ -199,6 +200,10 @@ export default function ListDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(safeDataAccess(() => safeData.list?.title, ''));
   const [editDescription, setEditDescription] = useState(safeDataAccess(() => safeData.list?.description, ''));
+
+  // Debounced auto-save for title and description
+  const debouncedTitle = useDebounce(editTitle, 1000);
+  const debouncedDescription = useDebounce(editDescription, 1000);
   const [items, setItems] = useState(safeDataAccess(() => safeData.items, []));
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -427,6 +432,50 @@ export default function ListDetails() {
     };
   }, [listId]);
 
+  // Auto-save title when debounced value changes
+  useEffect(() => {
+    if (!listId || !isEditing || !debouncedTitle) return;
+    if (debouncedTitle === safeData.list?.title) return; // Don't save if unchanged
+
+    const saveTitle = async () => {
+      try {
+        const { error } = await supabase
+          .from('lists')
+          .update({ title: debouncedTitle })
+          .eq('id', listId);
+
+        if (error) throw error;
+        console.log('Title auto-saved:', debouncedTitle);
+      } catch (error) {
+        console.error('Error auto-saving title:', error);
+      }
+    };
+
+    saveTitle();
+  }, [debouncedTitle, listId, isEditing, safeData.list?.title]);
+
+  // Auto-save description when debounced value changes
+  useEffect(() => {
+    if (!listId || !isEditing) return;
+    if (debouncedDescription === safeData.list?.description) return; // Don't save if unchanged
+
+    const saveDescription = async () => {
+      try {
+        const { error } = await supabase
+          .from('lists')
+          .update({ description: debouncedDescription })
+          .eq('id', listId);
+
+        if (error) throw error;
+        console.log('Description auto-saved:', debouncedDescription);
+      } catch (error) {
+        console.error('Error auto-saving description:', error);
+      }
+    };
+
+    saveDescription();
+  }, [debouncedDescription, listId, isEditing, safeData.list?.description]);
+
   const handleLikeClick = async () => {
     if (!await requireAuth('listeyi beğenmek')) return;
     handleLike();
@@ -602,7 +651,7 @@ export default function ListDetails() {
     }
   };
 
-  const handleAddItem = (newItem: {
+  const handleAddItem = async (newItem: {
     id: string;
     title: string;
     image: string;
@@ -625,20 +674,20 @@ export default function ListDetails() {
     const updatedItems = [...items, newListItem];
     setItems(updatedItems);
     
-    // Düzenleme modunda değilse, doğrudan veritabanını güncelle
-    if (listId && !isEditing) {
-      updateItemsInDatabase(updatedItems);
+    // Düzenleme modunda da veritabanını güncelle (içerik kaybını önlemek için)
+    if (listId) {
+      await updateItemsInDatabase(updatedItems);
     }
   };
 
-  const confirmRemoveItem = (itemId: string) => {
+  const confirmRemoveItem = async (itemId: string) => {
     // Yerel state'i güncelle
     const updatedItems = items.filter(item => item.id !== itemId);
     setItems(updatedItems);
     
-    // Düzenleme modunda değilse, doğrudan veritabanını güncelle
-    if (listId && !isEditing) {
-      updateItemsInDatabase(updatedItems);
+    // Düzenleme modunda da veritabanını güncelle (içerik kaybını önlemek için)
+    if (listId) {
+      await updateItemsInDatabase(updatedItems);
     }
     
     // Modal'ı kapat
@@ -698,7 +747,7 @@ export default function ListDetails() {
         state: { 
           refresh: true, 
           timestamp: new Date().getTime(),
-          category: 'all',
+          category: DEFAULT_HOME_CATEGORY,
           sortDirection: 'desc'
         } 
       });
@@ -912,7 +961,16 @@ export default function ListDetails() {
             {/* Liste Başlığı ve Bilgileri */}
             {/* Mobil Layout */}
             <div className="block md:hidden">
-              <div className="space-y-3 mt-5 px-6">
+              {/* Geri Butonu */}
+              <div className="flex items-center px-6 pt-4 pb-2">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <ArrowLeft size={18} className="text-gray-600" />
+                </button>
+              </div>
+              <div className="space-y-3 px-6">
                 {/* Kullanıcı Bilgileri */}
                 <div className="flex items-center gap-3">
                   <button
@@ -1022,6 +1080,15 @@ export default function ListDetails() {
             
             {/* Desktop Layout */}
             <div className="hidden md:block mt-5 px-6">
+              {/* Geri Butonu */}
+              <div className="flex items-center mb-4">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <ArrowLeft size={20} className="text-gray-600" />
+                </button>
+              </div>
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => navigate(`/profile/${safeData.list?.profiles?.username || ''}`)}
@@ -1125,8 +1192,8 @@ export default function ListDetails() {
               </div>
             </div>
             {/* Liste İçerikleri */}
-            <div className="px-6 pb-2 md:pb-6 mt-[10px] pt-[25px] border-t border-gray-200">
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-4">
+            <div className="px-3 md:px-6 pb-2 md:pb-6 mt-[10px] pt-[15px] md:pt-[25px] border-t border-gray-200">
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-1 md:gap-4">
                 {[...items, ...(isEditing ? [null] : [])].map((item) => (
                   item ? (
                   <div 
@@ -1280,11 +1347,11 @@ export default function ListDetails() {
             
             {/* Yorum Bölümü - Items alanının hemen altında */}
             {!isEditing && (
-              <div className="px-6 py-4 border-t border-gray-200">
-                <h3 className="text-base md:text-lg font-semibold mb-4">{t('listPreview.listDetails.comments.title')} ({comments.length})</h3>
+              <div className="px-3 md:px-6 py-2 md:py-4 border-t border-gray-200">
+                <h3 className="text-sm md:text-lg font-semibold mb-2 md:mb-4">{t('listPreview.listDetails.comments.title')} ({comments.length})</h3>
                 
                 {/* Yorum Giriş Formu */}
-                <form onSubmit={handleSubmitComment} className="mb-6">
+                <form onSubmit={handleSubmitComment} className="mb-3 md:mb-6">
                   {replyToComment && (
                     <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg mb-2">
                       <div className="text-sm text-gray-600">
@@ -1430,8 +1497,8 @@ export default function ListDetails() {
             )}
             
             {/* Like ve Share Butonları */}
-            <div className="border-t mt-4">
-              <div className="flex items-center gap-4 px-6 py-4">
+            <div className="border-t mt-2 md:mt-4">
+              <div className="flex items-center gap-2 md:gap-4 px-3 md:px-6 py-2 md:py-4">
                 <button
                   onClick={handleLikeClick}
                   className={`flex items-center gap-2 ${
@@ -1484,7 +1551,6 @@ export default function ListDetails() {
             onSelect={handleAddItem}
             category={getNormalizedCategory(safeData?.list?.category)}
             alreadyAddedItemIds={filterUndefined(items.map(item => item.external_id))}
-            selectedItemIds={filterUndefined(items.map(item => item.external_id))}
           />
         </>
       )}
@@ -1584,3 +1650,5 @@ export default function ListDetails() {
 }
 
 export { ListDetails }
+
+

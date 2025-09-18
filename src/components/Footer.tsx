@@ -1,22 +1,21 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 import { detectUserLocation } from '../i18n/locationDetector';
 
 export function Footer() {
-  const { t } = useTranslation();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { setLanguage } = useLanguage();
   
   const changeLanguage = async (lng: string) => {
-    i18n.changeLanguage(lng);
-    localStorage.setItem('i18nextLng', lng);
+    setLanguage(lng);
   };
 
   // Otomatik dil tespiti için fonksiyon
   const autoDetectLanguage = async () => {
     try {
       const detectedLang = await detectUserLocation();
-      i18n.changeLanguage(detectedLang);
-      localStorage.setItem('i18nextLng', detectedLang);
+      setLanguage(detectedLang);
     } catch (error) {
       console.error('Otomatik dil tespiti yapılamadı:', error);
     }

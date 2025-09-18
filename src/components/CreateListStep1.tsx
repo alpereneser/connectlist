@@ -88,6 +88,9 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
   const searchResultsRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Normalize category ids (desktop/web uses `musics` in some routes)
+  const normalizeCategory = (c: string) => (c === 'musics' ? 'music' : c);
+
   const getCategoryTitle = () => {
     const categoryMap: { [key: string]: string } = {
       movies: i18n.language === 'tr' ? 'Film' : 'Movie',
@@ -139,26 +142,52 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
     try {
       let results: ListItem[] = [];
 
-      switch (category) {
+      switch (normalizeCategory(category)) {
         case 'movies':
         case 'series':
         case 'people': {
-          const type = category === 'people' ? 'person' : category === 'movies' ? 'movie' : 'tv';
-          const tmdbResults = await searchTMDB(query, type);
-          results = tmdbResults.map((item: TMDBItem) => {
+          const desiredType = category === 'people' ? 'person' : category === 'movies' ? 'movie' : 'tv';
+          const tmdbResults = await searchTMDB(query, 'multi');
+          const filteredResults = (tmdbResults as any[]).filter((item: any) => item.media_type === desiredType);
+          results = filteredResults.map((item: TMDBItem) => {
             const isMovie = 'title' in item;
-            const isSeries = 'name' in item;
+            const isSeries = 'name' in item && !isMovie;
             const isPerson = 'known_for_department' in item;
+            
+            let title: string;
+            let imagePath: string | null;
+            let year: string | undefined;
+            let description: string | undefined;
+            
+            if (isMovie) {
+              const movieItem = item as TMDBMovie;
+              title = movieItem.title;
+              imagePath = movieItem.poster_path;
+              year = movieItem.release_date?.split('-')[0];
+              description = movieItem.overview;
+            } else if (isSeries) {
+              const seriesItem = item as TMDBSeries;
+              title = seriesItem.name;
+              imagePath = seriesItem.poster_path;
+              year = seriesItem.first_air_date?.split('-')[0];
+              description = seriesItem.overview;
+            } else {
+              const personItem = item as TMDBPerson;
+              title = personItem.name;
+              imagePath = personItem.profile_path;
+              year = undefined;
+              description = undefined;
+            }
             
             return {
               id: item.id.toString(),
-              title: isMovie ? item.title : isSeries ? item.name : item.name,
-              image: item.poster_path || item.profile_path 
-                ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.profile_path}`
+              title,
+              image: imagePath 
+                ? `https://image.tmdb.org/t/p/w500${imagePath}`
                 : '/placeholder-image.jpg',
               type: isPerson ? 'person' as const : isMovie ? 'movie' as const : 'series' as const,
-              year: isMovie ? item.release_date?.split('-')[0] : isSeries ? item.first_air_date?.split('-')[0] : undefined,
-              description: isMovie ? item.overview : isSeries ? item.overview : undefined
+              year,
+              description
             };
           });
           break;
@@ -192,13 +221,20 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
             try {
               const videoDetails = await getVideoDetails(query);
               if (videoDetails) {
-                results = [{
+                const videoItem = {
                   id: videoDetails.id,
                   title: videoDetails.title,
                   image: videoDetails.thumbnail,
                   type: 'video' as const,
                   description: videoDetails.description
-                }];
+                };
+                results = [videoItem];
+                
+                // Otomatik olarak videoyu seç
+                const isAlreadySelected = selectedItems.some(item => item.id === videoItem.id);
+                if (!isAlreadySelected) {
+                  handleSelectItem(videoItem);
+                }
               }
             } catch (error) {
               console.error('Video details error:', error);
@@ -295,8 +331,8 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
       )}
 
       <div className="min-h-screen bg-[rgb(250,250,250)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="max-w-4xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 py-2 md:py-4">
+          <div className="flex items-center gap-3 mb-4 md:mb-6">
             <Icon size={32} className="text-orange-500" />
             <h1 className="text-lg font-bold">
               {i18n.language === 'tr' ? 
@@ -306,8 +342,8 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
           </div>
 
           {/* Arama Bölümü */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="bg-white rounded-lg shadow-sm p-3 md:p-6 mb-4 md:mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2 md:mb-3">
               {category === 'videos' ? t('listPreview.listDetails.youtubeLink') : t('listPreview.listDetails.searchContent')}
             </label>
             <div className="relative">
@@ -323,7 +359,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
                 }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-base"
+                className="w-full pl-10 pr-3 py-2 md:py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-base"
                 placeholder={category === 'videos'
                   ? t('listPreview.listDetails.youtubeLinkPlaceholder')
                   : category === 'places'
@@ -344,7 +380,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-80 overflow-y-auto" ref={searchResultsRef}>
+                  <div className="space-y-1 md:space-y-2 max-h-80 overflow-y-auto" ref={searchResultsRef}>
                     {searchResults.map((result) => {
                       const isSelected = selectedItems.some(selected => selected.id === result.id);
                       return (
@@ -353,7 +389,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
                           onClick={() => { 
                             !isSelected && handleSelectItem(result); 
                           }}
-                          className={`flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg ${
+                          className={`flex items-center gap-3 md:gap-4 p-2 md:p-3 cursor-pointer hover:bg-gray-100 transition-colors rounded-lg ${
                             isSelected ? 'bg-gray-200 opacity-50 cursor-not-allowed' : ''
                           }`}
                         >
@@ -394,9 +430,9 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
           </div>
 
           {/* Seçilen İçerikler */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 md:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">
+              <h2 className="text-base md:text-lg font-medium">
                 {i18n.language === 'tr' ? 'Seçilen İçerikler' : 'Selected Content'}
                 {selectedItems.length > 0 && (
                   <span className="ml-2 text-sm text-gray-500">({selectedItems.length})</span>
@@ -405,7 +441,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
             </div>
             
             {selectedItems.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-8 md:py-12 text-gray-500">
                 <Icon size={48} className="mx-auto mb-4 text-gray-300" />
                 <p>{i18n.language === 'tr' ? 'Henüz içerik seçilmedi' : 'No content selected yet'}</p>
                 <p className="text-sm mt-1">
@@ -414,12 +450,12 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto mb-6">
-                  <div className="flex gap-4 pb-2" style={{ minWidth: 'max-content' }}>
+                <div className="overflow-x-auto mb-4 md:mb-6">
+                  <div className="flex gap-3 md:gap-4 pb-2" style={{ minWidth: 'max-content' }}>
                     {selectedItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex-shrink-0 w-48 p-3 bg-gray-50 rounded-lg"
+                        className="flex-shrink-0 w-40 md:w-48 p-2 md:p-3 bg-gray-50 rounded-lg"
                       >
                         <div className="relative">
                           <img 
@@ -427,7 +463,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
                             alt={item.title} 
                             loading="lazy"
                             decoding="async"
-                            className="w-full h-32 object-cover rounded-md shadow-sm mb-3"
+                            className="w-full h-24 md:h-32 object-cover rounded-md shadow-sm mb-2 md:mb-3"
                           />
                           <button
                             onClick={() => handleRemoveItem(item.id)}
@@ -460,7 +496,7 @@ export function CreateListStep1({ category, selectedItems, onItemsChange, onNext
                 
                 <button
                   onClick={onNext}
-                  className="w-full bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 font-medium"
+                  className="w-full bg-orange-500 text-white py-2 md:py-3 px-4 rounded-lg hover:bg-orange-600 focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 font-medium"
                 >
                   {i18n.language === 'tr' ? 'İleri' : 'Next'}
                 </button>

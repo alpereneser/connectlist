@@ -6,6 +6,7 @@ import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin, Music } from 'lucide-r
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { AuthPopup } from './AuthPopup';
+import { DEFAULT_HOME_CATEGORY } from '../constants/categories';
 
 interface BottomMenuProps {
   hidden?: boolean;
@@ -168,7 +169,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
           refresh: true,
           timestamp: new Date().getTime(),
           randomize: false,
-          category: 'all',
+          category: DEFAULT_HOME_CATEGORY,
           sortDirection: 'desc'
         } 
       });
@@ -178,7 +179,7 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
         state: {
           refresh: true, // Sayfayı yenileme durumu
           randomize: false,
-          category: 'all',
+          category: DEFAULT_HOME_CATEGORY,
           sortDirection: 'desc'
         }
       });
@@ -443,3 +444,5 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
     </>
   );
 };
+
+

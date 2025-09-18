@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 import { useRef } from 'react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useDebounce } from '../hooks/useDebounce';
-import { searchTMDB, searchGames, searchBooks, getVideoDetails, searchLists } from '../lib/api';
+import { searchTMDB, searchGames, searchBooks, getVideoDetails, searchLists, searchYouTubeMusic } from '../lib/api';
 import { searchPlaces, getDefaultPlaceImage } from '../lib/api-places';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +51,11 @@ type SearchResult = {
   year?: string;
   description?: string;
   username?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedItemIds = [] }: SearchPopupProps) {
@@ -114,9 +119,9 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
   
   // Kategori değerini normalize et
   const normalizedCategory = useMemo(() => {
-    // Eğer kategori zaten doğru formatta ise (movies, series, books, games, people, videos, lists, all)
+    // Eğer kategori zaten doğru formatta ise (movies, series, books, games, people, videos, lists, places, musics, all)
     // olduğu gibi kullan
-    if (['movies', 'series', 'books', 'games', 'people', 'videos', 'lists', 'all'].includes(category)) {
+    if (['movies', 'series', 'books', 'games', 'people', 'videos', 'lists', 'places', 'musics', 'all'].includes(category)) {
       return category;
     }
     
@@ -131,6 +136,8 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
       case 'person': return 'people';
       case 'video': return 'videos';
       case 'list': return 'lists';
+      case 'place': return 'places';
+      case 'music': return 'musics';
       default: return 'all';
     }
   }, [category]);
@@ -150,6 +157,8 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
       case 'people': return t('common.categories.people');
       case 'videos': return t('common.categories.videos');
       case 'lists': return t('search.categories.lists');
+      case 'places': return t('common.categories.places');
+      case 'musics': return t('common.categories.musics');
       default: return '';
     }
   };
@@ -585,6 +594,38 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
           }
           break;
         }
+        
+        // Müzik araması
+        case 'musics': {
+          try {
+            const musicResults = await searchYouTubeMusic(debouncedSearch);
+            
+            if (!Array.isArray(musicResults)) {
+              console.error('Müzik sonuçları bir dizi değil');
+              setError('Müzik sonuçları işlenirken bir hata oluştu.');
+              filteredResults = [];
+              break;
+            }
+            
+            filteredResults = musicResults.map((music) => ({
+              id: music.id || `music-${Date.now()}-${Math.random()}`,
+              title: music.title || 'İsimsiz Müzik',
+              image: music.thumbnail || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(music.title || 'Müzik')}&backgroundColor=green`,
+              type: 'music',
+              description: music.artist || '',
+              year: music.duration || ''
+            }));
+            
+            if (filteredResults.length === 0) {
+              setError(`"${debouncedSearch}" için müzik bulunamadı.`);
+            }
+          } catch (error) {
+            console.error('Müzik arama hatası:', error);
+            setError('Müzik araması sırasında bir hata oluştu.');
+            filteredResults = [];
+          }
+          break;
+        }
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -672,6 +713,28 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
           image: `https://img.youtube.com/vi/${result.id}/hqdefault.jpg`,
           type: 'video',
           description: result.description
+        };
+      case 'places':
+        return {
+          id: result.id?.toString() || '',
+          title: result.name || result.title || 'Mekan',
+          image: result.image || getDefaultPlaceImage(result.name || result.title || 'Mekan'),
+          type: 'place',
+          description: result.categories?.join(', ') || result.description || '',
+          address: result.address,
+          city: result.city,
+          country: result.country,
+          latitude: result.latitude,
+          longitude: result.longitude
+        };
+      case 'musics':
+        return {
+          id: result.id?.toString() || '',
+          title: result.name || result.title || 'Müzik',
+          image: result.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(result.name || result.title || 'Music')}&backgroundColor=green`,
+          type: 'music',
+          year: result.year || '',
+          description: result.description || ''
         };
       default:
         return null;

@@ -10,6 +10,7 @@ import { AuthPopup } from './AuthPopup';
 import { markAllNotificationsAsRead } from '../lib/api';
 import { useDebounce } from '../hooks/useDebounce';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { DEFAULT_HOME_CATEGORY } from '../constants/categories';
 
 interface Profile {
   username: string;
@@ -561,7 +562,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
             {/* Logo - Mobile optimized */}
             <Link 
               to="/" 
-              className={`flex items-center ${isMobile ? 'flex-1 justify-center' : 'md:flex-none'} cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded`}
+              className={`flex items-center ${isMobile ? 'flex-1 justify-center' : 'md:flex-none'} cursor-pointer focus:outline-none transition-all duration-200 ease-in-out hover:opacity-80 focus:opacity-80 rounded-lg p-1 -m-1`}
               aria-label="ConnectList ana sayfaya git"
               tabIndex={0}
             > 
@@ -583,7 +584,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       state: { 
                         refresh: true,
                         sortDirection: 'desc',
-                        category: 'all'
+                        category: DEFAULT_HOME_CATEGORY
                       }
                     });
                     announceToScreenReader('Ana sayfaya yönlendirildi');
@@ -611,7 +612,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
             </div>
 
             {/* Desktop Search Bar - Hidden on mobile */}
-            <div className="flex-1 max-w-2xl mx-8 hidden md:block" role="search" aria-label="Arama bölümü">
+            <div className="flex-1 max-w-3xl mx-6 hidden md:block" role="search" aria-label="Arama bölümü">
               <div className="relative">
                 <form onSubmit={handleSearchSubmit} role="search">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -774,7 +775,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                         <img
                           src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=1` : "https://api.dicebear.com/7.x/avataaars/svg"}
                           alt={`${profile?.full_name || 'Kullanıcı'} profil fotoğrafı`}
-                          className={`h-10 w-10 rounded-full object-cover border-2 border-orange-100 ${isLoading ? 'opacity-50' : ''}`}
+                          className={`h-8 w-8 rounded-full object-cover border-2 border-orange-100 ${isLoading ? 'opacity-50' : ''}`}
                           role="img"
                         />
                         {profile && !isLoading && (
@@ -898,3 +899,5 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
     </header>
   );
 }
+
+

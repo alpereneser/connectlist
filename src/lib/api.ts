@@ -3,12 +3,14 @@ import { supabaseBrowser } from './supabase-browser';
 // API anahtarlarını dışa aktar
 const TMDB_LANGUAGE = import.meta.env.VITE_TMDB_LANGUAGE || 'en-US';
 const TMDB_ACCESS_TOKEN = import.meta.env.VITE_TMDB_ACCESS_TOKEN || '';
+// Support README's API key name as a fallback
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 const RAWG_API_KEY = import.meta.env.VITE_RAWG_API_KEY || '';
 const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || 'AIzaSyCEQZ1ri472vtTCiexDsriTKZTIPQoRJkY';
 const GOOGLE_BOOKS_API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY || GOOGLE_API_KEY;
 const NETLIFY_FUNCTION_ENDPOINT = import.meta.env.VITE_NETLIFY_FUNCTION_ENDPOINT || '/.netlify/functions/restaurants';
 
-export { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY, NETLIFY_FUNCTION_ENDPOINT, GOOGLE_API_KEY };
+export { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, TMDB_API_KEY, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY, NETLIFY_FUNCTION_ENDPOINT, GOOGLE_API_KEY };
 
 // YouTube Music araması (YouTube Data API)
 export async function searchYouTubeMusic(query: string) {
@@ -398,17 +400,22 @@ export async function searchLists(query: string) {
 // TMDB API
 export async function searchTMDB(query: string, type: string = 'multi') {
   const endpoint = type === 'multi' ? 'multi' : type === 'movie' ? 'movie' : type === 'tv' ? 'tv' : 'person';
-  const response = await fetch(
-    `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&language=${TMDB_LANGUAGE}&include_adult=false`,
-    {
-      headers: {
-        'Authorization': `Bearer ${TMDB_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      mode: 'cors'
-    }
-  );
+  const base = `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&language=${TMDB_LANGUAGE}&include_adult=false`;
+
+  // Build headers and URL based on available credentials
+  const useBearer = !!TMDB_ACCESS_TOKEN;
+  const url = useBearer ? base : (TMDB_API_KEY ? `${base}&api_key=${encodeURIComponent(TMDB_API_KEY)}` : base);
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  if (useBearer) headers['Authorization'] = `Bearer ${TMDB_ACCESS_TOKEN}`;
+
+  if (!useBearer && !TMDB_API_KEY) {
+    console.warn('TMDB credentials are missing. Set VITE_TMDB_ACCESS_TOKEN or VITE_TMDB_API_KEY in .env');
+  }
+
+  const response = await fetch(url, { headers, mode: 'cors' });
   
   try {
     const data = await response.json();
@@ -1275,8 +1282,8 @@ export async function getLists(category?: string, page: number = 0, limit: numbe
     `);
   
   const ascending = sortDirection === 'asc';
-  // Sıralama yönüne göre sırala: created_at ve id aynı yönde
-  query = query.order('created_at', { ascending }).order('id', { ascending });
+  // Sıralama yönüne göre sırala: updated_at öncelikli, sonra created_at ve id aynı yönde
+  query = query.order('updated_at', { ascending }).order('created_at', { ascending }).order('id', { ascending });
   
   if (category) {
     // Kategori filtrelemesi yap
@@ -1324,7 +1331,10 @@ export async function getLists(category?: string, page: number = 0, limit: numbe
   }));
 }
 
-export async function getUserLists(userId: string) {
+export async function getUserLists(userId: string, page: number = 0, limit: number = 10) {
+  const start = page * limit;
+  const end = start + limit - 1;
+
   const { data: lists, error: listsError } = await supabaseBrowser
     .from('lists')
     .select(`
@@ -1336,7 +1346,8 @@ export async function getUserLists(userId: string) {
       )
     `)
     .eq('user_id', userId)
-    .order('created_at', { ascending: false }); // Sondan başa doğru sırala (en yeni en üstte)
+    .order('created_at', { ascending: false })
+    .range(start, end);
 
   if (listsError) throw listsError;
 
@@ -1581,6 +1592,7 @@ export async function getVideoDetails(input: string) {
     const oembedData = await oembedResponse.json();
 
     return {
+      id: videoId,
       title: oembedData.title,
       description: oembedData.author_name,
       publishedAt: new Date().toISOString(),

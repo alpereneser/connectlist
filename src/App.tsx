@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useState, useRef, useEffect, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,6 +64,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   isLoadingMore: boolean;
   setIsLoadingMore: (loading: boolean) => void;
 }) {
+  const navigationType = useNavigationType();
   const location = useLocation();
   const listContainerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
@@ -119,8 +120,15 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     setLists([]);
     setPage(0);
     setHasMore(true);
-    scrollToTop();
-    fetchLists().then(() => { 
+    const saved = sessionStorage.getItem('scroll:returnTo');
+    const shouldRestore = navigationType === 'POP' && !!saved;
+    if (!shouldRestore) { scrollToTop(); }
+    fetchLists().then(() => {
+      if (shouldRestore && saved) {
+        try { const { path, y } = JSON.parse(saved); if (path === window.location.pathname) { window.scrollTo({ top: y, behavior: 'auto' }); } } catch (e) {}
+        sessionStorage.removeItem('scroll:returnTo');
+        return;
+      } 
       // Eğer son görüntülenen liste varsa, ona kaydır
       if (lastViewedListId && !isMobile) {
         setTimeout(() => {
@@ -240,37 +248,31 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   };
 
   // Scroll event handler for infinite loading
-    const handleScroll = () => {
-    if (!listContainerRef.current || isLoadingMore || !hasMore) return;
+  const handleScroll = () => {
+    if (isLoadingMore || !hasMore) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = listContainerRef.current;
-    const threshold = 300;
-
-    // Tüm cihazlarda alt kısma yaklaşıldığında daha eski içerikleri yükle
-    if (scrollHeight - scrollTop - clientHeight < threshold) {
-      fetchLists();
+    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) {
+      return;
     }
-    };
+    fetchLists();
+  };
 
   useEffect(() => {
-    const container = listContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, [isLoadingMore, hasMore, isMobile]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMore, page, activeCategory]);
 
   // Tüm cihazlar için standart liste görünümü
   return (
     <div ref={listContainerRef} className="min-h-screen bg-gray-100"> 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[10px] pb-8"> 
+      <div className="max-w-7xl mx-auto px-2 md:px-4 sm:px-6 lg:px-8 pt-2 md:pt-[10px] pb-4 md:pb-8"> 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-10 md:mt-0 mt-[-5px] text-center">
+          <div className="flex flex-col items-center justify-center py-8 md:py-10 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-orange-500 border-t-transparent mb-3"></div>
             <LoadingQuote />
           </div>
         ) : (
-          <div className="flex flex-col space-y-6 md:mt-0 mt-[-5px]">
+          <div className="flex flex-col space-y-3 md:space-y-6">
             {lists.map((list) => (
               <div key={list.id} id={`list-${list.id}`}>
                 <ListPreview list={list} items={list.items} onListClick={() => setLastViewedListId(list.id)} />
@@ -335,14 +337,35 @@ function App() {
 
   useEffect(() => {
     checkAuth();
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session ? 'User logged in' : 'User logged out');
+      
+      // E-posta doğrulama sonrası oturum yönetimi
+      if (event === 'SIGNED_IN' && session) {
+        // Eğer kullanıcı e-posta doğrulama linkinden geliyorsa
+        const urlParams = new URLSearchParams(window.location.search);
+        const isEmailConfirmation = urlParams.get('type') === 'email_change' || 
+                                   urlParams.get('type') === 'signup' ||
+                                   window.location.hash.includes('type=email_change') ||
+                                   window.location.hash.includes('type=signup');
+        
+        if (isEmailConfirmation) {
+          // Mevcut oturumu kapat ve login sayfasına yönlendir
+          supabase.auth.signOut().then(() => {
+            setIsAuthenticated(false);
+            navigate('/auth/login', { replace: true });
+          });
+          return;
+        }
+      }
+      
       setIsAuthenticated(!!session);
-      setIsAuthChecked(true); // Ensure auth status is updated on change
+      setIsAuthChecked(true);
     });
     return () => {
-      authListener?.subscription.unsubscribe(); // Correctly call unsubscribe
+      authListener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   // Wait until authentication status is checked
   if (!isAuthChecked) {
@@ -606,3 +629,5 @@ function CommentsPage() {
 }
 
 export default App;
+
+

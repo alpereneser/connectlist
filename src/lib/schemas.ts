@@ -18,6 +18,10 @@ export const getRegisterSchema = () => z.object({
   fullName: z.string().min(2, t('validation.fullNameMinLength')),
   email: z.string().email(t('validation.invalidEmail')),
   password: z.string().min(6, t('validation.passwordMinLength')),
+  confirmPassword: z.string().min(6, t('validation.passwordMinLength')),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: t('validation.passwordsDoNotMatch'),
+  path: ['confirmPassword'],
 });
 
 export const getForgotPasswordSchema = () => z.object({
