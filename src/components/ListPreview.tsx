@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { AuthPopup } from './AuthPopup';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 import { CommentModal } from './CommentModal';
+import { ShareModal } from './ShareModal';
 import { LazyImage } from './LazyImage';
 import { useLikeMutation } from '../hooks/useLikeMutation';
 import { createSlug } from '../lib/utils';
@@ -82,7 +83,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
   };
 
   const handleLikeClick = async () => {
-    if (!await requireAuth('listeyi beğenmek')) return;
+    if (!await requireAuth('likingList')) return;
     handleLike();
   };
 
@@ -158,29 +159,6 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
 
   const handleShare = () => {
     setShowShareModal(true);
-    
-    const url = `${window.location.origin}/${list.profiles.username}/list/${createSlug(list.title)}`;
-    
-    // Paylaşım metni oluştur
-    const shareText = `${list.title}\n${list.description ? list.description + '\n' : ''}${url}`;
-    
-    // Mobil cihazlarda native paylaşım menüsünü kullan
-    if (navigator.share && window.innerWidth < 768) {
-      navigator.share({
-        title: list.title,
-        text: shareText,
-        url: url
-      }).catch(() => {
-        // Paylaşım başarısız olursa veya iptal edilirse formatlanmış metni kopyala
-        navigator.clipboard.writeText(shareText);
-        setTimeout(() => setShowShareModal(false), 2000);
-      });
-    }
-    else {
-      // Masaüstünde formatlanmış metni kopyala
-      navigator.clipboard.writeText(shareText);
-      setTimeout(() => setShowShareModal(false), 2000);
-    }
   };
 
   const formatDate = (dateString: string) => {
@@ -612,12 +590,13 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
       )}
       
       {/* Paylaşım Modal */}
-      {showShareModal && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 z-[9999]">
-          <LinkIcon size={16} />
-          <span>{t('listPreview.linkCopied')}</span>
-        </div>
-      )}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        url={`${window.location.origin}/list/${list.id}/${createSlug(list.title)}`}
+        title={list.title}
+        description={list.description}
+      />
     </div>
   );
 }

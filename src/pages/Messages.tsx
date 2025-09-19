@@ -578,7 +578,7 @@ export function Messages() {
               <div className={`col-span-12 md:col-span-4 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'} overflow-hidden border-r border-gray-200`}>
                 <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
                   <div className="flex items-center justify-between p-6">
-                    <h1 className="text-2xl font-bold text-gray-900">{t('messages.title')}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('common.messages.title')}</h1>
                     <button 
                       onClick={() => setShowFollowingSearch(true)}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
@@ -623,7 +623,7 @@ export function Messages() {
                           ))
                         ) : (
                           <div className="p-6 text-center text-gray-500">
-                            {t('messages.noResults')}
+                            {t('common.noResults')}
                           </div>
                         )}
                       </div>
@@ -678,7 +678,7 @@ export function Messages() {
                                 (conversation.last_message_text.length > 35 ? 
                                   conversation.last_message_text.substring(0, 35) + '...' : 
                                   conversation.last_message_text
-                                ) : t('messages.noMessagesYet')
+                                ) : t('common.messages.noMessagesYet')
                               }
                             </p>
                           </div>
@@ -686,12 +686,12 @@ export function Messages() {
                       );
                     })
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                    <div className="min-h-full flex flex-col items-center justify-center py-16 text-gray-500">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <Search size={24} className="text-gray-400" />
                       </div>
-                      <p className="text-lg font-medium mb-2">{t('messages.noConversations')}</p>
-                      <p className="text-sm text-center">{t('messages.startConversation')}</p>
+                      <p className="text-lg font-medium mb-2">{t('common.messages.noConversations')}</p>
+                      <p className="text-sm text-center">{t('common.messages.startConversation')}</p>
                     </div>
                   )}
                 </div>
@@ -727,7 +727,7 @@ export function Messages() {
                             {getOtherParticipant(selectedConversation)?.full_name}
                           </h3>
                           <p className="text-sm text-green-500 font-medium">
-                            {t('messages.online')}
+                            {t('common.messages.online')}
                           </p>
                         </div>
                       </div>
@@ -748,7 +748,7 @@ export function Messages() {
                             setShowDeleteConfirm(true);
                           }}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                          title={t('messages.deleteConversation')}
+                          title={t('common.messages.deleteConversation')}
                         >
                           <Trash2 size={20} />
                         </button>
@@ -807,9 +807,9 @@ export function Messages() {
                                             {message.is_sending ? (
                                               <span className="inline-block w-3 h-3 rounded-full border-2 border-orange-100 border-t-transparent animate-spin"></span>
                                             ) : message.is_read ? (
-                                              <span title={t('messages.read')}>✓✓</span>
+                                              <span title={t('common.messages.read')}>✓✓</span>
                                             ) : (
-                                              <span title={t('messages.delivered')}>✓</span>
+                                              <span title={t('common.messages.delivered')}>✓</span>
                                             )}
                                           </span>
                                         )}
@@ -833,7 +833,7 @@ export function Messages() {
                                               });
                                           } catch (error) {
                                             console.error('Error deleting message:', error);
-                                            alert(t('messages.errorDeleting'));
+                                            alert(t('common.messages.errorDeleting'));
                                           }
                                         }}
                                         className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded ${
@@ -857,8 +857,8 @@ export function Messages() {
                           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                             <Search size={24} className="text-gray-400" />
                           </div>
-                          <p className="text-lg font-medium mb-2">{t('messages.noMessagesYet')}</p>
-                          <p className="text-sm text-center">{t('messages.startFirstMessage')}</p>
+                          <p className="text-lg font-medium mb-2">{t('common.messages.noMessagesYet')}</p>
+                          <p className="text-sm text-center">{t('common.messages.startFirstMessage')}</p>
                         </div>
                       )}
                       {isTyping && (
@@ -893,13 +893,13 @@ export function Messages() {
                                 handleSendMessage(e);
                               }
                             }}
-                            placeholder={t('messages.typeMessage')}
+                            placeholder={t('common.messages.typeMessage')}
                             autoFocus
                             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
                           />
                           <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
                             </svg>
                           </button>
                         </div>
@@ -914,8 +914,8 @@ export function Messages() {
                     </form>
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-gray-500">
-                    <p>{t('messages.selectConversation')}</p>
+                  <div className="flex-1 flex items-center justify-center h-full text-gray-500">
+                    <p>{t('common.messages.selectConversation')}</p>
                   </div>
                 )}
               </div>
@@ -929,9 +929,9 @@ export function Messages() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg w-full max-w-sm mx-4">
             <div className="p-6">
-              <h2 className="text-lg font-semibold mb-2">{t('messages.deleteConversation')}</h2>
+              <h2 className="text-lg font-semibold mb-2">{t('common.messages.deleteConversation')}</h2>
               <p className="text-gray-600 text-sm mb-6">
-                  {t('messages.deleteConfirmation')}
+                  {t('common.messages.deleteConfirmation')}
                 </p>
               <div className="flex justify-end gap-3">
                 <button
@@ -941,7 +941,7 @@ export function Messages() {
                   }}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
                 >
-                  {t('messages.cancel')}
+                  {t('common.messages.cancel')}
                 </button>
                 <button
                   onClick={async () => {
@@ -960,12 +960,12 @@ export function Messages() {
                       setConversationToDelete(null);
                     } catch (error) {
                       console.error('Error deleting conversation:', error);
-                      alert(t('messages.errorDeletingConversation'));
+                      alert(t('common.messages.errorDeletingConversation'));
                     }
                   }}
                   className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600"
                 >
-                  {t('messages.delete')}
+                  {t('common.messages.delete')}
                 </button>
               </div>
             </div>

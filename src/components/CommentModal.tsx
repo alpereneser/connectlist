@@ -4,6 +4,7 @@ import { X, Smile, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { useRequireAuth } from '../hooks/useRequireAuth';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { AuthPopup } from './AuthPopup';
 
@@ -34,6 +35,7 @@ interface CommentModalProps {
 export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommentDeleted, commentCount, isMobile = false }: CommentModalProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { requireAuth, showAuthPopup, setShowAuthPopup, authMessage } = useRequireAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
@@ -42,7 +44,6 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
   // Yorum sayısını takip etmek için kullanılmıyor, onCommentAdded callback'i kullanılıyor
   const [isLoadingComments, setIsLoadingComments] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [showAuthPopup, setShowAuthPopup] = useState(false);
   const [lastCommentId, setLastCommentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
@@ -259,17 +260,14 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
     if (!newComment.trim()) return;
     
     // Kimlik doğrulama kontrolü
+    const isAuthenticated = await requireAuth('commenting');
+    if (!isAuthenticated) return;
+    
     const { data: { session } } = await supabase.auth.getSession();
     const userId = session?.user?.id;
     
-    if (!userId) {
-      console.log('Yorum yapılırken kimlik doğrulama hatası: Kullanıcı oturumu bulunamadı');
-      setShowAuthPopup(true);
-      return;
-    }
-    
     // Kullanıcı ID'sini güncelle (ama doğrudan userId'yi kullan)
-    setCurrentUserId(userId);
+    setCurrentUserId(userId || null);
 
     try {
       console.log('Yorum gönderiliyor:', {
@@ -643,7 +641,7 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
         <AuthPopup
           isOpen={showAuthPopup}
           onClose={() => setShowAuthPopup(false)}
-          message="Yorum yapmak için giriş yapmalısınız"
+          message={authMessage}
         />
       </div>
     </div>

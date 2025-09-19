@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface Comment {
   id: string;
-  content_type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place';
+  content_type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place' | 'music';
   content_id: string;
   user_id: string;
   parent_comment_id?: string;
@@ -21,7 +21,7 @@ export interface Comment {
 }
 
 export interface CreateCommentData {
-  content_type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place';
+  content_type: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place' | 'music';
   content_id: string;
   content: string;
   parent_comment_id?: string;

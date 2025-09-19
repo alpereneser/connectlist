@@ -160,6 +160,12 @@
     "register": "Sign Up",
     "requireAuthMessage": "You need to log in to perform this action: {{action}}",
     "loginRequired": "You need to log in to perform this action: adding items to a list",
+    "actions": {
+      "likingList": "liking a list",
+      "addingToList": "adding items to a list",
+      "followingUser": "following a user",
+      "commenting": "commenting"
+    },
     "forgotPassword": "Forgot Password",
     "email": "Email",
     "password": "Password",
@@ -781,6 +787,31 @@
     "contact": {
       "title": "Contact Us",
       "description": "If you have any questions about this Privacy Policy, please contact us through the support form in the app."
+    }
+  },
+  "social": {
+    "share": {
+      "title": "Share",
+      "description": "Share this content on social media",
+      "whatsapp": "Share on WhatsApp",
+      "facebook": "Share on Facebook",
+      "twitter": "Share on Twitter",
+      "telegram": "Share on Telegram",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied!",
+      "shareText": "I discovered this amazing content on Connectlist!"
+    },
+    "meta": {
+      "siteName": "Connectlist",
+      "siteDescription": "Create, share and discover content lists",
+      "defaultImage": "Connectlist - Content Listing Platform",
+      "movieDescription": "Detailed information about {{title}} movie and user lists",
+      "seriesDescription": "Detailed information about {{title}} series and user lists",
+      "bookDescription": "Detailed information about {{title}} book and user lists",
+      "gameDescription": "Detailed information about {{title}} game and user lists",
+      "personDescription": "Detailed information about {{name}} and user lists",
+      "profileDescription": "{{username}}'s Connectlist profile and lists",
+      "listDescription": "{{title}} list - {{category}} list containing {{itemCount}} items"
     }
   }
 }

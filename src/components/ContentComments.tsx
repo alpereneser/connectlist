@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 interface ContentCommentsProps {
-  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place';
+  contentType: 'movie' | 'series' | 'book' | 'game' | 'person' | 'place' | 'music';
   contentId: string;
   contentTitle: string;
 }

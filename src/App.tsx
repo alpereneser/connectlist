@@ -16,6 +16,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { CommentModal } from './components/CommentModal';
 import { ListPreview } from './components/ListPreview';
 import { OfflineNotification, PWAInstallPrompt } from './components/OfflineNotification';
+import ErrorBoundary from './components/ErrorBoundary';
 import { getLists } from './lib/api';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import PullToRefresh from './components/PullToRefresh';
@@ -44,8 +45,10 @@ const MovieDetails = lazy(() => import('./pages/details/MovieDetails').then(modu
 const SeriesDetails = lazy(() => import('./pages/details/SeriesDetails').then(module => ({ default: module.SeriesDetails })));
 const BookDetails = lazy(() => import('./pages/details/BookDetails').then(module => ({ default: module.BookDetails })));
 const GameDetails = lazy(() => import('./pages/details/GameDetails').then(module => ({ default: module.GameDetails })));
-const PersonDetails = lazy(() => import('./pages/details/PersonDetails').then(module => ({ default: module.PersonDetails })));
+const PersonDetails = lazy(() => import('./pages/details/PersonDetails.tsx').then(module => ({ default: module.PersonDetails })));
 const PlaceDetails = lazy(() => import('./pages/details/PlaceDetails').then(module => ({ default: module.PlaceDetails })));
+const VideoDetails = lazy(() => import('./pages/details/VideoDetails'));
+const MusicDetails = lazy(() => import('./pages/details/MusicDetails'));
 
 // MobileListView removed - using standard list view for all devices
 
@@ -440,8 +443,9 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <div className="flex flex-col min-h-screen bg-gray-50">
+    <ErrorBoundary>
+      <ThemeProvider>
+        <div className="flex flex-col min-h-screen bg-gray-50">
         {/* Header: Auth sayfalarında gizle */}
         {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && (
           <Header 
@@ -592,8 +596,12 @@ function App() {
             <Route path="/person/:id" element={<PersonDetails />} />
             <Route path="/person/:id/:slug" element={<PersonDetails />} />
             <Route path="/place/:id" element={<PlaceDetails />} />
-            <Route path="/place/:id/:slug" element={<PlaceDetails />} />
-            <Route path="/list/:id" element={<ListDetails />} />
+                <Route path="/place/:id/:slug" element={<PlaceDetails />} />
+                <Route path="/video/:id" element={<VideoDetails />} />
+                <Route path="/video/:id/:slug" element={<VideoDetails />} />
+                <Route path="/music/:id" element={<MusicDetails />} />
+                <Route path="/music/:id/:slug" element={<MusicDetails />} />
+                <Route path="/list/:id" element={<ListDetails />} />
             <Route path="/search" element={<Search />} />
             <Route path="/mobile-search" element={<MobileSearch />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -630,21 +638,31 @@ function App() {
         {/* Mobil anasayfada BottomMenu'yu göster */}
         {!isAuthPage && !isMessageDetailPage && <BottomMenu />}
         <InstallPrompt />
-      </div>
-    </ThemeProvider>
+        </div>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
 // Basit özlü söz komponenti
 function LoadingQuote() {
-  const quotes = [
+  const { i18n } = useTranslation();
+  const quotesTr = [
     'İyi fikirler paylaşınca çoğalır.',
     'Keşfetmek, ilk adımı atmaktır.',
     'Listeler fikirlerin haritasıdır.',
     'Bir öneri, yeni bir başlangıçtır.',
     'Bugün keşfedeceğin şey, yarının ilhamı olur.',
   ];
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  const quotesEn = [
+    'Good ideas grow when shared.',
+    'Exploration begins with the first step.',
+    'Lists are maps of ideas.',
+    'A suggestion is a new beginning.',
+    "What you discover today becomes tomorrow's inspiration.",
+  ];
+  const source = (i18n.language || 'tr').toLowerCase().startsWith('tr') ? quotesTr : quotesEn;
+  const quote = source[Math.floor(Math.random() * source.length)];
   return (
     <p className="text-sm text-gray-600 max-w-sm">{quote}</p>
   );

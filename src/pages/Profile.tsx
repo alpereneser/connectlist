@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthPopup } from '../components/AuthPopup';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, Heart } from '@phosphor-icons/react';
 import { FollowModal } from '../components/FollowModal';
@@ -202,7 +203,7 @@ export function Profile() {
 
   const handleFollowClick = async () => {
     try {
-      const isAuthenticated = await requireAuth('kullanıcıyı takip etmek');
+      const isAuthenticated = await requireAuth('followingUser');
       if (!isAuthenticated) return;
       
       if (!profile || !profile.id) {
@@ -600,10 +601,37 @@ export function Profile() {
       <Helmet>
         <title>{`${profileTitle} - ConnectList`}</title>
         <meta name="description" content={metaDescription} />
-        <meta property="og:title" content={profileTitle} />
-        <meta property="og:description" content={metaDescription} />
-        {profileImage && <meta property="og:image" content={profileImage} />}
+        
+        {/* Open Graph Meta Tags */}
         <meta property="og:type" content="profile" />
+        <meta property="og:url" content={`https://connectlist.me/profile/${profile.username}`} />
+        <meta property="og:title" content={profileTitle} />
+        <meta property="og:description" content={metaDescription || t('social.meta.profileDescription', { username: profile.username })} />
+        {profileImage && <meta property="og:image" content={profileImage} />}
+        {profileImage && <meta property="og:image:width" content="400" />}
+        {profileImage && <meta property="og:image:height" content="400" />}
+        {profileImage && <meta property="og:image:alt" content={`${profile.full_name || profile.username} ${t('social.meta.defaultImage')}`} />}
+        <meta property="og:site_name" content={t('social.meta.siteName')} />
+        <meta property="og:locale" content={i18n.language === 'tr' ? 'tr_TR' : 'en_US'} />
+        <meta property="og:locale:alternate" content={i18n.language === 'tr' ? 'en_US' : 'tr_TR'} />
+        
+        {/* Profile specific Open Graph */}
+        <meta property="profile:first_name" content={profile.full_name?.split(' ')[0] || profile.username} />
+        {profile.full_name?.split(' ').length > 1 && <meta property="profile:last_name" content={profile.full_name.split(' ').slice(1).join(' ')} />}
+        <meta property="profile:username" content={profile.username} />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:site" content="@connectlist" />
+        <meta name="twitter:creator" content={`@${profile.username}`} />
+        <meta name="twitter:title" content={profileTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        {profileImage && <meta name="twitter:image" content={profileImage} />}
+        {profileImage && <meta name="twitter:image:alt" content={`${profile.full_name || profile.username} avatar`} />}
+        
+        {/* WhatsApp specific meta tags */}
+        {profileImage && <meta property="og:image:type" content="image/jpeg" />}
+        {profileImage && <meta property="og:image:secure_url" content={profileImage} />}
       </Helmet>
       {/* ANA DIV BURADA BAŞLIYOR */}
       <div className="min-h-screen bg-white md:bg-gray-100" data-component-name="Profile" style={{

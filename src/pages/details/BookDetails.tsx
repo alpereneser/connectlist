@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Plus, Users, X } from 'lucide-react';
+import { Plus, Users, X, Share2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { Header } from '../../components/Header';
 import { AddToListModal } from '../../components/AddToListModal';
+import { ShareModal } from '../../components/ShareModal';
 import { Breadcrumb } from '../../components/Breadcrumb';
 import { supabaseBrowser as supabase } from '../../lib/supabase-browser';
 import { getBookDetails } from '../../lib/api';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { AuthPopup } from '../../components/AuthPopup';
 import ContentComments from '../../components/ContentComments';
+import i18n from '../../i18n';
 
 interface BookDetails {
   id: string;
@@ -30,6 +32,7 @@ interface BookDetails {
   language: string;
   preview_link: string;
   info_link: string;
+  isbn?: string;
 }
 
 interface ListUser {
@@ -54,8 +57,10 @@ export function BookDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [showListUsers, setShowListUsers] = useState(false);
   const [showAddToListModal, setShowAddToListModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [listUsers, setListUsers] = useState<ListUser[]>([]);
   const [listsContainingBook] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -205,7 +210,7 @@ export function BookDetails() {
         setShowAddToListModal(true);
       } else {
         console.log('Oturum açık değil, popup gösteriliyor');
-        const isLoggedIn = await requireAuth(t('details.addToListAuthAction'));
+        const isLoggedIn = await requireAuth('addingToList');
         if (isLoggedIn) {
           setShowAddToListModal(true);
         }
@@ -220,10 +225,40 @@ export function BookDetails() {
       <Helmet>
         <title>{`${bookTitleWithAuthor} - ConnectList`}</title>
         <meta name="description" content={metaDescription} />
-        <meta property="og:title" content={bookTitleWithAuthor} />
-        <meta property="og:description" content={metaDescription} />
-        {book.image_links.large && <meta property="og:image" content={book.image_links.large} />}
+        
+        {/* Open Graph Meta Tags */}
         <meta property="og:type" content="book" />
+        <meta property="og:url" content={`https://connectlist.me/book/${id}`} />
+        <meta property="og:title" content={bookTitleWithAuthor} />
+        <meta property="og:description" content={metaDescription || t('social.meta.bookDescription', { title: book.title })} />
+        {book.image_links.large && <meta property="og:image" content={book.image_links.large} />}
+        {book.image_links.large && <meta property="og:image:width" content="400" />}
+        {book.image_links.large && <meta property="og:image:height" content="600" />}
+        {book.image_links.large && <meta property="og:image:alt" content={`${book.title} ${t('social.meta.defaultImage')}`} />}
+        <meta property="og:site_name" content={t('social.meta.siteName')} />
+        <meta property="og:locale" content={i18n.language === 'tr' ? 'tr_TR' : 'en_US'} />
+        <meta property="og:locale:alternate" content={i18n.language === 'tr' ? 'en_US' : 'tr_TR'} />
+        
+        {/* Book specific Open Graph */}
+        {book.authors && <meta property="book:author" content={book.authors.join(', ')} />}
+        {book.published_date && <meta property="book:release_date" content={book.published_date} />}
+        {book.isbn && <meta property="book:isbn" content={book.isbn} />}
+        {book.categories && book.categories.map(category => (
+          <meta key={category} property="book:tag" content={category} />
+        ))}
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@connectlist" />
+        <meta name="twitter:title" content={bookTitleWithAuthor} />
+        <meta name="twitter:description" content={metaDescription} />
+        {book.image_links.large && <meta name="twitter:image" content={book.image_links.large} />}
+        {book.image_links.large && <meta name="twitter:image:alt" content={`${book.title} book cover`} />}
+        
+        {/* WhatsApp specific meta tags */}
+        {book.image_links.large && <meta property="og:image:type" content="image/jpeg" />}
+        {book.image_links.large && <meta property="og:image:secure_url" content={book.image_links.large} />}
+        
         {bookSchema && (
           <script type="application/ld+json">
             {JSON.stringify(bookSchema)}
@@ -298,6 +333,13 @@ export function BookDetails() {
                         <Users size={20} className="mr-2" />
                         {t('details.whoAdded')}
                       </button>
+                      <button
+                        onClick={() => setShowShareModal(true)}
+                        className="flex items-center bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+                      >
+                        <Share2 size={20} className="mr-2" />
+                        Paylaş
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -305,40 +347,110 @@ export function BookDetails() {
             </div>
           </div>
           
+          {/* Mobile Hero Section */}
           <div className="md:hidden">
-            <div className="flex gap-4 p-4">
-              <div className="w-1/3">
+            <div className="relative">
+              {/* Background Image */}
+              <div className="absolute inset-0 h-48">
                 <img
                   src={book.image_links.large || book.image_links.medium || book.image_links.small}
                   alt={book.title}
-                  className="w-full rounded-lg aspect-[2/3] object-cover"
+                  className="w-full h-full object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               </div>
               
-              <div className="w-2/3">
-                <h1 className="text-base font-bold mb-1">{book.title}</h1>
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600 mb-2">
-                  <span>{book.authors.join(', ')}</span>
-                  <span>•</span>
-                  <span>{new Date(book.published_date).getFullYear()}</span>
-                </div>
-                {book.categories && book.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {book.categories.map(category => (
-                      <span
-                        key={category}
-                        className="px-2 py-0.5 bg-gray-100 rounded-full text-[10px] text-gray-600"
-                      >
-                        {category}
-                      </span>
-                    ))}
+              {/* Content */}
+              <div className="relative z-10 pt-8 pb-4 px-4">
+                <div className="flex gap-4 items-end">
+                  {/* Book Cover */}
+                  <div className="w-24 flex-shrink-0">
+                    <img
+                      src={book.image_links.large || book.image_links.medium || book.image_links.small}
+                      alt={book.title}
+                      className="w-full rounded-lg aspect-[2/3] object-cover shadow-lg"
+                    />
                   </div>
-                )}
+                  
+                  {/* Info */}
+                  <div className="flex-1 text-white pb-2">
+                    <h1 className="text-xl font-bold mb-2 leading-tight">{book.title}</h1>
+                    <div className="flex flex-wrap items-center gap-2 text-sm mb-3">
+                      <span>{book.authors.join(', ')}</span>
+                      <span>•</span>
+                      <span>{new Date(book.published_date).getFullYear()}</span>
+                    </div>
+                    {book.categories && book.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {book.categories.slice(0, 3).map(category => (
+                          <span
+                            key={category}
+                            className="px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs"
+                          >
+                            {category}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Sticky Action Buttons */}
+            <div className="sticky top-[95px] z-20 bg-white border-b border-gray-200 px-4 py-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAttemptAddToList}
+                  className="flex-1 flex items-center justify-center gap-2 bg-orange-500 text-white py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors"
+                >
+                  <Plus size={18} />
+                  <span>{t('listPreview.addToList')}</span>
+                </button>
+                <button
+                  onClick={fetchListUsers}
+                  className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  <Users size={18} />
+                </button>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  <Share2 size={18} />
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+          {/* Mobile Tab Navigation */}
+          <div className="md:hidden bg-white border-b border-gray-200 sticky top-[155px] z-10">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'overview'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Genel Bakış
+              </button>
+              <button
+                onClick={() => setActiveTab('details')}
+                className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'details'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Detaylar
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
               <div className="md:col-span-2 space-y-3 md:space-y-6">
                 <div>
@@ -373,26 +485,50 @@ export function BookDetails() {
                   </dl>
                 </div>
               </div>
-              
-              <div className="space-y-4 md:space-y-6 md:hidden">
-                <div className="flex flex-wrap gap-3 items-center px-4">
-                  <button
-                    onClick={handleAttemptAddToList}
-                    className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
-                  >
-                    <Plus size={18} className="mr-2" />
-                    {t('details.addToList')}
-                  </button>
-                  <button
-                    onClick={fetchListUsers}
-                    className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
-                  >
-                    <Users size={18} className="mr-2" />
-                    {t('details.whoAdded')}
-                  </button>
+            </div>
+          </div>
+
+          {/* Mobile Content */}
+          <div className="md:hidden bg-gray-50 min-h-screen">
+            {activeTab === 'overview' && (
+              <div className="p-4 space-y-4">
+                <div className="bg-white rounded-lg p-4">
+                  <h2 className="text-lg font-bold mb-3">{t('details.about')}</h2>
+                  <div
+                    className="text-sm text-gray-600 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: book.description }}
+                  />
                 </div>
               </div>
-            </div>
+            )}
+
+            {activeTab === 'details' && (
+              <div className="p-4 space-y-4">
+                <div className="bg-white rounded-lg p-4">
+                  <h3 className="font-bold text-lg mb-4">{t('details.info.book.title')}</h3>
+                  <dl className="space-y-4">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <dt className="text-gray-500 font-medium">{t('details.info.book.publisher')}</dt>
+                      <dd className="font-medium text-right">{book.publisher}</dd>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <dt className="text-gray-500 font-medium">{t('details.info.book.publishDate')}</dt>
+                      <dd className="font-medium text-right">
+                        {new Date(book.published_date).toLocaleDateString('tr-TR')}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <dt className="text-gray-500 font-medium">{t('details.info.book.pageCount')}</dt>
+                      <dd className="font-medium text-right">{book.page_count}</dd>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <dt className="text-gray-500 font-medium">{t('details.info.book.language')}</dt>
+                      <dd className="font-medium text-right">{book.language.toUpperCase()}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -488,6 +624,14 @@ export function BookDetails() {
         isOpen={showAuthPopup}
         onClose={() => setShowAuthPopup(false)}
         message={authMessage}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        url={window.location.href}
+        title={book.title}
+        description={book.description}
       />
     </>
   );

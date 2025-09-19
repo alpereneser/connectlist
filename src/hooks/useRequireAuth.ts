@@ -7,10 +7,11 @@ export function useRequireAuth() {
   const [authMessage, setAuthMessage] = useState('');
   const { t } = useTranslation();
 
-  const requireAuth = async (action: string) => {
+  const requireAuth = async (actionKey: string) => {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
+      const action = t(`auth.actions.${actionKey}`);
       setAuthMessage(t('auth.requireAuthMessage', { action }));
       setShowAuthPopup(true);
       return false;

@@ -1806,3 +1806,34 @@ export async function deleteMessage(messageId: string) {
   throw error;
 }
 }
+
+export async function getMusicDetails(input: string) {
+  try {
+    // Spotify URL'den track ID'sini çıkar
+    const spotifyMatch = input.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);
+    const trackId = spotifyMatch ? spotifyMatch[1] : input;
+
+    if (!trackId) {
+      throw new Error('Geçersiz müzik ID\'si');
+    }
+
+    // Mock data döndür (gerçek API entegrasyonu için Spotify API kullanılabilir)
+    return {
+      id: trackId,
+      title: 'Müzik Başlığı',
+      artist: 'Sanatçı Adı',
+      album: 'Albüm Adı',
+      duration: '3:45',
+      releaseDate: new Date().toISOString(),
+      genre: 'Pop',
+      thumbnail: `https://via.placeholder.com/300x300?text=Music`,
+      url: '',
+      description: 'Bu müzik hakkında açıklama...',
+      popularity: 85,
+      explicit: false
+    };
+  } catch (error) {
+    console.error('Müzik detayları alınırken hata:', error);
+    throw error;
+  }
+}

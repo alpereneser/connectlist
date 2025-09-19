@@ -3,14 +3,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 import { Helmet } from 'react-helmet-async';
-import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Link as LinkIcon, Plus, Send, MapPin, Music, ArrowLeft } from 'lucide-react';
+import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Plus, Send, MapPin, Music, ArrowLeft } from 'lucide-react';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
+import { ListItem, List, User, Comment, Like } from '../types/supabase';
 import { turkishToEnglish } from '../lib/utils';
 import { AuthPopup } from '../components/AuthPopup';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 
 import { SearchPopup } from '../components/SearchPopup';
 import { CommentModal } from '../components/CommentModal';
+import { ShareModal } from '../components/ShareModal';
 import { useListDetails } from '../hooks/useListDetails';
 import { useListMutations } from '../hooks/useListMutations';
 import { useLikeMutation } from '../hooks/useLikeMutation';
@@ -98,73 +100,7 @@ export default function ListDetails() {
   const { t, i18n } = useTranslation();
 
   const { data, isLoading, error, isOwner, refetch } = useListDetails(listId || '');
-  // Liste öğesi tipi
-  type ListItem = {
-    id: string;
-    list_id?: string; // İsteğe bağlı yapıldı çünkü bazı öğelerde bulunmayabilir
-    title: string;
-    description?: string;
-    image_url?: string;
-    url?: string;
-    order?: number;
-    created_at?: string;
-    updated_at?: string;
-    // Bazı liste öğelerinde bulunan ek alanlar
-    external_id?: string;
-    type?: string;
-    year?: string;
-    position?: number;
-    // Google Places API için eklenen alanlar
-    city?: string;
-    country?: string;
-    address?: string;
-    latitude?: number;
-    longitude?: number;
-  };
 
-  // Kullanıcı tipi
-  type User = {
-    id: string;
-    username: string;
-    full_name: string;
-    avatar?: string;
-    created_at?: string;
-  };
-
-  // Yorum tipi
-  type Comment = {
-    id: string;
-    list_id: string;
-    user_id: string;
-    content: string;
-    created_at: string;
-    updated_at?: string;
-    user?: User;
-  };
-
-  // Beğeni tipi
-  type Like = {
-    id: string;
-    list_id: string;
-    user_id: string;
-    created_at: string;
-    user?: User;
-  };
-
-  // Liste tipi
-  type List = {
-    id: string;
-    title: string;
-    description?: string;
-    category?: string;
-    user_id?: string;
-    created_at?: string;
-    updated_at?: string;
-    image_url?: string;
-    username?: string; // Kullanıcı adı bazen doğrudan liste içinde bulunabilir
-    profiles?: User; // Kullanıcı profil bilgileri
-    likes_count?: number; // Beğeni sayısı
-  };
 
   // Ana veri tipi
   type SafeData = {
@@ -221,6 +157,11 @@ export default function ListDetails() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [replyToComment, setReplyToComment] = useState<{id: string, username: string} | null>(null);
   const [showDeleteConfirmComment, setShowDeleteConfirmComment] = useState<string | null>(null);
+
+  // list.profiles: Profile | Profile[] olduğundan, tekil bir profil referansı elde edelim
+  const ownerProfile = useMemo(() => (
+    Array.isArray(safeData.list?.profiles) ? safeData.list?.profiles[0] : safeData.list?.profiles
+  ), [safeData.list?.profiles]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -477,7 +418,7 @@ export default function ListDetails() {
   }, [debouncedDescription, listId, isEditing, safeData.list?.description]);
 
   const handleLikeClick = async () => {
-    if (!await requireAuth('listeyi beğenmek')) return;
+    if (!await requireAuth('likingList')) return;
     handleLike();
   };
 
@@ -491,54 +432,10 @@ export default function ListDetails() {
     }
   };
 
-  // Instagram tarayıcısını algılama fonksiyonu
-  const isInstagramBrowser = () => {
-    const userAgent = navigator.userAgent || navigator.vendor || '';
-    return userAgent.indexOf('Instagram') > -1;
-  };
+
 
   const handleShare = () => {
     setShowShareModal(true);
-    
-    const urlToCopy = window.location.href; // TARAYICININ MEVCUT TAM URL'İNİ KULLAN
-    
-    // Paylaşım metni ve başlığı için varsayılan değerlerle birlikte çevrilebilir metinler
-    const listTitle = safeData?.list?.title || t('listDetails.share.defaultTitle', 'Bu Listeye Göz Atın!');
-    const listDescription = safeData?.list?.description || '';
-    
-    const shareText = `${listTitle}\n${listDescription ? listDescription + '\n' : ''}${urlToCopy}`;
-    
-    // Mobil cihazlarda native paylaşım menüsünü kullan
-    if (navigator.share && window.innerWidth < 768) {
-      navigator.share({
-        title: listTitle, // Paylaşım başlığı
-        text: shareText,
-        url: urlToCopy
-      }).catch((error) => {
-        // Paylaşım başarısız olursa veya iptal edilirse (AbortError hariç) panoya kopyala
-        if (error.name !== 'AbortError') {
-          console.error('Share API failed:', error);
-        }
-        navigator.clipboard.writeText(shareText).catch(err => {
-           console.error('Panoya kopyalama (paylaşım sonrası fallback) başarısız:', err);
-           // İsteğe bağlı: Kullanıcıya kopyalamanın da başarısız olduğunu bildir
-           // alert(t('listDetails.share.copyFallbackFailed', 'Paylaşım iptal edildi/başarısız oldu ve bağlantı kopyalanamadı.'));
-        });
-        setTimeout(() => setShowShareModal(false), 2000);
-      });
-    } else {
-      // Masaüstünde veya Web Share API olmayan mobil cihazlarda panoya kopyala
-      navigator.clipboard.writeText(shareText).catch(err => {
-          console.error('Panoya kopyalama (masaüstü) başarısız:', err);
-          alert(t('listDetails.share.copyFailed', 'Bağlantı kopyalanamadı.'));
-      });
-      setTimeout(() => setShowShareModal(false), 2000);
-    }
-    
-    // Instagram tarayıcısı uyarısı (bu kısım değişmedi)
-    if (isInstagramBrowser()) {
-      alert(t('listDetails.share.instagramWarning', "Instagram tarayıcısındasınız. En iyi deneyim için bağlantıyı kopyalayıp Safari veya Chrome gibi bir tarayıcıda açmanız önerilir."));
-    }
   };
 
   // Liste düzenleme fonksiyonu
@@ -659,8 +556,19 @@ export default function ListDetails() {
     year?: string;
     description?: string;
   }) => {
-    const newListItem = {
+    const newListItem: ListItem = {
+      // Zorunlu alanlar (ListItem arayüzü)
       id: crypto.randomUUID(),
+      list_id: listId || '',
+      content_id: newItem.id,
+      content_type: newItem.type,
+      content_title: newItem.title,
+      content_image: newItem.image,
+      created_at: new Date().toISOString(),
+      // Opsiyonel alanlar
+      content_year: newItem.year,
+      content_description: newItem.description,
+      // Uyum için mevcut alanları da koru (kodun geri kalanıyla uyumlu)
       external_id: newItem.id,
       title: newItem.title,
       image_url: newItem.image,
@@ -894,10 +802,53 @@ export default function ListDetails() {
 
   // Liste başlığı ve açıklamasından SEO meta etiketleri oluştur
   const pageTitle = safeData?.list?.title ? `${safeData.list.title} | ConnectList` : 'ConnectList';
-  const pageDescription = safeData?.list?.description || 'Film, dizi, kitap, oyun ve kişi listelerinizi oluşturun, paylaşın ve keşfedin. ConnectList ile sosyalleşin.';
+  
+  // Dil desteği ile açıklama
+  const defaultDescription = i18n.language === 'tr' 
+    ? 'Film, dizi, kitap, oyun ve kişi listelerinizi oluşturun, paylaşın ve keşfedin. ConnectList ile sosyalleşin.'
+    : 'Create, share and discover your own content lists. Easily manage books, movies, series, games and more.';
+  
+  const pageDescription = safeData?.list?.description || defaultDescription;
+  
   // Doğru URL formatını kullan
   const pageUrl = `${window.location.origin}/${username}/list/${slug}`;
-  const pageImage = safeData?.list?.image_url || 'https://ynbwiarxodetyirhmcbp.supabase.co/storage/v1/object/public/images/connectlist-social-slogan.png';
+  
+  // Görsel seçimi - önce liste görseli, sonra ilk öğenin görseli, son olarak varsayılan
+  const getListImage = () => {
+    if (safeData?.list?.image_url) {
+      return safeData.list.image_url;
+    }
+    
+    // Liste öğelerinden ilk görseli al
+    const firstItemWithImage = safeData?.list?.list_items?.find((item: ListItem) => {
+      if (item.content_type === 'movie' || item.content_type === 'series') {
+        return item.poster_path;
+      } else if (item.content_type === 'book') {
+        return item.thumbnail;
+      } else if (item.content_type === 'game') {
+        return item.background_image;
+      } else if (item.content_type === 'person') {
+        return item.profile_path;
+      }
+      return false;
+    });
+    
+    if (firstItemWithImage) {
+      if (firstItemWithImage.content_type === 'movie' || firstItemWithImage.content_type === 'series') {
+        return `https://image.tmdb.org/t/p/w500${firstItemWithImage.poster_path}`;
+      } else if (firstItemWithImage.content_type === 'book') {
+        return firstItemWithImage.thumbnail;
+      } else if (firstItemWithImage.content_type === 'game') {
+        return firstItemWithImage.background_image;
+      } else if (firstItemWithImage.content_type === 'person') {
+        return `https://image.tmdb.org/t/p/w500${firstItemWithImage.profile_path}`;
+      }
+    }
+    
+    return 'https://ynbwiarxodetyirhmcbp.supabase.co/storage/v1/object/public/images/connectlist-social-slogan.png';
+  };
+  
+  const pageImage = getListImage();
   // Görsel URL'sine önbellek kırma parametresi ekle
   const pageImageWithCache = pageImage ? `${pageImage}?t=${new Date().getTime()}` : pageImage;
   
@@ -919,9 +870,18 @@ export default function ListDetails() {
         <meta property="og:type" content="article" />
         <meta property="og:url" content={pageUrl} />
         <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
+        <meta property="og:description" content={pageDescription || t('social.meta.listDescription', { title: safeData?.list?.title || 'Liste', category: safeData?.list?.category || 'genel', itemCount: safeData?.items?.length || 0 })} />
         <meta property="og:image" content={pageImageWithCache} />
-        <meta property="og:site_name" content="ConnectList" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={`${pageTitle} ${t('social.meta.defaultImage')}`} />
+        <meta property="og:site_name" content={t('social.meta.siteName')} />
+        <meta property="og:locale" content={i18n.language === 'tr' ? 'tr_TR' : 'en_US'} />
+        <meta property="og:locale:alternate" content={i18n.language === 'tr' ? 'en_US' : 'tr_TR'} />
+        {safeData?.list?.created_at && <meta property="article:published_time" content={safeData.list.created_at} />}
+        {safeData?.list?.updated_at && <meta property="article:modified_time" content={safeData.list.updated_at} />}
+        <meta property="article:author" content={ownerProfile?.full_name || ownerProfile?.username || 'ConnectList User'} />
+        <meta property="article:section" content={safeData?.list?.category || 'Lists'} />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -929,6 +889,13 @@ export default function ListDetails() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content={pageImageWithCache} />
+        <meta name="twitter:image:alt" content={pageTitle} />
+        <meta name="twitter:site" content="@connectlist" />
+        <meta name="twitter:creator" content="@connectlist" />
+        
+        {/* WhatsApp specific */}
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:secure_url" content={pageImageWithCache} />
         
         {/* Yapısal veri (Schema.org) */}
         <script type="application/ld+json">
@@ -940,7 +907,7 @@ export default function ListDetails() {
             "image": pageImageWithCache,
             "author": {
               "@type": "Person",
-              "name": safeData?.list?.username || "ConnectList Kullanıcısı"
+              "name": ownerProfile?.full_name || ownerProfile?.username || "ConnectList Kullanıcısı"
             },
             "publisher": {
               "@type": "Organization",
@@ -990,24 +957,24 @@ export default function ListDetails() {
                 {/* Kullanıcı Bilgileri */}
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => navigate(`/profile/${safeData.list?.profiles?.username || ''}`)}
+                    onClick={() => navigate(`/profile/${ownerProfile?.username || ''}`)}
                     className="flex-shrink-0"
                   >
                     <img
-                      src={safeData.list?.profiles?.avatar || ''}
-                      alt={safeData.list?.profiles?.full_name || ''}
+                      src={ownerProfile?.avatar || ''}
+                      alt={ownerProfile?.full_name || ''}
                       className="w-10 h-10 rounded-full"
                     />
                   </button>
                   <div>
                     <button
-                      onClick={() => navigate(`/profile/${safeData.list?.profiles?.username || ''}`)}
-                      className="text-[15px] font-bold hover:text-orange-500"
-                    >
-                      {safeData.list?.profiles?.full_name || ''}
-                    </button>
-                    <div className="flex items-center gap-1 text-[13px] text-gray-500">
-                      <span>@{safeData.list?.profiles?.username || ''}</span>
+                      onClick={() => navigate(`/profile/${ownerProfile?.username || ''}`)}
+                    className="text-[15px] font-bold hover:text-orange-500"
+                  >
+                    {ownerProfile?.full_name || ''}
+                  </button>
+                  <div className="flex items-center gap-1 text-[13px] text-gray-500">
+                    <span>@{ownerProfile?.username || ''}</span>
                       <span>•</span>
                       <span className="font-bold">{formatDate(safeData.list?.created_at || '', t, i18n.language)}</span>
                     </div>
@@ -1123,24 +1090,24 @@ export default function ListDetails() {
               </div>
               <div className="flex items-center gap-3 mb-6">
                 <button
-                  onClick={() => navigate(`/profile/${safeData.list?.profiles?.username || ''}`)}
+                  onClick={() => navigate(`/profile/${ownerProfile?.username || ''}`)}
                   className="flex-shrink-0"
                 >
                   <img
-                    src={safeData.list?.profiles?.avatar || ''}
-                    alt={safeData.list?.profiles?.full_name || ''}
+                    src={ownerProfile?.avatar || ''}
+                    alt={ownerProfile?.full_name || ''}
                     className="w-10 h-10 rounded-full"
                   />
                 </button>
                 <div>
                   <button
-                    onClick={() => navigate(`/profile/${safeData.list?.profiles?.username || ''}`)}
-                    className="font-medium hover:text-orange-500"
-                  >
-                    {safeData.list?.profiles?.full_name || ''}
-                  </button>
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <span>@{safeData.list?.profiles?.username || ''}</span>
+                    onClick={() => navigate(`/profile/${ownerProfile?.username || ''}`)}
+                  className="text-[15px] font-bold hover:text-orange-500"
+                >
+                  {ownerProfile?.full_name || ''}
+                </button>
+                <div className="flex items-center gap-1 text-[13px] text-gray-500">
+                  <span>@{ownerProfile?.username || ''}</span>
                     <span>•</span>
                     <span>{formatDate(safeData.list?.created_at || '', t, i18n.language)}</span>
                     <span>•</span>
@@ -1236,19 +1203,19 @@ export default function ListDetails() {
                       }
                       switch (item.type) {
                         case 'movie':
-                          navigate(`/movie/${item.external_id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                          navigate(`/movie/${item.external_id}/${encodeURIComponent((item.title ?? item.content_title).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
                           break;
                         case 'series':
-                          navigate(`/series/${item.external_id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                          navigate(`/series/${item.external_id}/${encodeURIComponent((item.title ?? item.content_title).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
                           break;
                         case 'book':
-                          navigate(`/book/${item.external_id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                          navigate(`/book/${item.external_id}/${encodeURIComponent((item.title ?? item.content_title).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
                           break;
                         case 'game':
-                          navigate(`/game/${item.external_id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                          navigate(`/game/${item.external_id}/${encodeURIComponent((item.title ?? item.content_title).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
                           break;
                         case 'person':
-                          navigate(`/person/${item.external_id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+                          navigate(`/person/${item.external_id}/${encodeURIComponent((item.title ?? item.content_title).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
                           break;
                         case 'video':
                           window.open(`https://www.youtube.com/watch?v=${item.external_id}`, '_blank');
@@ -1273,13 +1240,13 @@ export default function ListDetails() {
                               }
                             } else if (eid.includes('spotify.com')) {
                               // Fallback: open a YouTube Music search by title
-                              target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title)}`;
+                              target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title ?? item.content_title)}`;
                             } else {
                               target = eid;
                             }
                           } else {
                             // Fallback: search by title
-                            target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title)}`;
+                            target = `https://music.youtube.com/search?q=${encodeURIComponent(item.title ?? item.content_title)}`;
                           }
                           window.open(target, '_blank');
                           break;
@@ -1297,12 +1264,12 @@ export default function ListDetails() {
                     >
                       {!item.image_url ? (
                         <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center text-center p-4">
-                          <div className="text-[10px] md:text-sm text-gray-500 line-clamp-3">{item.title}</div>
+                          <div className="text-[10px] md:text-sm text-gray-500 line-clamp-3">{item.title ?? item.content_title}</div>
                         </div>
                       ) : (
                         <img
                           src={item.image_url}
-                          alt={item.title}
+                          alt={item.title ?? item.content_title}
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                       )}
@@ -1319,23 +1286,23 @@ export default function ListDetails() {
                       )}
                     </div>
                     <h3 className="mt-2 font-medium text-[10px] md:text-sm line-clamp-1">
-                      {item.type === 'place' && item.title.includes('|') 
-                        ? item.title.split('|')[0]?.trim() 
-                        : item.title}
+                      {item.type === 'place' && (item.title ?? item.content_title).includes('|') 
+                        ? (item.title ?? item.content_title).split('|')[0]?.trim() 
+                        : (item.title ?? item.content_title)}
                     </h3>
                     {item.type === 'place' ? (
                       <div className="text-[9px] md:text-xs text-gray-500">
                         {/* Ülke/Şehir bilgisi */}
-                        {item.title && item.title.includes('|') ? (
+                        {(item.title ?? item.content_title).includes('|') ? (
                           <div>
                             {(() => {
-                              const locationParts = item.title.split('|')[1]?.trim().split(',');
+                              const locationParts = (item.title ?? item.content_title).split('|')[1]?.trim().split(',');
                               if (locationParts && locationParts.length >= 2) {
                                 const city = locationParts[0]?.trim();
                                 const country = locationParts[locationParts.length - 1]?.trim();
                                 return <span>{country}/{city}</span>;
                               }
-                              return <span>{item.title.split('|')[1]?.trim()}</span>;
+                              return <span>{(item.title ?? item.content_title).split('|')[1]?.trim()}</span>;
                             })()}
                           </div>
                         ) : (
@@ -1671,12 +1638,13 @@ export default function ListDetails() {
       )}
 
       {/* Share Modal */}
-      {showShareModal && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 z-[9999]">
-          <LinkIcon size={16} />
-          <span>{t('listPreview.linkCopied')}</span>
-        </div>
-      )}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        url={window.location.href}
+        title={safeData?.list?.title || ''}
+        description={safeData?.list?.description}
+      />
     </>
   );
 }

@@ -155,6 +155,12 @@
     "register": "Kayıt Ol",
     "requireAuthMessage": "Bu işlemi yapabilmek için giriş yapmalısınız: {{action}}",
     "loginRequired": "Bu işlemi yapabilmek için giriş yapmalısınız: listeye öğe ekleme",
+    "actions": {
+      "likingList": "listeyi beğenmek",
+      "addingToList": "listeye öğe ekleme",
+      "followingUser": "kullanıcıyı takip etmek",
+      "commenting": "yorum yapmak"
+    },
     "forgotPassword": "Şifremi Unuttum",
     "email": "E-posta",
     "password": "Şifre",
@@ -802,6 +808,31 @@
       "deleteConfirm": "Bu yorumu silmek istediğinize emin misiniz?",
       "deleteButton": "Sil",
       "noComments": "Henüz yorum yok"
+    }
+  },
+  "social": {
+    "share": {
+      "title": "Paylaş",
+      "description": "Bu içeriği sosyal medyada paylaş",
+      "whatsapp": "WhatsApp'ta Paylaş",
+      "facebook": "Facebook'ta Paylaş",
+      "twitter": "Twitter'da Paylaş",
+      "telegram": "Telegram'da Paylaş",
+      "copyLink": "Bağlantıyı Kopyala",
+      "linkCopied": "Bağlantı kopyalandı!",
+      "shareText": "Bu harika içeriği Connectlist'te keşfettim!"
+    },
+    "meta": {
+      "siteName": "Connectlist",
+      "siteDescription": "İçerik listelerinizi oluşturun, paylaşın ve keşfedin",
+      "defaultImage": "Connectlist - İçerik Listeleme Platformu",
+      "movieDescription": "{{title}} filmi hakkında detaylı bilgi ve kullanıcı listeleri",
+      "seriesDescription": "{{title}} dizisi hakkında detaylı bilgi ve kullanıcı listeleri",
+      "bookDescription": "{{title}} kitabı hakkında detaylı bilgi ve kullanıcı listeleri",
+      "gameDescription": "{{title}} oyunu hakkında detaylı bilgi ve kullanıcı listeleri",
+      "personDescription": "{{name}} hakkında detaylı bilgi ve kullanıcı listeleri",
+      "profileDescription": "{{username}} kullanıcısının Connectlist profili ve listeleri",
+      "listDescription": "{{title}} listesi - {{itemCount}} öğe içeren {{category}} listesi"
     }
   }
 }

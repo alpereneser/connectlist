@@ -47,7 +47,7 @@ const Seo: React.FC<SeoProps> = ({
   section,
   tags
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
 
   const defaultTitle = i18n.language === 'tr'
@@ -127,10 +127,10 @@ const Seo: React.FC<SeoProps> = ({
       <meta property="og:image" content={image} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={finalTitle} />
+      <meta property="og:image:alt" content={`${finalTitle} ${t('social.meta.defaultImage')}`} />
       <meta property="og:url" content={finalUrl} />
       <meta property="og:type" content={type} />
-      <meta property="og:site_name" content="Connectlist" />
+      <meta property="og:site_name" content={t('social.meta.siteName')} />
       <meta property="og:locale" content={i18n.language === 'tr' ? 'tr_TR' : 'en_US'} />
       <meta property="og:locale:alternate" content={i18n.language === 'tr' ? 'en_US' : 'tr_TR'} />
       

@@ -121,7 +121,7 @@ export function PlaceDetails() {
       } else {
         // Oturum açık değilse requireAuth ile oturum açma popup'ını göster
         console.log('Oturum açık değil, popup gösteriliyor');
-        const isLoggedIn = await requireAuth(t('details.addToListAuthAction'));
+        const isLoggedIn = await requireAuth('addingToList');
         if (isLoggedIn) {
           setShowAddToListModal(true);
         }
