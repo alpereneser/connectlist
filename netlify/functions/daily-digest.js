@@ -1,4 +1,5 @@
-const nodemailer = require('nodemailer');
+// nodemailer kaldırıldı; Mailtrap Send API kullanılıyor
+const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async () => {
@@ -30,16 +31,11 @@ exports.handler = async () => {
     }));
 
     // Setup transporter once
-    const transporter = nodemailer.createTransport({
-      host: process.env.MAILTRAP_HOST || 'live.smtp.mailtrap.io',
-      port: parseInt(process.env.MAILTRAP_PORT || '587', 10),
-      secure: (process.env.MAILTRAP_PORT || '587') === '465',
-      auth: {
-        user: process.env.MAILTRAP_USER || 'api',
-        pass: process.env.MAILTRAP_TOKEN || '567581ce4dc930849982919d4413687f',
-      },
-    });
-
+    const token = process.env.MAILTRAP_TOKEN;
+    if (!token) {
+      console.warn('MAILTRAP_TOKEN missing; skip daily digest');
+      return { statusCode: 200, body: 'skipped' };
+    }
     const from = process.env.MAIL_FROM || 'ConnectList <noreply@connectlist.me>';
 
     for (const u of users || []) {
@@ -61,7 +57,28 @@ exports.handler = async () => {
         </div>`;
 
       if (!u.email) continue;
-      await transporter.sendMail({ from, to: u.email, subject, html });
+      // Parse from into name/email
+      let fromName = 'ConnectList';
+      let fromEmail = from;
+      const m = /^(.*)<([^>]+)>$/.exec(from);
+      if (m) {
+        fromName = m[1].trim().replace(/\"|\'/g, '') || 'ConnectList';
+        fromEmail = m[2].trim();
+      }
+      const payload = {
+        from: { email: fromEmail, name: fromName },
+        to: [{ email: u.email }],
+        subject,
+        html,
+        category: 'ConnectList Daily Digest'
+      };
+      await axios.post('https://send.api.mailtrap.io/api/send', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000
+      });
     }
 
     return { statusCode: 200, body: 'ok' };

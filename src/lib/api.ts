@@ -419,8 +419,17 @@ export async function searchTMDB(query: string, type: string = 'multi') {
   
   try {
     const data = await response.json();
+    const results = Array.isArray(data.results) ? data.results : [];
+
+    // Tekil endpointlerde (movie/tv/person) media_type alanını enjekte et
+    const normalizedResults = results.map((item: any) => {
+      if (endpoint === 'multi') return item;
+      const media_type = endpoint === 'movie' ? 'movie' : endpoint === 'tv' ? 'tv' : 'person';
+      return { ...item, media_type };
+    });
+
     // Poster veya profil resmi olmayan içerikleri filtrele
-    const filteredResults = (data.results || []).filter((item: {
+    const filteredResults = normalizedResults.filter((item: {
       media_type: string;
       poster_path: string | null;
       profile_path: string | null;
@@ -1086,6 +1095,15 @@ export async function likeList(listId: string) {
     });
 
   if (error) throw error;
+
+  // Beğeni başarılıysa e-posta tetikleyicisini çalıştır
+  import('../lib/email-triggers').then(({ triggerListLikedNotification }) => {
+    try {
+      triggerListLikedNotification(listId, session.user.id);
+    } catch (e) {
+      console.warn('triggerListLikedNotification çağrılırken hata:', e);
+    }
+  });
 }
 
 // Ülkeler listesi
@@ -1740,6 +1758,15 @@ export async function sendMessage(conversationId: string, text: string) {
     if (updateError) {
       console.error('Konuşma güncellenirken hata:', updateError);
       throw updateError;
+    }
+
+    // Mesaj başarıyla eklendi ve konuşma güncellendi; e-posta bildirimi tetikle
+    try {
+      const { triggerMessageNotification } = await import('./email-triggers');
+      await triggerMessageNotification(insertedMessage.id);
+    } catch (err) {
+      console.error('Mesaj e-posta bildirimi tetiklenemedi:', err);
+      // Bildirim hatası kullanıcı akışını engellemesin
     }
 
     return insertedMessage;

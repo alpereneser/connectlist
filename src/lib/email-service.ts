@@ -80,7 +80,8 @@ export async function sendCommentNotification(
   const html = `
   <div style="font-family: Inter, Arial, sans-serif; max-width:600px; margin:0 auto; padding:24px; color:#0f172a">
     <h2 style="margin:0 0 8px; color:#f97316">${greet} ${recipientName},</h2>
-    <p style="color:#334155">${commentContent}</p>
+    <p style="color:#334155"><strong>${commenterName}</strong> (@${commenterUsername})</p>
+    <p style="color:#334155; margin-top:8px">${commentContent}</p>
     <div style="text-align:center;margin-top:16px">
       <a href="${url}" style="background:#f97316;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">${cta}</a>
     </div>
@@ -106,7 +107,8 @@ export async function sendMessageNotification(
   const html = `
   <div style="font-family: Inter, Arial, sans-serif; max-width:600px; margin:0 auto; padding:24px; color:#0f172a">
     <h2 style="margin:0 0 8px; color:#f97316">${greet} ${recipientName},</h2>
-    <p style="color:#334155">${messageContent}</p>
+    <p style="color:#334155"><strong>${senderName}</strong> (@${senderUsername})</p>
+    <p style="color:#334155; margin-top:8px">${messageContent}</p>
     <div style="text-align:center;margin-top:16px">
       <a href="${url}" style="background:#f97316;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">${cta}</a>
     </div>
@@ -165,5 +167,28 @@ export async function sendDailyDigestEmail(
   lang: Lang = 'tr'
 ) {
   const { subject, html } = (await import('./email-templates')).dailyDigestTemplate({ lang, recipientName, lists });
+  return sendByFunction(recipientEmail, subject, html);
+}
+
+// Liste beğenildi bildirimi
+export async function sendListLikedNotification(
+  recipientEmail: string,
+  recipientName: string,
+  likerName: string,
+  likerUsername: string,
+  listTitle: string,
+  listSlug: string,
+  ownerUsername: string,
+  lang: Lang = 'tr'
+) {
+  const { subject, html } = (await import('./email-templates')).listLikedTemplate({
+    lang,
+    recipientName,
+    likerName,
+    likerUsername,
+    listTitle,
+    listSlug,
+    ownerUsername,
+  });
   return sendByFunction(recipientEmail, subject, html);
 }

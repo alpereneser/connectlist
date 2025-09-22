@@ -5,8 +5,8 @@
 
 [dev]
   command = "vite"
-  port = 3000
-  targetPort = 5173
+  port = 3999
+  targetPort = 3002
   functionsPort = 8888
 
 [functions."daily-digest"]

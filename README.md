@@ -131,7 +131,40 @@
 
 5. **Open your browser**
    
-   Navigate to `http://localhost:8888` (Netlify Dev default port)
+   Navigate to `http://localhost:3999/` (Netlify Dev proxied UI; Functions are available under `/.netlify/functions/*`)
+
+#### Local Email Functions & Mailtrap Smoke Test
+
+To verify local email functions:
+
+1. Ensure your `.env` contains:
+   ```env
+   MAILTRAP_TOKEN=your_mailtrap_api_token
+   ```
+2. Test function endpoints via Netlify Dev proxy (running on `http://localhost:3999/`):
+   - Email test page (GET):
+     ```powershell
+     Invoke-WebRequest -UseBasicParsing -Method Get -Uri http://localhost:3999/.netlify/functions/email-test
+     ```
+   - Mailtrap send (POST JSON):
+     ```powershell
+     $body = @{ to = "test@example.com"; subject = "ConnectList Mailtrap Smoke"; text = "Smoke test from Netlify function" } | ConvertTo-Json
+     Invoke-RestMethod -Method Post -Uri http://localhost:3999/.netlify/functions/mailtrap-send -ContentType 'application/json' -Body $body
+     ```
+   - Successful response example:
+     ```
+     success id
+     ------- --
+        True <message-id-from-mailtrap>
+     ```
+
+Notes:
+- Netlify Dev ports configured in `netlify.toml`:
+  - `[dev] port = 3999` (proxy UI)
+  - `[dev] targetPort = 3002` (Vite)
+  - `[dev] functionsPort = 8888` (Functions)
+- The list like action triggers email via `triggerListLikedNotification` after a successful like, respecting user email preferences.
+
 
 ### Available Scripts
 
@@ -284,6 +317,25 @@ npm run build
 - **Function Dependencies**: Isolated package management for serverless functions
 - **Environment Configuration**: Enhanced environment variable management
 - **Build Optimization**: Improved build process with chunk size optimization
+
+#### ⚙️ Development Environment Optimization (January 2025)
+- **Vite Configuration Updates**: Enhanced development server configuration for better Netlify Dev integration
+  - Updated server port configuration to 3002 with `strictPort: true` for consistent proxy behavior
+  - Improved CORS and host settings for seamless local development
+  - Optimized build process with better chunk size management
+- **Netlify Dev Proxy Setup**: Streamlined proxy configuration between Netlify Dev and Vite
+  - Netlify Dev runs on port 3999 (main UI)
+  - Vite development server on port 3002 (framework)
+  - Functions available on port 8888
+  - Automatic proxy routing for seamless development experience
+- **Service Worker Optimization**: Enhanced service worker management for development
+  - Improved cache clearing for localhost development
+  - Better separation between development and production SW behavior
+  - Resolved MIME type conflicts in development environment
+- **Production Deployment**: Successfully deployed to https://connectlist.me
+  - Build time: 15.91s with optimized asset bundling
+  - 64 files and 7 functions deployed to CDN
+  - Automated sitemap generation with 224 dynamic routes
 
 ## 🔧 Configuration
 

@@ -813,5 +813,12 @@
       "profileDescription": "{{username}}'s Connectlist profile and lists",
       "listDescription": "{{title}} list - {{category}} list containing {{itemCount}} items"
     }
+  },
+  "avatar": {
+    "title": "Edit Profile Photo",
+    "subtitle": "Crop and resize your photo as you like",
+    "zoom": "Zoom",
+    "rotate": "Rotate",
+    "confirm": "Confirm"
   }
 }

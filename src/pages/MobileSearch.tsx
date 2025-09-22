@@ -597,17 +597,20 @@ export function MobileSearch() {
         let listItems: SearchResult[] = [];
 
         // Execute searches with retry logic
-        if (activeCategory === 'all' || activeCategory === 'movies' || activeCategory === 'series' || activeCategory === 'people') {
+        if (activeCategory === 'all' || activeCategory === 'movies' || activeCategory === 'series') {
           try {
             const tmdbResults = await searchWithRetry(() => searchTMDB(debouncedSearch), []);
-          results = results.concat(tmdbResults.map((item: TMDBItem) => ({
-            id: item.id,
-            title: item.title || item.name || '',
-              image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 
-                    (item.media_type === 'person' && (item as any).profile_path) ? `https://image.tmdb.org/t/p/w500${(item as any).profile_path}` : '',
-            type: item.media_type === 'movie' ? 'movie' : (item.media_type === 'tv' ? 'series' : 'person'),
-            year: item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4)
-          })));
+          results = results.concat(
+            tmdbResults
+              .filter((item: TMDBItem) => item.media_type === 'movie' || item.media_type === 'tv')
+              .map((item: TMDBItem) => ({
+              id: item.id,
+              title: item.title || item.name || '',
+                image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+              type: item.media_type === 'movie' ? 'movie' : 'series',
+              year: item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4)
+            }))
+          );
           } catch (error) {
             console.error('TMDB search error:', error);
         }
@@ -739,17 +742,20 @@ export function MobileSearch() {
         let listItems: SearchResult[] = [];
 
         // Execute searches with retry logic - with pagination if APIs support it
-        if (activeCategory === 'all' || activeCategory === 'movies' || activeCategory === 'series' || activeCategory === 'people') {
+        if (activeCategory === 'all' || activeCategory === 'movies' || activeCategory === 'series') {
           try {
             const tmdbResults = await searchWithRetry(() => searchTMDB(debouncedSearch), []);
-            results = results.concat(tmdbResults.map((item: TMDBItem) => ({
-              id: item.id,
-              title: item.title || item.name || '',
-              image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : 
-                    (item.media_type === 'person' && (item as any).profile_path) ? `https://image.tmdb.org/t/p/w500${(item as any).profile_path}` : '',
-              type: item.media_type === 'movie' ? 'movie' : (item.media_type === 'tv' ? 'series' : 'person'),
-              year: item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4)
-            })));
+            results = results.concat(
+              tmdbResults
+                .filter((item: TMDBItem) => item.media_type === 'movie' || item.media_type === 'tv')
+                .map((item: TMDBItem) => ({
+                  id: item.id,
+                  title: item.title || item.name || '',
+                  image: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
+                  type: item.media_type === 'movie' ? 'movie' : 'series',
+                  year: item.release_date?.substring(0, 4) || item.first_air_date?.substring(0, 4)
+                }))
+            );
           } catch (error) {
             console.error('TMDB search error:', error);
           }
@@ -1042,9 +1048,10 @@ export function MobileSearch() {
       case 'list':
         navigate(`/list/${item.id}`);
         break;
-      case 'person':
-        navigate(`/person/${item.id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
-        break;
+      // case 'person':
+      //   // People disabled for now
+      //   // navigate(`/person/${item.id}/${encodeURIComponent(item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`);
+      //   break;
     }
   };
 
@@ -1061,8 +1068,7 @@ export function MobileSearch() {
       'books': ['book'],
       'games': ['game'],
       'users': ['user'],
-      'lists': ['list'],
-      'people': ['person']
+      'lists': ['list']
     };
     
     const allowedTypes = categoryMap[activeCategory] || [activeCategory];

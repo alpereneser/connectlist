@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Mail, Bell, Shield, Globe, UserMinus, HelpCircle, LogOut, Camera, Send, Moon, Sun } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Header } from '../components/Header';
+import { AvatarCropper } from '../components/AvatarEditor';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { useHapticFeedback } from '../hooks/useHapticFeedback';
 
@@ -57,7 +58,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const [announceText, setAnnounceText] = useState('');
   // Active section state for settings navigation (fixes ReferenceError)
-  const [activeSection, setActiveSection] = useState<'language' | 'support' | 'account' | 'notifications' | 'privacy' | 'security' | 'email'>('language');
+  const [activeSection, setActiveSection] = useState<'language' | 'support' | 'account' | 'notifications' | 'privacy' | 'security' | 'email'>('account');
   // Local state for delete account modal and password input
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -105,6 +106,8 @@ const Settings = () => {
     location: ''
   });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [showAvatarCropper, setShowAvatarCropper] = useState(false);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>('');
   const [success, setSuccess] = useState<string | null>('');
 
@@ -262,19 +265,29 @@ const Settings = () => {
       return;
     }
 
+    // Dosyayı seç ve kırpma modalını aç
+    setSelectedAvatarFile(file);
+    setShowAvatarCropper(true);
+    setError(null);
+    triggerHaptic('light');
+  };
+
+  const handleAvatarSave = async (croppedImageBlob: Blob) => {
     try {
       setIsUploadingAvatar(true);
+      setShowAvatarCropper(false);
       setError(null);
       triggerHaptic('light');
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Oturum bulunamadı');
 
+      const fileExt = selectedAvatarFile?.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, croppedImageBlob);
 
       if (uploadError) throw uploadError;
 
@@ -302,7 +315,13 @@ const Settings = () => {
       triggerHaptic('heavy');
     } finally {
       setIsUploadingAvatar(false);
+      setSelectedAvatarFile(null);
     }
+  };
+
+  const handleAvatarCancel = () => {
+    setShowAvatarCropper(false);
+    setSelectedAvatarFile(null);
   };
 
   const handleProfileUpdate = async () => {
@@ -494,29 +513,47 @@ const Settings = () => {
     triggerHaptic('light');
 
     try {
-      // Supabase Edge Function kullanarak e-posta gönderme
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Oturum bulunamadı');
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-support-email`, {
+
+      // Netlify Functions + Mailtrap üzerinden ilet
+      const recipients = [
+        'support@connectlist.me',
+        'alperen@connectlist.me',
+        'tuna@connectlist.me'
+      ];
+
+      const subject = `[Support] ${data.subject}`;
+      const html = `
+        <div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #0f172a;">
+          <h2 style=\"margin:0 0 12px;\">Yeni Destek Talebi</h2>
+          <p style=\"margin:4px 0;\"><strong>İsim:</strong> ${profile?.full_name || 'Kullanıcı'}</p>
+          <p style=\"margin:4px 0;\"><strong>E-posta:</strong> ${session.user.email}</p>
+          <p style=\"margin:4px 0 12px;\"><strong>Kullanıcı adı:</strong> ${profile?.username || '-'}</p>
+          <hr style=\"border:none; border-top:1px solid #e2e8f0; margin:12px 0;\"/>
+          <p style=\"white-space: pre-wrap; margin:12px 0;\">${data.message}</p>
+        </div>
+      `;
+      const text = `Yeni Destek Talebi\nİsim: ${profile?.full_name || 'Kullanıcı'}\nE-posta: ${session.user.email}\nKullanıcı adı: ${profile?.username || '-'}\n----\n${data.message}`;
+
+      const response = await fetch('/.netlify/functions/mailtrap-send', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          email: session.user.email,
-          name: profile?.full_name || 'Kullanıcı',
-          subject: data.subject,
-          message: data.message
+          to: recipients.join(','),
+          subject,
+          html,
+          text
         })
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Destek talebi gönderilemedi');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error((errorData as any).error || 'Destek talebi gönderilemedi');
       }
-      
+
       setSuccess(t('settings.support.success'));
       announceToScreenReader('Destek talebi gönderildi');
       triggerHaptic('medium');
@@ -601,7 +638,7 @@ const Settings = () => {
       </div>
       
       <div className="min-h-screen bg-gray-50" style={{
-        paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height) - 20px)',
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height) - 35px)',
         paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))'
       }}>
         <div className="max-w-5xl mx-auto px-2 md:px-6 lg:px-8 pt-0 pb-2 md:py-8">
@@ -719,12 +756,12 @@ const Settings = () => {
                         <img
                           src={profile?.avatar ? `${profile.avatar}${profile.avatar.includes('?') ? '&' : '?'}t=${Date.now()}` : 
                               (profile?.avatar_url ? supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl : null) || 
-                              `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}`
+                              `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}&backgroundColor=f97316&textColor=ffffff`
                           }
                           alt={t('settings.profilePhoto')}
-                          className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover border-4 border-white shadow-lg"
+                          className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover object-center border-4 border-white shadow-lg bg-gray-100"
                           onError={(e) => {
-                            e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}`;
+                            e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.full_name || '?'}&backgroundColor=f97316&textColor=ffffff`;
                           }}
                         />
                         <label
@@ -1422,6 +1459,25 @@ const Settings = () => {
                 {t('common.cancel')}
               </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avatar Kırpma Modalı */}
+      {showAvatarCropper && selectedAvatarFile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-lg md:max-w-xl max-h-[92vh] overflow-auto">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">{t('avatar.title', 'Profil Fotoğrafını Düzenle')}</h3>
+              <p className="text-sm text-gray-500 mt-1">{t('avatar.subtitle', 'Fotoğrafınızı istediğiniz gibi kırpın ve boyutlandırın')}</p>
+            </div>
+            <div className="p-4">
+              <AvatarCropper
+                 image={selectedAvatarFile}
+                 onSave={handleAvatarSave}
+                 onCancel={handleAvatarCancel}
+               />
             </div>
           </div>
         </div>

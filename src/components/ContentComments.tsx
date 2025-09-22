@@ -206,6 +206,10 @@ const ContentComments: React.FC<ContentCommentsProps> = ({
         setNewComment('');
         setReplyingTo(null);
         loadComments();
+        // E-posta bildirimi tetikle (UI akışını bloklamadan)
+        import('../lib/email-triggers')
+          .then(({ triggerListCommentNotification }) => triggerListCommentNotification(createdComment.id))
+          .catch((err) => console.error('List yorum e-posta bildirimi tetiklenemedi:', err));
       }
     } catch (error) {
       console.error('Yorum gönderilemedi:', error);

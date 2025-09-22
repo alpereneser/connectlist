@@ -3,13 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { Header } from '../components/Header';
-import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks, searchPlaces } from '../lib/api';
-import { getDefaultPlaceImage } from '../lib/api';
+import { searchUsers, searchLists, searchTMDB, searchGames, searchBooks } from '../lib/api';
 import { Movie, Show, Person, Game, Book as BookType, User } from '../types/search';
 import { List } from '../types/supabase';
 import { AuthPopup } from '../components/AuthPopup';
 import { TMDB_LANGUAGE, TMDB_ACCESS_TOKEN, RAWG_API_KEY, GOOGLE_BOOKS_API_KEY } from '../lib/api'; 
-import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, MapPin, Music, Mic, MicOff } from 'lucide-react';
+import { Home, Film, Tv, Book, Users2, Gamepad2, ListChecks, Music, Mic, MicOff } from 'lucide-react';
 import { useVoiceSearch } from '../hooks/useVoiceSearch';
 
 // TMDB sonuçları için genişletilmiş tipler
@@ -55,20 +54,8 @@ export function Search() {
     lists: List[];
     movies: Movie[];
     shows: Show[];
-    people: Person[];
     games: Game[];
     books: BookType[];
-    places: Array<{
-      id: string;
-      name: string;
-      address: string;
-      city: string;
-      country: string;
-      categories: string[];
-      image: string;
-      latitude?: number;
-      longitude?: number;
-    }>;
     musics: Array<{
       id: string;
       title: string;
@@ -82,12 +69,11 @@ export function Search() {
     lists: [],
     movies: [],
     shows: [],
-    people: [],
     games: [],
     books: [],
-    places: [],
     musics: [],
   });
+
   const [discoverContent, setDiscoverContent] = useState<Array<{
     id: string | number;
     title: string;
@@ -147,7 +133,6 @@ export function Search() {
       let tmdbResults: Array<TMDBMovie | TMDBShow | TMDBPerson> = [];
       let gamesResults: Game[] = [];
       let booksResults: BookType[] = [];
-      let placesResults: any[] = [];
       let musicsResults: Array<{
         id: string;
         title: string;
@@ -187,15 +172,6 @@ export function Search() {
         console.error('Error searching books:', error);
       }
       
-      // Mobile cihazlarda places araması yapma
-      if (window.innerWidth >= 768) {
-        try {
-          placesResults = await searchPlaces(query, i18n.language);
-        } catch (error) {
-          console.error('Error searching places:', error);
-        }
-      }
-      
       try {
         // Simulated music search - replace with actual API call
         musicsResults = [
@@ -227,10 +203,8 @@ export function Search() {
         lists: listsResults,
         movies: tmdbResults.filter((item) => item.media_type === 'movie') as TMDBMovie[],
         shows: tmdbResults.filter((item) => item.media_type === 'tv') as TMDBShow[],
-        people: window.innerWidth >= 768 ? tmdbResults.filter((item) => item.media_type === 'person') as TMDBPerson[] : [],
         games: gamesResults,
         books: booksResults,
-        places: placesResults,
         musics: musicsResults,
       });
     } catch (error) {
@@ -534,29 +508,7 @@ export function Search() {
     );
   };
 
-  const renderPeople = (limit?: number) => {
-    const peopleToShow = limit ? results.people.slice(0, limit) : results.people;
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {peopleToShow.map((person) => (
-          <div key={person.id} className="cursor-pointer" onClick={() => navigate(`/person/${person.id}`)}>
-            <div className="aspect-[2/3] relative group">
-              <img
-                src={`https://image.tmdb.org/t/p/w500${person.profile_path}`}
-                alt={person.name}
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg" />
-            </div>
-            <div className="mt-2">
-              <h3 className="font-medium text-sm truncate">{person.name}</h3>
-              <p className="text-xs text-gray-500">{person.known_for_department}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+
 
   const renderGames = (limit?: number) => {
     const gamesToShow = limit ? results.games.slice(0, limit) : results.games;
@@ -606,33 +558,7 @@ export function Search() {
     );
   };
 
-  const renderPlaces = (limit?: number) => {
-    const placesToShow = limit ? results.places.slice(0, limit) : results.places;
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {placesToShow.map((place) => (
-          <div 
-            key={place.id} 
-            className="cursor-pointer" 
-            onClick={() => navigate(`/place/${place.id}/${encodeURIComponent(place.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}`)}
-          >
-            <div className="aspect-[2/3] relative group">
-              <img
-                src={place.image || getDefaultPlaceImage(place.name)}
-                alt={place.name}
-                className="w-full h-full object-cover rounded-lg"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg" />
-            </div>
-            <div className="mt-2">
-              <h3 className="font-medium text-sm truncate">{place.name}</h3>
-              <p className="text-xs text-gray-500">{place.city || place.address}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
+
 
   const renderMusics = (limit?: number) => {
     const musicsToShow = limit ? results.musics.slice(0, limit) : results.musics;
@@ -675,14 +601,6 @@ export function Search() {
 
   const renderResults = () => {
     switch (activeTab) {
-      case 'places':
-        return results.places.length ? (
-          <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
-            <div className="p-4 md:p-6">
-              {renderPlaces()}
-            </div>
-          </div>
-        ) : null;
       case 'lists':
         return results.lists.length ? (
           <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
@@ -794,33 +712,7 @@ export function Search() {
             </div>
           </div>
         ) : null;
-      case 'people':
-        return results.people.length ? (
-          <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
-            <div className="p-4 md:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                {results.people.map((person) => (
-                  <div
-                    key={person.id}
-                    onClick={() => navigate(`/person/${person.id}`)}
-                    className="aspect-[2/3] relative group cursor-pointer"
-                  >
-                    <img
-                      src={`https://image.tmdb.org/t/p/w500${person.profile_path}`}
-                      alt={person.name}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg" />
-                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      <h3 className="font-medium text-xs line-clamp-1">{person.name}</h3>
-                      <p className="text-xs">{person.known_for_department}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : null;
+
       case 'games':
         return results.games.length ? (
           <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
@@ -1012,26 +904,6 @@ export function Search() {
               </div>
             )}
 
-            {/* People */}
-            {results.people.length > 0 && (
-              <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
-                <div className="p-3 bg-orange-100 border-b border-orange-200 flex items-center">
-                  <Users2 size={16} className="text-orange-500 mr-2" />
-                  <h2 className="text-sm font-medium text-orange-800">{t('common.categories.people')}</h2>
-                </div>
-                <div className="p-4 md:p-6">
-                  {renderPeople(8)}
-                  {results.people.length > 8 && (
-                    <button
-                      onClick={() => setActiveTab('people')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
-                    >
-                      {t('common.seeAll')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Games */}
             {results.games.length > 0 && (
@@ -1075,26 +947,7 @@ export function Search() {
               </div>
             )}
 
-            {/* Places */}
-            {results.places.length > 0 && (
-              <div className="bg-[rgb(245,245,245)] rounded-lg shadow-sm overflow-hidden">
-                <div className="p-3 bg-orange-100 border-b border-orange-200 flex items-center">
-                  <MapPin size={16} className="text-orange-500 mr-2" />
-                  <h2 className="text-sm font-medium text-orange-800">{t('common.categories.places')}</h2>
-                </div>
-                <div className="p-4 md:p-6">
-                  {renderPlaces(8)}
-                  {results.places.length > 8 && (
-                    <button
-                      onClick={() => setActiveTab('places')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
-                    >
-                      {t('common.seeAll')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+
 
             {/* Music */}
             {results.musics.length > 0 && (

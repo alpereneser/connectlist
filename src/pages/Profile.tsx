@@ -1135,7 +1135,7 @@ export function Profile() {
                     items={list.items}
                     onListClick={() => setLastViewedListId(list.id)}
                     hideAuthor={true}
-                    hideActions={true}
+                    hideActions={false}
                   />
                 </div>
               ))

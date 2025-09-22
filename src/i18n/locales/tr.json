@@ -834,5 +834,12 @@
       "profileDescription": "{{username}} kullanıcısının Connectlist profili ve listeleri",
       "listDescription": "{{title}} listesi - {{itemCount}} öğe içeren {{category}} listesi"
     }
+  },
+  "avatar": {
+    "title": "Profil Fotoğrafını Düzenle",
+    "subtitle": "Fotoğrafınızı istediğiniz gibi kırpın ve boyutlandırın",
+    "zoom": "Yakınlaştır",
+    "rotate": "Döndür",
+    "confirm": "Onayla"
   }
 }

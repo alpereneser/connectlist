@@ -622,7 +622,7 @@ export function Notifications() {
       {/* Page Header below global header (Instagram-like) */}
       <div className="bg-white border-b sticky z-40" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}>
         <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <h1 className="text-base font-semibold text-gray-900">
               {t('common.notifications.title', 'Notifications')}
             </h1>

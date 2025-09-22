@@ -2,10 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser'; // supabaseBrowser'ı supabase olarak kullan
-import { markNotificationAsRead, deleteNotification, deleteAllNotifications } from '../lib/api';
+import { deleteNotification, deleteAllNotifications } from '../lib/api';
 import { Check, Trash2, X, Bell, Heart, MessageCircle, UserPlus, List, AlertCircle } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { turkishToEnglish } from '../lib/utils';
+// removed unused import: turkishToEnglish
 
 interface Notification {
   id: string;
@@ -204,32 +204,8 @@ export function NotificationDropdown({
     }
   }, [triggerHaptic, announceToScreenReader, onMarkAllRead]);
 
-  // Delete all notifications
-  const handleDeleteAllNotifications = useCallback(async () => {
-    try {
-      setIsDeletingAll(true);
-      triggerHaptic('heavy');
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      setNotifications([]);
-      announceToScreenReader('Tüm bildirimler silindi');
-      onNotificationsRead();
-    } catch (error) {
-      console.error('Error deleting all notifications:', error);
-      announceToScreenReader('Bildirimler silinirken hata oluştu');
-    } finally {
-      setIsDeletingAll(false);
-    }
-  }, [triggerHaptic, announceToScreenReader, onNotificationsRead]);
+  // Confirm flow is used for delete all; direct handler removed to avoid unused warnings
 
   // Handle notification click
   const handleNotificationClick = useCallback((notification: Notification) => {
@@ -569,6 +545,9 @@ export function NotificationDropdown({
                       src={getNotificationAvatar(notification)}
                       alt={notification.data.full_name || notification.data.username || 'User'}
                       className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${notification.data.full_name || notification.data.username || '?'}`;
+                      }}
                     />
                   </div>
                   <div className="flex-shrink-0 mt-1">
@@ -588,6 +567,14 @@ export function NotificationDropdown({
                         <span className="text-xs text-gray-400">
                           {formatTime(notification.created_at)}
                       </span>
+                        <button
+                          onClick={(e) => handleDeleteNotification(notification.id, e)}
+                          className="p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                          aria-label={i18n.language === 'tr' ? 'Bildirimi sil' : 'Delete notification'}
+                          title={i18n.language === 'tr' ? 'Bildirimi sil' : 'Delete notification'}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                        </button>
                         {!notification.is_read && (
                           <div 
                             className="w-2 h-2 bg-orange-500 rounded-full" 

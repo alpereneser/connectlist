@@ -298,6 +298,11 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
       // Yeni yorumun ID'sini kaydet
       setLastCommentId(data.id);
       
+      // E-posta bildirimi tetikle (UI akışını bloklamadan)
+      import('../lib/email-triggers')
+        .then(({ triggerListCommentNotification }) => triggerListCommentNotification(data.id))
+        .catch((err) => console.error('List yorum e-posta bildirimi tetiklenemedi:', err));
+      
       // Yorum sayısını güncelle
       if (onCommentAdded) {
         onCommentAdded();
@@ -406,22 +411,34 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
   const displayCommentCount = commentCount !== undefined ? commentCount : totalCommentsCount;
 
   return (
-    <div className={`fixed inset-0 z-50 flex ${isMobile ? 'items-end' : 'items-center justify-center'} bg-black bg-opacity-50 transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-50 flex ${isMobile ? 'items-stretch' : 'items-center justify-center'} ${isMobile ? 'bg-white' : 'bg-black bg-opacity-50'} transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <div
         ref={modalRef}
-        className={`bg-white ${isMobile ? 'w-full h-[90vh] rounded-t-2xl' : 'rounded-lg w-full max-w-lg max-h-[80vh]'} flex flex-col transform transition-all duration-300 ease-in-out ${isOpen ? (isMobile ? 'translate-y-0' : 'scale-100 opacity-100') : (isMobile ? 'translate-y-full' : 'scale-95 opacity-0')}`}
+        className={`${isMobile ? 'w-full h-full mobile-viewport-stable' : 'bg-white rounded-lg w-full max-w-lg max-h-[80vh]'} flex flex-col transform transition-all duration-300 ease-in-out ${isOpen ? (isMobile ? 'translate-y-0' : 'scale-100 opacity-100') : (isMobile ? 'translate-y-full' : 'scale-95 opacity-0')}`}
+        style={isMobile ? { backgroundColor: 'white' } : {}}
       >
         {/* Modal Header */}
-        <div className={`flex items-center justify-between ${isMobile ? 'p-4' : 'p-5'} border-b border-gray-200`}>
-          <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
-            {t('listPreview.commentSection.title')} ({displayCommentCount})
+        <div className={`flex items-center justify-between ${isMobile ? 'p-4 safe-top' : 'p-5'} border-b border-gray-200 ${isMobile ? 'sticky top-0 bg-white z-10' : ''}`}>
+          {isMobile && (
+            <button
+              onClick={onClose}
+              className="text-gray-600 hover:text-gray-800 p-1"
+            >
+              <X size={24} />
+            </button>
+          )}
+          <h3 className={`${isMobile ? 'text-lg font-semibold flex-1 text-center' : 'text-xl font-semibold'} text-gray-800`}>
+            {isMobile ? t('listPreview.commentSection.title') : `${t('listPreview.commentSection.title')} (${displayCommentCount})`}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X size={20} />
-          </button>
+          {!isMobile && (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+          )}
+          {isMobile && <div className="w-8"></div>}
         </div>
         
         <div ref={commentsContainerRef} className="flex-1 overflow-y-auto p-4">
@@ -536,11 +553,11 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
           )}
         </div>
 
-        <form onSubmit={handleSubmitComment} className={`${isMobile ? 'p-3' : 'p-4'} border-t`}>
+        <form onSubmit={handleSubmitComment} className={`${isMobile ? 'p-3 safe-bottom sticky bottom-0 bg-white border-t border-gray-200' : 'p-4 border-t border-gray-200 bg-white'}`}>
           {replyTo && (
-            <div className={`flex items-center justify-between bg-gray-50 ${isMobile ? 'p-1.5 rounded-md mb-1.5' : 'p-2 rounded-lg mb-2'}`}>
-              <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
-                <span className="font-medium">{replyTo.profiles.username}</span> {t('listPreview.commentSection.replyingTo')}
+            <div className={`flex items-center justify-between ${isMobile ? 'mb-2 p-2' : 'mb-3 p-3'} bg-gray-50 rounded-lg`}>
+              <span className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                {t('listPreview.commentSection.replyingTo')} <strong>@{replyTo.profiles.username}</strong>
               </span>
               <button
                 onClick={() => setReplyTo(null)}

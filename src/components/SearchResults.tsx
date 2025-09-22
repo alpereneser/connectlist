@@ -110,13 +110,12 @@ export function SearchResults({
     { 
       id: 'all', 
       label: t('search.tabs.all'), 
-      count: (searchResults?.users?.length || 0) + (searchResults?.lists?.length || 0) + (searchResults?.movies?.length || 0) + (searchResults?.shows?.length || 0) + (searchResults?.people?.length || 0) + (searchResults?.games?.length || 0) + (searchResults?.books?.length || 0) + (searchResults?.places?.length || 0)
+      count: (searchResults?.users?.length || 0) + (searchResults?.lists?.length || 0) + (searchResults?.movies?.length || 0) + (searchResults?.shows?.length || 0) + (searchResults?.games?.length || 0) + (searchResults?.books?.length || 0) + (searchResults?.places?.length || 0)
     },
     { id: 'users', label: t('search.tabs.users'), count: searchResults?.users?.length || 0 },
     { id: 'lists', label: t('search.tabs.lists'), count: searchResults?.lists?.length || 0 },
     { id: 'movies', label: t('search.tabs.movies'), count: searchResults?.movies?.length || 0 },
     { id: 'series', label: t('common.categories.series'), count: searchResults?.shows?.length || 0 },
-    { id: 'people', label: t('search.tabs.people'), count: searchResults?.people?.length || 0 },
     { id: 'games', label: t('search.tabs.games'), count: searchResults?.games?.length || 0 },
     { id: 'books', label: t('search.tabs.books'), count: searchResults?.books?.length || 0 },
     { id: 'places', label: t('search.tabs.places'), count: searchResults?.places?.length || 0 },
@@ -174,14 +173,36 @@ export function SearchResults({
       if (searchResults.lists) allResults.push(...searchResults.lists.map((item: any) => ({ ...item, type: 'list' })));
       if (searchResults.movies) allResults.push(...searchResults.movies.map((item: any) => ({ ...item, type: 'movie' })));
       if (searchResults.shows) allResults.push(...searchResults.shows.map((item: any) => ({ ...item, type: 'show' })));
-      if (searchResults.people) allResults.push(...searchResults.people.map((item: any) => ({ ...item, type: 'person' })));
       if (searchResults.games) allResults.push(...searchResults.games.map((item: any) => ({ ...item, type: 'game' })));
       if (searchResults.books) allResults.push(...searchResults.books.map((item: any) => ({ ...item, type: 'book' })));
       if (searchResults.places) allResults.push(...searchResults.places.map((item: any) => ({ ...item, type: 'place' })));
     } else {
-      const resultKey = activeTab as keyof typeof searchResults;
+      // Map tab id to the correct results key and item type
+      const keyMap: Record<string, keyof typeof searchResults> = {
+        series: 'shows',
+        movies: 'movies',
+        lists: 'lists',
+        users: 'users',
+        games: 'games',
+        books: 'books',
+        places: 'places',
+      } as const;
+
+      const typeMap: Record<string, string> = {
+        series: 'show',
+        movies: 'movie',
+        lists: 'list',
+        users: 'user',
+        games: 'game',
+        books: 'book',
+        places: 'place',
+      } as const;
+
+      const resultKey = (keyMap[activeTab] || (activeTab as keyof typeof searchResults));
+      const itemType = typeMap[activeTab] || activeTab.slice(0, -1);
+
       if (searchResults[resultKey]) {
-        allResults.push(...(searchResults[resultKey] as any[]).map((item: any) => ({ ...item, type: activeTab.slice(0, -1) })));
+        allResults.push(...(searchResults[resultKey] as any[]).map((item: any) => ({ ...item, type: itemType })));
       }
     }
     

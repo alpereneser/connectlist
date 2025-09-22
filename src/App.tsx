@@ -132,6 +132,8 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
         scrollToTop();
         // State'i temizle
         window.history.replaceState({}, '', location.pathname);
+        // Listeleri yeniden yükle
+        fetchLists();
       }
     }
   }, [location.state]);
@@ -433,13 +435,17 @@ function App() {
       return 'pt-0'; // No padding for CreateList page since it has its own Header
     }
 
-    if (isMobile) {
-      // Mobile: Header (56) + SubHeader (60) = 116px
-      return 'pt-[116px]';
-    } else {
-      // Desktop: Header (64) + SubHeader (64) = 128px
-      return 'pt-32';
+    if (isNotificationsPage) {
+      return 'pt-[calc(var(--safe-area-inset-top)+var(--header-height))]';
     }
+
+    if (isMobile) {
+      // Mobile: Header + SubHeader heights handled via CSS variables
+      return 'pt-[calc(var(--safe-area-inset-top)+var(--header-height)+var(--subheader-height))]';
+    }
+
+    // Desktop fallback keeps existing spacing for header + subheader
+    return 'pt-32';
   };
 
   return (

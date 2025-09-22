@@ -1,24 +1,29 @@
-import { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useRef } from 'react';
+// Removed unused: useTranslation
 import AvatarEditor from 'react-avatar-editor';
-import { Sliders as Slider, Upload, ZoomIn, ZoomOut, Check, X } from 'lucide-react';
+import { Sliders as Slider, ZoomIn, ZoomOut, Check, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface AvatarEditorProps {
   image: File | string;
-  onSave: (canvas: HTMLCanvasElement) => void;
+  onSave: (blob: Blob) => void;
   onCancel: () => void;
 }
 
 export function AvatarCropper({ image, onSave, onCancel }: AvatarEditorProps) {
-  const { t } = useTranslation();
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(1.2);
   const [rotate, setRotate] = useState(0);
   const editorRef = useRef<AvatarEditor>(null);
+  const { t } = useTranslation();
 
   const handleSave = () => {
     if (editorRef.current) {
       const canvas = editorRef.current.getImageScaledToCanvas();
-      onSave(canvas);
+      canvas.toBlob((blob: Blob | null) => {
+        if (blob) {
+          onSave(blob);
+        }
+      }, 'image/jpeg', 0.9);
     }
   };
 
@@ -28,21 +33,21 @@ export function AvatarCropper({ image, onSave, onCancel }: AvatarEditorProps) {
         <AvatarEditor
           ref={editorRef}
           image={image}
-          width={250}
-          height={250}
-          border={50}
-          borderRadius={125}
+          width={280}
+          height={280}
+          border={40}
+          borderRadius={140}
           color={[0, 0, 0, 0.6]}
           scale={scale}
           rotate={rotate}
-          className="rounded-lg"
+          className="rounded-lg shadow-lg"
         />
       </div>
 
       <div className="w-full space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Yakınlaştır</span>
+            <span className="text-sm font-medium text-gray-700">{t('avatar.zoom', 'Yakınlaştır')}</span>
             <div className="flex items-center gap-2">
               <ZoomOut size={16} className="text-gray-500" />
               <input
@@ -61,7 +66,7 @@ export function AvatarCropper({ image, onSave, onCancel }: AvatarEditorProps) {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Döndür</span>
+            <span className="text-sm font-medium text-gray-700">{t('avatar.rotate', 'Döndür')}</span>
             <div className="flex items-center gap-2">
               <Slider size={16} className="text-gray-500" />
               <input
@@ -84,14 +89,15 @@ export function AvatarCropper({ image, onSave, onCancel }: AvatarEditorProps) {
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
           >
             <X size={16} className="inline mr-1" />
-            İptal
+            {t('common.cancel', 'İptal')}
           </button>
           <button
             onClick={handleSave}
             className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600"
+            aria-label="Onayla"
           >
             <Check size={16} className="inline mr-1" />
-            Kaydet
+            {t('avatar.confirm', 'Onayla')}
           </button>
         </div>
       </div>

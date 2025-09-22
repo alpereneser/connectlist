@@ -132,9 +132,9 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
   
   // Kategori değerini normalize et
   const normalizedCategory = useMemo(() => {
-    // Eğer kategori zaten doğru formatta ise (movies, series, books, games, people, videos, lists, places, musics, all)
+    // Eğer kategori zaten doğru formatta ise (movies, series, books, games, videos, lists, places, musics, all)
     // olduğu gibi kullan
-    if (['movies', 'series', 'books', 'games', 'people', 'videos', 'lists', 'places', 'musics', 'all'].includes(category)) {
+    if (['movies', 'series', 'books', 'games', 'videos', 'lists', 'places', 'musics', 'all'].includes(category)) {
       return category;
     }
     
@@ -146,7 +146,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
       case 'tv-series': return 'series';
       case 'book': return 'books';
       case 'game': return 'games';
-      case 'person': return 'people';
+      // case 'person': return 'people'; // people kategorisi kaldırıldı
       case 'video': return 'videos';
       case 'list': return 'lists';
       case 'place': return 'places';
@@ -167,7 +167,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
       case 'series': return t('common.categories.series');
       case 'books': return t('common.categories.books');
       case 'games': return t('common.categories.games');
-      case 'people': return t('common.categories.people');
+      // case 'people': return t('common.categories.people'); // people kaldırıldı
       case 'videos': return t('common.categories.videos');
       case 'lists': return t('search.categories.lists');
       case 'places': return t('common.categories.places');
@@ -263,16 +263,16 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 description: item.overview || ''
               }));
             
-            // Kişiler
-            const peopleResults: SearchResult[] = tmdbResults
-              .filter((item: TMDBItem) => item && item.media_type === 'person' && item.profile_path)
-              .map((item: TMDBItem) => ({
-                id: item.id.toString(),
-                title: item.name || 'İsimsiz Kişi',
-                image: `https://image.tmdb.org/t/p/w185${item.profile_path}`,
-                type: 'person',
-                description: item.known_for_department || ''
-              }));
+            // Kişiler (ALL görünümünde hariç tutuldu)
+            // const peopleResults: SearchResult[] = tmdbResults
+            //   .filter((item: TMDBItem) => item && item.media_type === 'person' && item.profile_path)
+            //   .map((item: TMDBItem) => ({
+            //     id: item.id.toString(),
+            //     title: item.name || 'İsimsiz Kişi',
+            //     image: `https://image.tmdb.org/t/p/w185${item.profile_path}`,
+            //     type: 'person',
+            //     description: item.known_for_department || ''
+            //   }));
             
             // Kitap araması
             const bookResults = await searchBooks(debouncedSearch);
@@ -330,8 +330,8 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
                 description: item.description_raw || ''
               }));
             
-            // Tüm sonuçları birleştir
-            filteredResults = [...movieResults, ...seriesResults, ...bookItems, ...gameItems, ...peopleResults];
+            // Tüm sonuçları birleştir (peopleResults hariç)
+            filteredResults = [...movieResults, ...seriesResults, ...bookItems, ...gameItems];
           } catch (error) {
             console.error('Genel arama hatası:', error);
             setError('Arama sırasında bir hata oluştu.');
@@ -341,7 +341,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
         // Film araması
         case 'movies': {
           try {
-            const tmdbResults = await searchTMDB(debouncedSearch);
+            const tmdbResults = await searchTMDB(debouncedSearch, 'movie');
             filteredResults = tmdbResults
               .filter((item: TMDBItem) => item && item.media_type === 'movie' && item.poster_path)
               .map((item: TMDBItem) => ({
@@ -367,7 +367,7 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
         // Dizi araması
         case 'series': {
           try {
-            const tmdbResults = await searchTMDB(debouncedSearch);
+            const tmdbResults = await searchTMDB(debouncedSearch, 'tv');
             filteredResults = tmdbResults
               .filter((item: TMDBItem) => item && item.media_type === 'tv')
               .map((item: TMDBItem) => ({
@@ -476,28 +476,6 @@ export function SearchPopup({ isOpen, onClose, onSelect, category, alreadyAddedI
           } catch (error) {
             console.error('Oyun arama hatası:', error);
             setError('Oyun araması sırasında bir hata oluştu.');
-          }
-          break;
-        }
-        case 'people': {
-          try {
-            const tmdbResults = await searchTMDB(debouncedSearch);
-            filteredResults = tmdbResults
-              .filter((item: TMDBItem) => item && item.media_type === 'person' && item.profile_path)
-              .map((item: TMDBItem) => ({
-                id: item.id.toString(),
-                title: item.name || 'İsimsiz Kişi',
-                image: `https://image.tmdb.org/t/p/w185${item.profile_path}`,
-                type: 'person',
-                description: item.known_for_department || ''
-              }));
-            
-            if (filteredResults.length === 0) {
-              setError(`"${debouncedSearch}" için kişi bulunamadı.`);
-            }
-          } catch (error) {
-            console.error('Kişi arama hatası:', error);
-            setError('Kişi araması sırasında bir hata oluştu.');
           }
           break;
         }

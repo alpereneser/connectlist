@@ -44,7 +44,7 @@ BEGIN
   
   -- Edge Function'ı çağır
   PERFORM net.http_post(
-    url := 'https://connectlist.me/api/email/follower-notification-sendgrid',
+    url := 'https://connectlist.me/.netlify/functions/follower-notification',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || current_setting('app.api_key', true)
@@ -129,7 +129,7 @@ BEGIN
     LOOP
       -- Edge Function'ı çağır
       PERFORM net.http_post(
-        url := 'https://connectlist.me/api/email/list-item-notification-sendgrid',
+        url := 'https://connectlist.me/.netlify/functions/list-item-notification',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
           'Authorization', 'Bearer ' || current_setting('app.api_key', true)
@@ -262,7 +262,7 @@ BEGIN
   
   -- Edge Function'ı çağır
   PERFORM net.http_post(
-    url := 'https://connectlist.me/api/email/comment-notification-sendgrid',
+    url := 'https://connectlist.me/.netlify/functions/comment-notification',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || current_setting('app.api_key', true)
@@ -363,7 +363,7 @@ BEGIN
   
   -- Edge Function'ı çağır
   PERFORM net.http_post(
-    url := 'https://connectlist.me/api/email/message-notification-sendgrid',
+    url := 'https://connectlist.me/.netlify/functions/message-notification',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
       'Authorization', 'Bearer ' || current_setting('app.api_key', true)

@@ -4,8 +4,22 @@ import {
   sendListItemAddedNotification, 
   sendCommentNotification, 
   sendMessageNotification,
-  sendNewListNotification
+  sendNewListNotification,
+  sendListLikedNotification
 } from './email-service';
+
+// İlişkili profil verisi Supabase'te tekil obje veya dizi gelebilir; güvenli şekilde ilk profili döndür
+type ProfileLite = {
+  email?: string;
+  full_name?: string;
+  username?: string;
+  avatar?: string;
+  language?: string;
+};
+function getFirstProfile<T extends object = ProfileLite>(profiles: T | T[] | null | undefined): T | null {
+  if (!profiles) return null as any;
+  return Array.isArray(profiles) ? ((profiles[0] as any) ?? null) : (profiles as any);
+}
 
 // Kullanıcı e-posta tercihlerini kontrol et
 async function checkEmailPreference(userId: string, preferenceKey: string): Promise<boolean> {
@@ -21,7 +35,7 @@ async function checkEmailPreference(userId: string, preferenceKey: string): Prom
       return false;
     }
     
-    return data[preferenceKey] === true;
+    return (data as any)?.[preferenceKey] === true;
   } catch (error) {
     console.error('E-posta tercihi kontrol edilirken beklenmeyen hata:', error);
     return false;
@@ -76,10 +90,10 @@ export async function triggerFollowerNotification(followedId: string, followerId
     // E-posta gönder
     const result = await sendFollowerNotification(
       followedUser.email,
-      followedUser.full_name,
-      followerUser.full_name,
-      followerUser.username,
-      followerUser.avatar,
+      followedUser.full_name || '',
+      followerUser.full_name || '',
+      followerUser.username || '',
+      followerUser.avatar ?? null,
       (followedUser as any).language === 'en' ? 'en' : 'tr'
     );
     
@@ -99,74 +113,60 @@ export async function triggerListItemAddedNotification(listId: string, newItemId
       .select('id, title, slug, user_id, profiles(username)')
       .eq('id', listId)
       .single();
-      
     if (listError || !listData) {
       console.error('Liste bilgileri alınamadı:', listError);
       return { success: false, reason: 'list_not_found' };
     }
-    
+    const listOwner = getFirstProfile(listData.profiles as any) as ProfileLite | null;
+
     // Yeni eklenen öğeyi al
     const { data: itemData, error: itemError } = await supabase
       .from('list_items')
       .select('id, title, description, image_url')
       .eq('id', newItemId)
       .single();
-      
     if (itemError || !itemData) {
       console.error('Öğe bilgileri alınamadı:', itemError);
       return { success: false, reason: 'item_not_found' };
     }
-    
-    // Listeyi beğenen kullanıcıları bul
-    const { data: likesData, error: likesError } = await supabase
-      .from('likes')
-      .select('user_id')
-      .eq('list_id', listId);
-      
-    if (likesError) {
-      console.error('Beğenen kullanıcılar alınamadı:', likesError);
-      return { success: false, reason: 'likes_error' };
+
+    // Liste sahibinin takipçilerini bul
+    const { data: followersData, error: followersError } = await supabase
+      .from('followers')
+      .select('follower_id, profiles(email, full_name, language)')
+      .eq('followed_id', listData.user_id);
+    if (followersError) {
+      console.error('Takipçiler alınamadı:', followersError);
+      return { success: false, reason: 'followers_error' };
     }
-    
-    // Liste sahibini hariç tut
-    const userIds = likesData
-      .map(like => like.user_id)
-      .filter(userId => userId !== listData.user_id);
-      
-    if (userIds.length === 0) {
-      console.log('Bildirim gönderilecek kullanıcı yok');
-      return { success: true, sent: 0 };
-    }
-    
-    // Her beğenen kullanıcıya bildirim gönder
+
+    // Her takipçiye bildirim gönder
     let sentCount = 0;
-    for (const userId of userIds) {
+    for (const follower of followersData || []) {
+      const p = getFirstProfile(follower.profiles as any) as ProfileLite | null;
+      const followerId = follower.follower_id;
       // Kullanıcının bildirim tercihini kontrol et
-      const shouldSendEmail = await checkEmailPreference(userId, 'list_item_added');
+      const shouldSendEmail = await checkEmailPreference(followerId, 'list_item_added');
       if (!shouldSendEmail) continue;
-      
-      const user = await getUserInfo(userId);
-      if (!user || !user.email) continue;
-      
-      // E-posta gönder
+      if (!p?.email) continue;
+
       await sendListItemAddedNotification(
-        user.email,
-        user.full_name,
+        p.email,
+        p.full_name || '',
         listData.title,
         listData.id,
         listData.slug,
-        listData.profiles.username,
+        (listOwner?.username) || '',
         {
           title: itemData.title,
           description: itemData.description,
           image_url: itemData.image_url
         },
-        (user as any).language === 'en' ? 'en' : 'tr'
+        (p?.language === 'en' ? 'en' : 'tr') as any
       );
-      
       sentCount++;
     }
-    
+
     return { success: true, sent: sentCount };
   } catch (error) {
     console.error('Liste öğesi ekleme bildirimi gönderilirken hata:', error);
@@ -174,107 +174,101 @@ export async function triggerListItemAddedNotification(listId: string, newItemId
   }
 }
 
-// Yorum bildirimi gönder
-export async function triggerCommentNotification(
-  commentId: string, 
-  parentCommentId: string | null = null
-) {
+// List yorum bildirimi gönder (list_comments tablosu)
+export async function triggerListCommentNotification(commentId: string) {
   try {
     // Yorum bilgilerini al
     const { data: commentData, error: commentError } = await supabase
-      .from('comments')
-      .select(`
-        id, 
-        list_id, 
-        user_id, 
-        content, 
-        parent_comment_id,
-        profiles(id, full_name, username, avatar)
-      `)
+      .from('list_comments')
+      .select('id, list_id, user_id, text, parent_id')
       .eq('id', commentId)
       .single();
-      
+
     if (commentError || !commentData) {
-      console.error('Yorum bilgileri alınamadı:', commentError);
+      console.error('List yorumu bilgileri alınamadı:', commentError);
       return { success: false, reason: 'comment_not_found' };
     }
-    
+
     // Liste bilgilerini al
     const { data: listData, error: listError } = await supabase
       .from('lists')
-      .select('id, title, slug, user_id, profiles(id, username)')
+      .select('id, title, slug, user_id, profiles(username)')
       .eq('id', commentData.list_id)
       .single();
-      
+
     if (listError || !listData) {
       console.error('Liste bilgileri alınamadı:', listError);
       return { success: false, reason: 'list_not_found' };
     }
-    
-    let recipientId: string;
+    const listOwner = getFirstProfile(listData.profiles as any) as ProfileLite | null;
+
+    // Alıcıyı belirle (yanıtsa üst yorum sahibi, değilse liste sahibi)
+    let recipientId: string = listData.user_id;
     let isReply = false;
-    
-    if (parentCommentId) {
-      // Bu bir yanıt ise, üst yorumun sahibine bildirim gönder
+
+    if (commentData.parent_id) {
       const { data: parentComment, error: parentError } = await supabase
-        .from('comments')
+        .from('list_comments')
         .select('user_id')
-        .eq('id', parentCommentId)
+        .eq('id', commentData.parent_id)
         .single();
-        
+
       if (parentError || !parentComment) {
-        console.error('Üst yorum bilgileri alınamadı:', parentError);
+        console.error('Üst list yorumu bilgileri alınamadı:', parentError);
         return { success: false, reason: 'parent_comment_not_found' };
       }
-      
+
       recipientId = parentComment.user_id;
       isReply = true;
-    } else {
-      // Normal yorum ise, liste sahibine bildirim gönder
-      recipientId = listData.user_id;
     }
-    
-    // Kendi yorumuna yanıt verme durumunu kontrol et
+
+    // Kendi yorumuna/listesine yorum yapmışsa gönderme
     if (recipientId === commentData.user_id) {
-      console.log('Kullanıcı kendi yorumuna/listesine yorum yaptı, bildirim gönderilmiyor');
+      console.log('Kullanıcı kendi listesine/yorumuna yorum yaptı, bildirim gönderilmiyor');
       return { success: true, reason: 'self_comment' };
     }
-    
-    // Kullanıcının bildirim tercihini kontrol et
+
+    // E-posta tercihlerini kontrol et
     const preferenceKey = isReply ? 'comment_reply' : 'new_comment';
     const shouldSendEmail = await checkEmailPreference(recipientId, preferenceKey);
-    
     if (!shouldSendEmail) {
       console.log(`Kullanıcı ${preferenceKey} bildirimlerini almak istemiyor:`, recipientId);
       return { success: false, reason: 'preference_disabled' };
     }
-    
-    // Alıcı kullanıcının bilgilerini al
+
+    // Gönderen ve alıcı bilgilerini al
+    const sender = await getUserInfo(commentData.user_id);
     const recipient = await getUserInfo(recipientId);
-    if (!recipient || !recipient.email) {
-      console.error('Alıcı kullanıcı bilgileri alınamadı');
-      return { success: false, reason: 'recipient_not_found' };
+
+    if (!sender || !recipient) {
+      console.error('Kullanıcı bilgileri alınamadı');
+      return { success: false, reason: 'user_not_found' };
     }
-    
+
+    if (!recipient.email) {
+      console.error('Alıcının e-posta adresi yok');
+      return { success: false, reason: 'email_not_found' };
+    }
+
     // E-posta gönder
     const result = await sendCommentNotification(
       recipient.email,
-      recipient.full_name,
-      commentData.profiles.full_name,
-      commentData.profiles.username,
-      commentData.profiles.avatar,
+      recipient.full_name || '',
+      sender.full_name || '',
+      sender.username || '',
+      sender.avatar ?? null,
       listData.title,
       listData.id,
       listData.slug,
-      listData.profiles.username,
-      commentData.content,
+      listOwner?.username || '',
+      commentData.text,
       isReply,
       (recipient as any).language === 'en' ? 'en' : 'tr'
     );
-    
+
     return result;
   } catch (error) {
-    console.error('Yorum bildirimi gönderilirken hata:', error);
+    console.error('List yorum bildirimi gönderilirken hata:', error);
     return { success: false, error };
   }
 }
@@ -355,6 +349,7 @@ export async function triggerNewListNotification(listId: string) {
       console.error('Liste bilgileri alınamadı:', listError);
       return { success: false, reason: 'list_not_found' };
     }
+    const listOwner = getFirstProfile(listData.profiles as any) as ProfileLite | null;
 
     // 2. Listeyi paylaşan kullanıcının takipçilerini bul
     const { data: followersData, error: followersError } = await supabase
@@ -370,8 +365,9 @@ export async function triggerNewListNotification(listId: string) {
     // 3. Her takipçiye mail gönder
     let sentCount = 0;
     for (const follower of followersData) {
-      const email = follower.profiles?.email;
-      const name = follower.profiles?.full_name;
+      const p = getFirstProfile(follower.profiles as any) as ProfileLite | null;
+      const email = p?.email;
+      const name = p?.full_name;
       if (!email) continue;
 
       await sendNewListNotification(
@@ -379,8 +375,8 @@ export async function triggerNewListNotification(listId: string) {
         name,
         listData.title,
         listData.slug,
-        listData.profiles.full_name,
-        listData.profiles.username,
+        listOwner?.full_name || '',
+        listOwner?.username || '',
         listData.description,
         listData.created_at,
         'tr'
@@ -404,6 +400,7 @@ export async function triggerListUpdatedNotification(listId: string) {
       .eq('id', listId)
       .single();
     if (listError || !listData) return { success: false, reason: 'list_not_found' };
+    const listOwner = getFirstProfile(listData.profiles as any) as ProfileLite | null;
 
     const { data: followersData, error: followersError } = await supabase
       .from('followers')
@@ -413,16 +410,17 @@ export async function triggerListUpdatedNotification(listId: string) {
 
     let sent = 0;
     for (const follower of followersData || []) {
-      const email = follower.profiles?.email;
-      const name = follower.profiles?.full_name || '';
-      const lang = follower.profiles?.language === 'en' ? 'en' : 'tr';
+      const p = getFirstProfile(follower.profiles as any) as ProfileLite | null;
+      const email = p?.email;
+      const name = p?.full_name || '';
+      const lang = p?.language === 'en' ? 'en' : 'tr';
       if (!email) continue;
       await (await import('./email-service')).sendListUpdatedNotification(
         email,
         name,
         listData.title,
         listData.slug,
-        listData.profiles.username,
+        (listOwner?.username) || '',
         lang as any
       );
       sent++;
@@ -430,6 +428,44 @@ export async function triggerListUpdatedNotification(listId: string) {
     return { success: true, sent };
   } catch (error) {
     console.error('List updated notification error:', error);
+    return { success: false, error };
+  }
+}
+
+export async function triggerListLikedNotification(listId: string, likerId: string) {
+  try {
+    // Liste bilgilerini al
+    const { data: listData, error: listError } = await supabase
+      .from('lists')
+      .select('id, title, slug, user_id, profiles(email, full_name, username, language)')
+      .eq('id', listId)
+      .single();
+    if (listError || !listData) return { success: false, reason: 'list_not_found' };
+    const ownerProfile = getFirstProfile(listData.profiles as any) as ProfileLite | null;
+
+    // Liste sahibinin tercihlerini kontrol et
+    const shouldSend = await checkEmailPreference(listData.user_id, 'list_liked');
+    if (!shouldSend) return { success: false, reason: 'preference_disabled' };
+
+    // Beğenen kullanıcı bilgilerini al
+    const liker = await getUserInfo(likerId);
+    if (!liker || !ownerProfile?.email) return { success: false, reason: 'user_or_email_missing' };
+
+    const lang = (ownerProfile.language === 'en' ? 'en' : 'tr') as any;
+
+    await sendListLikedNotification(
+      ownerProfile.email!,
+      ownerProfile.full_name || '',
+      liker.full_name || '',
+      liker.username || '',
+      listData.title,
+      listData.slug,
+      ownerProfile.username || '',
+      lang
+    );
+    return { success: true };
+  } catch (error) {
+    console.error('List liked notification error:', error);
     return { success: false, error };
   }
 }

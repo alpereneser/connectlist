@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, Link as LinkIcon, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, MessageCircle, Share2, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { AuthPopup } from './AuthPopup';
@@ -62,6 +62,8 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
   // Dil ayarlarına göre kategori isimlerini dinamik olarak göster
   const { i18n } = useTranslation();
   const currentLanguage = i18n.language;
+  // Mobil için sağ kenarda overlay ok göstergesi görünürlüğü
+  const [showRightOverlay, setShowRightOverlay] = useState(false);
   
   // Log the props to use them and silence warnings
   useEffect(() => {
@@ -233,23 +235,33 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
   };
 
   useEffect(() => {
-    const handleScrollUpdate = () => {
-      if (scrollContainerRef.current) {
-        setScrollPosition(scrollContainerRef.current.scrollLeft);
-      }
+    const updateIndicators = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      setScrollPosition(container.scrollLeft);
+      const canScrollRight = container.scrollWidth > container.clientWidth && container.scrollLeft < (container.scrollWidth - container.clientWidth - 2);
+      setShowRightOverlay(canScrollRight);
     };
+
+    const handleScrollUpdate = () => updateIndicators();
 
     const container = scrollContainerRef.current;
     if (container) {
       container.addEventListener('scroll', handleScrollUpdate);
+      // İlk görünürlüğü ayarla (ör. resimler yüklenmeden önce de)
+      requestAnimationFrame(updateIndicators);
     }
+
+    // Resize olduğunda tekrar hesapla
+    window.addEventListener('resize', updateIndicators);
 
     return () => {
       if (container) {
         container.removeEventListener('scroll', handleScrollUpdate);
       }
+      window.removeEventListener('resize', updateIndicators);
     };
-  }, []);
+  }, [items]);
   return (
     <div className="bg-white md:rounded-lg md:shadow-sm overflow-hidden mt-[5px] border-t border-gray-200">
       {/* Liste Başlığı ve Kullanıcı Bilgisi */}
@@ -311,7 +323,14 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
           
           {/* Liste Açıklaması */}
           {list.description && (
-            <p className="text-[14px] text-gray-600 line-clamp-2 scale-90 origin-left mt-0 font-normal md:line-clamp-2">
+            <p 
+              onClick={() => {
+                if (onListClick) onListClick();
+                try { sessionStorage.setItem('scroll:returnTo', JSON.stringify({ path: window.location.pathname, y: window.scrollY })); } catch (e) {}
+                navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+              }}
+              className="text-[14px] text-gray-600 line-clamp-2 scale-90 origin-left mt-0 font-normal md:line-clamp-2 cursor-pointer hover:text-gray-800 transition-colors"
+            >
               {list.description}
             </p>
           )}
@@ -394,7 +413,16 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
                 </div>
               )}
               {list.description && (
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{list.description}</p>
+                <p 
+                  onClick={() => {
+                    if (onListClick) onListClick();
+                    try { sessionStorage.setItem('scroll:returnTo', JSON.stringify({ path: window.location.pathname, y: window.scrollY })); } catch (e) {}
+                    navigate(`/${list.profiles.username}/list/${createSlug(list.title)}`);
+                  }}
+                  className="text-sm text-gray-600 mt-1 line-clamp-2 cursor-pointer hover:text-gray-800 transition-colors"
+                >
+                  {list.description}
+                </p>
               )}
             </div>
           </div>
@@ -507,6 +535,20 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
           ))}
         </div>
 
+        {/* Mobil sağ kenar overlay ok göstergesi */}
+        <div
+          className={`block md:hidden pointer-events-none absolute right-0 top-0 h-full w-12 flex items-center justify-center transition-opacity duration-200 ${showRightOverlay ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-l from-white to-transparent"></div>
+          <button
+            aria-label="scroll right"
+            onClick={() => handleScroll('right')}
+            className="pointer-events-auto mr-1 rounded-full bg-white/90 shadow-md p-1.5 active:scale-95"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+
         {/* Kaydırma Butonları */}
         <div className="hidden md:block">
           <button
@@ -524,12 +566,12 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         </div>
       </div>
 
-      {/* Like ve Comment Butonları */}
+      {/* Like ve Comment Butonları - Sadece Mobile */}
       {!hideActions && (
-        <div className="list-actions flex items-center gap-3 px-3 md:px-6 py-2 md:py-3 border-t">
+        <div className="list-actions md:hidden flex items-center gap-3 px-3 py-2 border-t">
           <button
             onClick={handleLikeClick}
-            className={`flex items-center gap-1 text-gray-600 hover:text-red-500 ${
+            className={`flex items-center gap-1 text-gray-600 hover:text-red-500 active:scale-95 transition-all ${
               isLiked ? 'text-red-500' : ''
             }`}
           >
@@ -538,14 +580,14 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
           </button>
           <button
             onClick={handleCommentClick}
-            className="flex items-center gap-1 text-gray-600 hover:text-purple-500"
+            className="flex items-center gap-1 text-gray-600 hover:text-purple-500 active:scale-95 transition-all"
           >
             <MessageCircle size={16} />
             <span className="text-sm">{optimisticCommentCount}</span>
           </button>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1 text-gray-600 hover:text-blue-500"
+            className="flex items-center gap-1 text-gray-600 hover:text-blue-500 active:scale-95 transition-all"
           >
             <Share2 size={16} />
           </button>
@@ -564,6 +606,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         listId={list.id}
         onCommentAdded={() => setOptimisticCommentCount(prev => prev + 1)}
         onCommentDeleted={() => setOptimisticCommentCount(prev => prev - 1)}
+        isMobile={window.innerWidth < 768}
       />
       
       {/* Likes Modal */}

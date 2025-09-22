@@ -1,5 +1,5 @@
-const sgMail = require('@sendgrid/mail');
-
+const axios = require('axios');
+ 
 exports.handler = async function(event, context) {
   // CORS başlıkları
   const headers = {
@@ -171,20 +171,31 @@ exports.handler = async function(event, context) {
       };
     }
     
-    // SendGrid API anahtarını ayarla
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    
-    // E-posta mesajını oluştur
-    const msg = {
-      from: process.env.SENDGRID_FROM_EMAIL || 'info@connectlist.me',
-      to,
+    const token = process.env.MAILTRAP_TOKEN;
+    if (!token) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'MAILTRAP_TOKEN not set' }) };
+    }
+    const from = process.env.MAIL_FROM || 'ConnectList <noreply@connectlist.me>';
+    // Parse from to name/email
+    let fromName = 'ConnectList';
+    let fromEmail = from;
+    const m = /^(.*)<([^>]+)>$/.exec(from);
+    if (m) {
+      fromName = m[1].trim().replace(/\"|\'/g, '') || 'ConnectList';
+      fromEmail = m[2].trim();
+    }
+    const payload = {
+      from: { email: fromEmail, name: fromName },
+      to: [{ email: to }],
       subject,
-      text
+      text,
+      category: 'Email Test'
     };
-    
-    // E-postayı gönder
-    await sgMail.send(msg);
-    
+    await axios.post('https://send.api.mailtrap.io/api/send', payload, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      timeout: 10000
+    });
+
     return {
       statusCode: 200,
       headers,
@@ -197,9 +208,9 @@ exports.handler = async function(event, context) {
     console.log('Hata detayları:', JSON.stringify({
       message: error.message,
       stack: error.stack,
-      response: error.response ? error.response.body : null,
+      response: error.response ? (error.response.data || error.response.body) : null,
       code: error.code,
-      statusCode: error.statusCode
+      statusCode: error.response ? error.response.status : error.statusCode
     }));
     
     return {
@@ -209,8 +220,8 @@ exports.handler = async function(event, context) {
         error: 'E-posta gönderilemedi',
         details: error.message,
         code: error.code,
-        statusCode: error.statusCode,
-        response: error.response ? error.response.body : null
+        statusCode: error.response ? error.response.status : error.statusCode,
+        response: error.response ? (error.response.data || error.response.body) : null
       })
     };
   }

@@ -77,7 +77,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ listId, currentU
     if (!newComment.trim() || !currentUserId) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('list_comments')
         .insert({
           list_id: listId,
@@ -93,6 +93,13 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ listId, currentU
       setNewComment('');
       setReplyToComment(null);
       await fetchComments();
+      
+      // E-posta bildirimi tetikle (UI akışını bloklamadan)
+      if (data?.id) {
+        import('../lib/email-triggers')
+          .then(({ triggerListCommentNotification }) => triggerListCommentNotification(data.id))
+          .catch((err) => console.error('List yorum e-posta bildirimi tetiklenemedi:', err));
+      }
     } catch (error) {
       console.error('Error posting comment:', error);
     }

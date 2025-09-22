@@ -21,7 +21,7 @@ export interface EmailParams {
 export async function sendNotificationEmail(params: EmailParams): Promise<{ success: boolean; message: string; id?: string }> {
   try {
     // API anahtarı backend'de (Netlify Function) kullanılacak
-    const response = await fetch('/.netlify/functions/send-notification', {
+    const response = await fetch('/.netlify/functions/mailtrap-send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -105,7 +105,8 @@ export default defineConfig(async ({ mode }) => {
     server: {
       host: true,
       cors: true,
-      port: 3000,
+      port: 3002,
+      strictPort: true,
     },
     resolve: {
       alias: {
