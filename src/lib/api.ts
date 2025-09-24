@@ -1300,8 +1300,8 @@ export async function getLists(category?: string, page: number = 0, limit: numbe
     `);
   
   const ascending = sortDirection === 'asc';
-  // Sıralama yönüne göre sırala: updated_at öncelikli, sonra created_at ve id aynı yönde
-  query = query.order('updated_at', { ascending }).order('created_at', { ascending }).order('id', { ascending });
+  // Sıralama yönüne göre sırala: created_at öncelikli (listelerin oluşturulma tarihine göre), sonra id
+  query = query.order('created_at', { ascending }).order('id', { ascending });
   
   if (category) {
     // Kategori filtrelemesi yap

@@ -1,4 +1,5 @@
 export const HOME_CATEGORIES = [
+  'all',
   'movies',
   'series',
   'books',

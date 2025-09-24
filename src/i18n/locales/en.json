@@ -308,6 +308,26 @@
       "error": "An error occurred while sending your support request. Please try again later.",
       "subjectPlaceholder": "Subject of your support request",
       "messagePlaceholder": "Please describe your issue or suggestion in detail"
+    },
+    "emailPreferences": {
+      "title": "Email Notifications",
+      "description": "Choose when you want to receive email notifications",
+      "loadError": "Error loading email preferences",
+      "updateError": "Error updating preference",
+      "updateSuccess": "Preference updated successfully",
+      "notFound": "Email preferences not found",
+      "newFollower": "New Follower",
+      "newFollowerDesc": "Get email notification when someone follows you",
+      "listItemAdded": "List Item Added",
+      "listItemAddedDesc": "Get notification when someone you follow adds a new item to their list",
+      "listLiked": "List Liked",
+      "listLikedDesc": "Get email notification when one of your lists is liked",
+      "newComment": "New Comment",
+      "newCommentDesc": "Get email notification when someone comments on your lists",
+      "commentReply": "Comment Reply",
+      "commentReplyDesc": "Get email notification when someone replies to your comments",
+      "newMessage": "New Message",
+      "newMessageDesc": "Get email notification when you receive a new message"
     }
   },
   "footer": {

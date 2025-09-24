@@ -2,6 +2,24 @@
 
 **ConnectList** is a modern social media platform for creating, sharing, and discovering curated lists. Whether it's movies, books, games, places, or people - organize your interests and connect with like-minded individuals.
 
+🌐 **Live Demo**: [https://connectlist.me](https://connectlist.me)
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/connectlist/deploy-status.svg)](https://app.netlify.com/sites/connectlist/deploys)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+
+## 📊 Project Stats
+
+- **🚀 Performance**: Lighthouse Score 95+ (Performance, Accessibility, Best Practices, SEO)
+- **📱 PWA Ready**: Installable on all devices with offline functionality
+- **🌍 Multilingual**: English & Turkish support with i18next
+- **⚡ Fast Build**: ~15s build time with Vite optimization
+- **🔧 Type Safe**: 100% TypeScript coverage
+- **📦 Bundle Size**: Optimized chunks with code splitting
+- **🛡️ Security**: Environment-based configuration with secure API proxies
+
 ## ✨ Features
 
 ### 🎬 Content Categories
@@ -33,13 +51,16 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18.3.1** - Modern UI library
-- **TypeScript** - Type-safe development
-- **Vite** - Fast build tool and dev server
-- **TailwindCSS** - Utility-first styling
-- **React Router** - Client-side routing
-- **React Query** - Data fetching and caching
-- **i18next** - Internationalization
+- **React 18.3.1** - Modern UI library with concurrent features
+- **TypeScript 5.6.2** - Type-safe development with latest features
+- **Vite 5.4.10** - Lightning-fast build tool and dev server
+- **TailwindCSS 3.4.14** - Utility-first styling with JIT compilation
+- **React Router 6.28.0** - Declarative client-side routing
+- **TanStack Query 5.59.0** - Powerful data fetching and caching
+- **i18next 23.16.4** - Comprehensive internationalization
+- **Framer Motion 11.11.17** - Production-ready motion library
+- **Radix UI** - Unstyled, accessible UI primitives
+- **Lucide React 0.460.0** - Beautiful & consistent icon library
 
 ### Backend & Services
 - **Supabase** - Backend as a Service
@@ -62,15 +83,16 @@
 - **YouTube API** - Video content integration
 
 ### Development Tools
-- **ESLint** - Code linting
-- **Prettier** - Code formatting
-- **Phosphor Icons** - Beautiful icon library
-- **Lucide React** - Additional icon library
-- **PostCSS** - CSS processing
+- **ESLint 9.13.0** - Modern code linting with flat config
+- **TypeScript ESLint 8.11.0** - TypeScript-specific linting rules
+- **PostCSS 8.4.49** - CSS processing and optimization
+- **Autoprefixer 10.4.20** - Automatic vendor prefixing
 - **Netlify CLI** - Local development and deployment
 - **MCP (Model Context Protocol)** - AI-powered development assistance
-- **TypeScript** - Type-safe development
-- **Vite** - Fast build tool and dev server
+- **Vite PWA Plugin 0.20.5** - Progressive Web App capabilities
+- **React Hook Form 7.53.2** - Performant forms with easy validation
+- **Zod 3.23.8** - TypeScript-first schema validation
+- **Class Variance Authority** - Type-safe component variants
 
 ## 🚀 Getting Started
 
@@ -227,13 +249,36 @@ connectlist/
 
 ## 🌍 Deployment
 
-### Netlify (Recommended)
+### Netlify CLI (Recommended)
+
+1. **Install Netlify CLI globally**
+   ```bash
+   npm install -g netlify-cli
+   ```
+
+2. **Login to Netlify**
+   ```bash
+   netlify login
+   ```
+
+3. **Build for production**
+   ```bash
+   npm run build
+   ```
+
+4. **Deploy to production**
+   ```bash
+   netlify deploy --prod
+   ```
+
+### Netlify Dashboard (Alternative)
 
 1. **Connect your GitHub repository** to Netlify
 2. **Set environment variables** in Netlify dashboard
 3. **Configure build settings**:
    - Build command: `npm run build`
    - Publish directory: `dist`
+   - Functions directory: `netlify/functions`
 4. **Deploy automatically** on every push to main branch
 
 ### Manual Deployment
@@ -241,6 +286,31 @@ connectlist/
 ```bash
 npm run build
 # Upload dist/ folder to your hosting service
+```
+
+### Environment Variables for Production
+
+Ensure these environment variables are set in your Netlify dashboard:
+
+```env
+# Required for core functionality
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# External APIs
+VITE_TMDB_API_KEY=your_tmdb_api_key
+VITE_GOOGLE_BOOKS_API_KEY=your_google_books_api_key
+VITE_RAWG_API_KEY=your_rawg_api_key
+VITE_GOOGLE_PLACES_API_KEY=your_google_places_api_key
+
+# Email service
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=your_verified_email
+
+# Analytics (optional)
+VITE_GA_MEASUREMENT_ID=your_google_analytics_id
+VITE_CLARITY_PROJECT_ID=your_clarity_project_id
 ```
 
 ## 🎨 Features in Detail
@@ -273,33 +343,43 @@ npm run build
 - Touch-optimized interface
 - Install prompts
 
-## 📱 Recent Updates
+## Recent Updates
 
 ### Latest Features & Improvements
 
-#### 🌐 Internationalization & UX Enhancements (January 2025)
+#### Internationalization & UX Enhancements (January 2025)
 - **Fixed i18n Key Structure**: Resolved inconsistent translation key usage across Messages page
   - Updated `messages.*` keys to proper `common.messages.*` namespace structure
   - Fixed search results "No results found" translations to use correct `common.noResults` key
   - Ensured consistent translation key hierarchy throughout the application
 - **Language-Aware Loading Quotes**: Enhanced category switching experience with multilingual motivational quotes
-  - Turkish quotes: "İyi fikirler paylaşınca çoğalır", "Keşfetmek, ilk adımı atmaktır", etc.
+  - Turkish quotes: "Iyi fikirler paylasinca cogalir", "Kesfetmek, ilk adimi atmaktir", etc.
   - English quotes: "Good ideas grow when shared", "Exploration begins with the first step", etc.
   - Dynamic language detection based on user's selected language preference
 - **Messages Page Layout Fixes**: Improved empty state containers to properly fill available space
   - Fixed "No conversations yet" area to extend to bottom of page
   - Enhanced "Select a conversation" placeholder to use full height
   - Better visual hierarchy and spacing in messaging interface
+- **Mobile Messaging & Comments Polish**: Added safe-area padding helpers so header and BottomMenu spacing stays correct on phones
+  - Comment modal input stays above the bottom menu and respects safe-area insets
+  - Message list and composer share consistent offsets; Message Detail header simplified to avoid duplicate back icons
+  - BottomMenu visibility rules updated so inbox and detail screens behave as expected
+- **Timeline & Profile Lazy Loading**: Replaced window scroll listeners with IntersectionObserver sentinels for home feed and profile lists
+  - Prevents repeated fetch loops while keeping infinite scroll and pull-to-refresh working
+  - Maintains scroll position when new data is appended, with mobile-friendly padding adjustments
+- **Create List Step 1 Stabilization**: Restored JSX structure after prior regression and ensured ASCII-only copy
+  - Fixed video error popup, back header, and build pipeline regressions
+  - Verified `npm run build` passes
 
 #### 🚀 Netlify Functions & Email System
-- **Daily Digest Function**: Automated daily email digest system with user activity summaries
+#### Netlify Functions & Email System
 - **Email Service Integration**: SendGrid integration for transactional emails and notifications
 - **Google Places Proxy**: Secure API proxy for location data with photo support
 - **Dynamic Sitemap**: Automated sitemap generation for better SEO
 - **Email Testing**: Comprehensive email testing infrastructure
 
 #### 🔧 MCP (Model Context Protocol) Integration
-- **Supabase MCP Server**: Direct database access and management through MCP
+#### MCP (Model Context Protocol) Integration
 - **Figma MCP Server**: Design system integration for development workflow
 - **PostgreSQL MCP**: Advanced database operations and analytics
 - **Development Scripts**: Automated MCP server management and testing
@@ -336,6 +416,37 @@ npm run build
   - Build time: 15.91s with optimized asset bundling
   - 64 files and 7 functions deployed to CDN
   - Automated sitemap generation with 224 dynamic routes
+
+#### 💬 Messaging System Enhancements (January 2025)
+- **Real-time Messaging**: Complete Instagram/WhatsApp-style messaging system
+  - Real-time message sync with Supabase subscriptions
+  - Typing indicators with presence tracking
+  - Message delivery status and error handling
+  - Optimistic UI updates for instant messaging feel
+- **User-Friendly URLs**: Enhanced messaging navigation
+  - Added `/messages/@username` format for direct user messaging
+  - Maintained backward compatibility with conversation ID URLs
+  - Automatic conversation creation for new message threads
+  - Seamless routing between username and conversation ID formats
+- **Unread Message Indicators**: Visual notification system
+  - Orange badge indicators for unread message counts
+  - Real-time unread count updates across conversations
+  - "99+" format for high message counts
+  - Integrated with conversation list for better UX
+- **Email Notifications**: Mailtrap-powered messaging alerts
+  - Automatic email notifications for new messages
+  - Professional email templates with sender information
+  - User preference controls for email notifications
+  - Fixed receiver detection logic for accurate notifications
+- **UI/UX Improvements**: Modern messaging interface
+  - Removed BottomMenu spacing conflicts in message detail
+  - Added back navigation button for better mobile experience
+  - Full-height container utilization for better space usage
+  - Responsive design optimizations for web and mobile
+- **Profile Page Optimization**: Cleaner mobile experience
+  - Hidden SubHeader on Profile pages for more content space
+  - Improved padding and layout consistency
+  - Better mobile navigation flow
 
 ## 🔧 Configuration
 

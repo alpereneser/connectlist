@@ -809,7 +809,7 @@ export function Search() {
                   {results.users.length > 6 && (
                     <button
                       onClick={() => setActiveTab('users')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -853,7 +853,7 @@ export function Search() {
                   {results.lists.length > 5 && (
                     <button
                       onClick={() => setActiveTab('lists')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -874,7 +874,7 @@ export function Search() {
                   {results.movies.length > 8 && (
                     <button
                       onClick={() => setActiveTab('movies')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -895,7 +895,7 @@ export function Search() {
                   {results.shows.length > 8 && (
                     <button
                       onClick={() => setActiveTab('series')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -917,7 +917,7 @@ export function Search() {
                   {results.games.length > 8 && (
                     <button
                       onClick={() => setActiveTab('games')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -938,7 +938,7 @@ export function Search() {
                   {results.books.length > 8 && (
                     <button
                       onClick={() => setActiveTab('books')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -961,7 +961,7 @@ export function Search() {
                   {results.musics.length > 8 && (
                     <button
                       onClick={() => setActiveTab('musics')}
-                      className="mt-4 text-orange-500 hover:text-orange-600 font-medium"
+                      className="btn-touch mt-4 text-orange-500 hover:text-orange-600 font-medium"
                     >
                       {t('common.seeAll')}
                     </button>
@@ -1047,7 +1047,7 @@ export function Search() {
                   <button
                     type="button"
                     onClick={toggleListening}
-                    className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors ${
+                    className={`icon-btn absolute inset-y-0 right-0 mr-1 transition-colors ${
                       isListening
                         ? 'text-red-500 hover:text-red-600'
                         : 'text-gray-400 hover:text-orange-500'
@@ -1099,35 +1099,35 @@ export function Search() {
                 <div className="flex items-center justify-between h-[45px] py-0 my-0 overflow-x-auto scrollbar-hide">
                   <div className="flex h-full items-center space-x-2 overflow-x-auto scrollbar-hide">
                     <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'all' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`nav-btn flex h-full items-center space-x-1 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'all' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
                       onClick={() => setSelectedCategory('all')}
                     >
                       <Home className="w-4 h-4" />
                       <span>{t('common.categories.all')}</span>
                     </button>
                     <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'movie' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`nav-btn flex h-full items-center space-x-1 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'movie' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
                       onClick={() => setSelectedCategory('movie')}
                     >
                       <Film className="w-4 h-4" />
                       <span>{t('common.categories.movies')}</span>
                     </button>
                     <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'series' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`nav-btn flex h-full items-center space-x-1 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'series' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
                       onClick={() => setSelectedCategory('series')}
                     >
                       <Tv className="w-4 h-4" />
                       <span>{t('common.categories.series')}</span>
                     </button>
                     <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'game' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`nav-btn flex h-full items-center space-x-1 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'game' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
                       onClick={() => setSelectedCategory('game')}
                     >
                       <Gamepad2 className="w-4 h-4" />
                       <span>{t('common.categories.games')}</span>
                     </button>
                     <button
-                      className={`flex h-full items-center space-x-1 px-3 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'book' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`nav-btn flex h-full items-center space-x-1 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${selectedCategory === 'book' ? 'border-b-2 border-orange-500 text-orange-500' : 'text-gray-600 hover:text-gray-900'}`}
                       onClick={() => setSelectedCategory('book')}
                     >
                       <Book className="w-4 h-4" />

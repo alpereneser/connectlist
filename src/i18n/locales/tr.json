@@ -344,6 +344,26 @@
       "error": "Destek talebiniz gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
       "subjectPlaceholder": "Destek talebinizin konusu",
       "messagePlaceholder": "Lütfen sorununuzu veya önerinizi detaylı bir şekilde açıklayın"
+    },
+    "emailPreferences": {
+      "title": "E-posta Bildirimleri",
+      "description": "Hangi durumlarda e-posta bildirimi almak istediğinizi seçin",
+      "loadError": "E-posta tercihleri yüklenirken hata oluştu",
+      "updateError": "Tercih güncellenirken hata oluştu",
+      "updateSuccess": "Tercih başarıyla güncellendi",
+      "notFound": "E-posta tercihleri bulunamadı",
+      "newFollower": "Yeni Takipçi",
+      "newFollowerDesc": "Birisi sizi takip ettiğinde e-posta bildirimi al",
+      "listItemAdded": "Liste Öğesi Eklendi",
+      "listItemAddedDesc": "Takip ettiğiniz birisinin listesine yeni öğe eklendiğinde bildirim al",
+      "listLiked": "Liste Beğenildi",
+      "listLikedDesc": "Listelerinizden biri beğenildiğinde e-posta bildirimi al",
+      "newComment": "Yeni Yorum",
+      "newCommentDesc": "Listelerinize yorum yapıldığında e-posta bildirimi al",
+      "commentReply": "Yorum Yanıtı",
+      "commentReplyDesc": "Yorumlarınıza yanıt verildiğinde e-posta bildirimi al",
+      "newMessage": "Yeni Mesaj",
+      "newMessageDesc": "Size yeni mesaj geldiğinde e-posta bildirimi al"
     }
   },
   "discover": {

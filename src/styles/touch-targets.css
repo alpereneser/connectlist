@@ -1,0 +1,154 @@
+/* Touch Target Standardization */
+/* Minimum 44px touch targets for mobile accessibility */
+
+/* Touch Target Base Classes */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.touch-target-sm {
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.touch-target-lg {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Interactive Element Classes */
+.btn-touch {
+  @apply touch-target px-4 py-3 rounded-lg font-medium transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply active:scale-95;
+}
+
+.btn-touch-primary {
+  @apply btn-touch bg-orange-500 text-white hover:bg-orange-600;
+}
+
+.btn-touch-secondary {
+  @apply btn-touch bg-gray-100 text-gray-900 hover:bg-gray-200;
+}
+
+.btn-touch-danger {
+  @apply btn-touch bg-red-500 text-white hover:bg-red-600;
+}
+
+.btn-touch-ghost {
+  @apply btn-touch bg-transparent text-gray-700 hover:bg-gray-100;
+}
+
+/* Icon Button Classes */
+.icon-btn {
+  @apply touch-target rounded-full transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply active:scale-95;
+}
+
+.icon-btn-sm {
+  @apply touch-target-sm rounded-full transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply active:scale-95;
+}
+
+.icon-btn-lg {
+  @apply touch-target-lg rounded-full transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply active:scale-95;
+}
+
+/* Tab/Navigation Button Classes */
+.nav-btn {
+  @apply touch-target px-4 py-2 rounded-lg font-medium transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply active:scale-95;
+}
+
+.nav-btn-active {
+  @apply nav-btn bg-orange-100 text-orange-600 border-b-2 border-orange-500;
+}
+
+.nav-btn-inactive {
+  @apply nav-btn text-gray-600 hover:text-gray-900 hover:bg-gray-50;
+}
+
+/* Card/List Item Touch Areas */
+.card-touch {
+  @apply min-h-[44px] p-3 rounded-lg transition-all cursor-pointer;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply hover:bg-gray-50 active:scale-[0.98];
+}
+
+.list-item-touch {
+  @apply min-h-[44px] px-4 py-3 transition-all cursor-pointer;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply hover:bg-gray-50 active:bg-gray-100;
+}
+
+/* Toggle/Switch Classes */
+.toggle-touch {
+  @apply touch-target-sm rounded-full transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+}
+
+/* Input Touch Areas */
+.input-touch {
+  @apply min-h-[44px] px-4 py-3 rounded-lg border-2 transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500;
+}
+
+/* Floating Action Button */
+.fab {
+  @apply fixed bottom-6 right-6 w-14 h-14 bg-orange-500 text-white rounded-full shadow-lg;
+  @apply flex items-center justify-center transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply hover:bg-orange-600 active:scale-95;
+  @apply z-50;
+}
+
+.fab-sm {
+  @apply fixed bottom-6 right-6 w-12 h-12 bg-orange-500 text-white rounded-full shadow-lg;
+  @apply flex items-center justify-center transition-all;
+  @apply focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2;
+  @apply hover:bg-orange-600 active:scale-95;
+  @apply z-50;
+}
+
+/* Responsive Touch Targets */
+@media (max-width: 768px) {
+  .touch-target-responsive {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  
+  .btn-touch-responsive {
+    @apply px-6 py-4 text-base;
+  }
+  
+  .icon-btn-responsive {
+    @apply w-12 h-12;
+  }
+}
+
+/* Safe Area Support */
+.touch-safe-area {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Haptic Feedback Classes - handled by JavaScript */

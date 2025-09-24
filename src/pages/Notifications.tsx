@@ -620,7 +620,13 @@ export function Notifications() {
       </div>
 
       {/* Page Header below global header (Instagram-like) */}
-      <div className="bg-white border-b sticky z-40" style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}>
+      <div
+        className="bg-white border-b sticky z-40"
+        style={{
+          top: 'calc(var(--safe-area-inset-top) + var(--header-height))',
+          marginTop: 'calc(-1 * var(--safe-area-inset-top) - var(--header-height))'
+        }}
+      >
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <h1 className="text-base font-semibold text-gray-900">

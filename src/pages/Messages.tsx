@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, type CSSProperties } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 // Header/BottomMenu global olarak App içinde render ediliyor
@@ -14,6 +14,7 @@ interface Conversation {
   id: string;
   last_message_text: string;
   last_message_at: string;
+  unread_count?: number;
   participants: {
     user_id: string;
     profiles: {
@@ -43,6 +44,11 @@ interface FormattedUser {
   avatar: string;
 }
 
+interface ContactSuggestion extends FormattedUser {
+  conversationId?: string;
+  source: 'conversation' | 'following';
+}
+
 export function Messages() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -65,6 +71,40 @@ export function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
+  const [isMobileLayout, setIsMobileLayout] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileLayout(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const containerStyle: CSSProperties = isMobileLayout
+    ? {
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height))',
+        paddingBottom: 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))',
+        height: '100vh',
+      }
+    : {
+        paddingTop: 'calc(var(--safe-area-inset-top) + var(--header-height) + 1.5rem)',
+        paddingBottom: 'calc(var(--safe-area-inset-bottom) + 1.5rem)',
+        height: 'calc(100vh - var(--safe-area-inset-top) - var(--header-height) - 3rem)',
+        minHeight: 'calc(100vh - var(--safe-area-inset-top) - var(--header-height) - 3rem)',
+      };
+
+  const errorBannerStyle: CSSProperties = {
+    top: isMobileLayout
+      ? 'var(--safe-area-inset-top)'
+      : 'calc(var(--safe-area-inset-top) + var(--header-height))',
+  };
+  const mobileBottomInset = 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))';
+  const mobileListPadding = `calc(${mobileBottomInset} + 96px)`;
+  const mobileMessagesPadding = `calc(${mobileBottomInset} + 132px)`;
+  const mobileInputPadding = `calc(${mobileBottomInset} + 12px)`;
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -156,25 +196,47 @@ export function Messages() {
         conversation.participants.some((p: {user_id: string}) => p.user_id === currentUserId)
       );
       
-      // Remove duplicate conversations and only show conversations with messages
+      // Remove duplicate conversations - keep the most recent one for each user pair
       const uniqueConversations = userConversations.filter((conversation, index, self) => {
-        // Only show conversations that have messages
-        if (!conversation.last_message_text) return false;
-        
         // Get the other participant
         const otherParticipant = conversation.participants.find((p: { user_id: string; profiles: { username: string; full_name: string; avatar: string; }; }) => p.user_id !== currentUserId);
         if (!otherParticipant) return false;
         
-        // Check if this is the first occurrence of this user
-        const firstIndex = self.findIndex(conv => {
+        // Check if this is the most recent conversation with this user
+        const mostRecentIndex = self.findIndex(conv => {
           const otherUser = conv.participants.find((p: { user_id: string; profiles: { username: string; full_name: string; avatar: string; }; }) => p.user_id !== currentUserId);
           return otherUser?.user_id === otherParticipant.user_id;
         });
         
-        return index === firstIndex;
+        return index === mostRecentIndex;
       });
+
+      // Her conversation için unread count'u hesapla
+      const conversationsWithUnreadCount = await Promise.all(
+        uniqueConversations.map(async (conversation) => {
+          try {
+            const { count } = await supabase
+              .from('decrypted_messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', conversation.id)
+              .eq('is_read', false)
+              .neq('sender_id', currentUserId);
+            
+            return {
+              ...conversation,
+              unread_count: count || 0
+            };
+          } catch (error) {
+            console.error('Error counting unread messages:', error);
+            return {
+              ...conversation,
+              unread_count: 0
+            };
+          }
+        })
+      );
       
-      setConversations(uniqueConversations);
+      setConversations(conversationsWithUnreadCount);
       setIsLoadingConversations(false);
     };
 
@@ -438,10 +500,58 @@ export function Messages() {
     fetchFollowing();
   }, [currentUserId]);
 
-  const filteredFollowing = following.filter(user =>
-    user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const conversationContacts = useMemo(() => {
+    if (!currentUserId) return [];
+
+    const seen = new Set<string>();
+    const contacts: ContactSuggestion[] = [];
+
+    conversations.forEach(conversation => {
+      const otherParticipant = conversation.participants.find((p: { user_id: string; profiles: { username: string; full_name: string; avatar: string; }; }) => p.user_id !== currentUserId);
+      if (otherParticipant && !seen.has(otherParticipant.user_id) && otherParticipant.profiles) {
+        seen.add(otherParticipant.user_id);
+        contacts.push({
+          id: otherParticipant.user_id,
+          username: otherParticipant.profiles.username,
+          full_name: otherParticipant.profiles.full_name,
+          avatar: otherParticipant.profiles.avatar,
+          conversationId: conversation.id,
+          source: 'conversation'
+        });
+      }
+    });
+
+    return contacts;
+  }, [conversations, currentUserId]);
+
+  const suggestions = useMemo(() => {
+    const map = new Map<string, ContactSuggestion>();
+
+    conversationContacts.forEach(contact => {
+      map.set(contact.id, contact);
+    });
+
+    following.forEach(user => {
+      if (!map.has(user.id)) {
+        map.set(user.id, { ...user, source: 'following' });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [conversationContacts, following]);
+
+  const filteredSuggestions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return suggestions;
+    }
+
+    return suggestions.filter(user =>
+      user.full_name.toLowerCase().includes(query) ||
+      user.username.toLowerCase().includes(query)
+    );
+  }, [suggestions, searchQuery]);
+
 
   const handleStartConversation = async (userId: string, closeSearch = true) => {
     try {
@@ -477,6 +587,25 @@ export function Messages() {
         alert(error.message);
       }
     }
+  };
+
+  const handleSuggestionSelect = (suggestion: ContactSuggestion) => {
+    setShowFollowingSearch(false);
+    setSearchQuery('');
+
+    if (suggestion.conversationId) {
+      const existingConversation = conversations.find(conversation => conversation.id === suggestion.conversationId);
+      if (existingConversation) {
+        if (window.innerWidth < 768) {
+          navigate(`/messages/${suggestion.conversationId}`);
+        } else {
+          setSelectedConversation(existingConversation);
+        }
+        return;
+      }
+    }
+
+    void handleStartConversation(suggestion.id, false);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -564,21 +693,24 @@ export function Messages() {
       {error && (
         <div
           className="fixed left-0 right-0 bg-red-50 p-4 flex items-center justify-center gap-2 text-red-600 z-50"
-          style={{ top: 'calc(var(--safe-area-inset-top) + var(--header-height))' }}
+          style={errorBannerStyle}
         >
           <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
-      <div className="content-height-no-subheader md:content-height-no-subheader bg-white">
-        <div className="h-full max-w-7xl mx-auto">
-          <div className="h-full overflow-hidden">
-            <div className="h-full grid md:grid-cols-12 overflow-hidden">
+      <div
+        className={['bg-white', isMobileLayout ? 'fixed inset-0 z-40 flex flex-col' : 'fixed inset-0', 'md:static md:inset-auto'].join(' ')}
+        style={containerStyle}
+      >
+         <div className="flex-1 h-full max-w-7xl mx-auto w-full md:px-6 lg:px-8">
+           <div className="h-full flex flex-col md:flex-row overflow-hidden md:rounded-lg md:shadow-sm md:border md:border-gray-200">
+            <div className="h-full flex flex-col md:flex-row w-full overflow-hidden">
               {/* Conversations List */}
-              <div className={`col-span-12 md:col-span-4 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'} overflow-hidden border-r border-gray-200`}>
+              <div className={`w-full md:w-80 lg:w-96 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'} overflow-hidden border-r border-gray-200 bg-white`}>
                 <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
-                  <div className="flex items-center justify-between p-6">
-                    <h1 className="text-2xl font-bold text-gray-900">{t('common.messages.title')}</h1>
+                  <div className="flex items-center justify-between p-4 md:p-6">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('common.messages.title')}</h1>
                     <button 
                       onClick={() => setShowFollowingSearch(true)}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
@@ -586,7 +718,7 @@ export function Messages() {
                       <Search size={20} />
                     </button>
                   </div>
-                  <div className="relative px-6 pb-4">
+                  <div className="relative px-4 md:px-6 pb-4">
                     <input
                       type="text"
                       value={searchQuery}
@@ -598,29 +730,44 @@ export function Messages() {
                       placeholder="Ara..."
                       className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white border border-transparent focus:border-orange-500 transition-all"
                     />
-                    <Search className="absolute left-10 top-3.5 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-8 md:left-10 top-3.5 h-5 w-5 text-gray-400" />
                     
                     {/* Arama Sonuçları */}
-                    {showFollowingSearch && searchQuery && (
-                      <div className="absolute z-10 left-6 right-6 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 max-h-64 overflow-y-auto">
-                        {filteredFollowing.length > 0 ? (
-                          filteredFollowing.map((user) => (
-                            <button
-                              key={user.id}
-                              onClick={() => handleStartConversation(user.id)}
-                              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                            >
-                              <img
-                                src={user.avatar}
-                                alt={user.full_name}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                              <div className="text-left flex-1">
-                                <p className="font-semibold text-gray-900">{user.full_name}</p>
-                                <p className="text-sm text-gray-500">@{user.username}</p>
-                              </div>
-                            </button>
-                          ))
+                    {showFollowingSearch && (
+                      <div className="absolute z-50 left-4 md:left-6 right-4 md:right-6 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 max-h-72 overflow-y-auto">
+                        {filteredSuggestions.length > 0 ? (
+                          filteredSuggestions.map((suggestion) => {
+                            const conversationPreview = suggestion.conversationId
+                              ? conversations.find(conv => conv.id === suggestion.conversationId)?.last_message_text
+                              : null;
+                            const suggestionKey = suggestion.id + '-' + (suggestion.conversationId ?? "new");
+
+                            return (
+                              <button
+                                key={suggestionKey}
+                                onClick={() => handleSuggestionSelect(suggestion)}
+                                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors first:rounded-t-xl last:rounded-b-xl text-left"
+                              >
+                                <img
+                                  src={suggestion.avatar}
+                                  alt={suggestion.full_name}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 truncate">{suggestion.full_name}</p>
+                                  <p className="text-sm text-gray-500 truncate">@{suggestion.username}</p>
+                                  {conversationPreview && (
+                                    <p className="text-xs text-gray-400 mt-1 truncate">{conversationPreview}</p>
+                                  )}
+                                </div>
+                                {suggestion.conversationId ? (
+                                  <span className="text-xs text-orange-500 font-medium">{t('common.messages.title')}</span>
+                                ) : (
+                                  <span className="text-xs text-gray-400">{t('common.messages.startConversation')}</span>
+                                )}
+                              </button>
+                            );
+                          })
                         ) : (
                           <div className="p-6 text-center text-gray-500">
                             {t('common.noResults')}
@@ -630,7 +777,10 @@ export function Messages() {
                     )}
                   </div>
                 </div>
-                <div className="overflow-y-auto flex-1">
+                <div
+                  className="overflow-y-auto flex-1"
+                  style={isMobileLayout ? { paddingBottom: mobileListPadding, scrollPaddingBottom: mobileListPadding } : undefined}
+                >
                   {isLoadingConversations ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-white">
                       <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
@@ -650,7 +800,7 @@ export function Messages() {
                               setSelectedConversation(conversation);
                             }
                           }}
-                          className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors ${
+                          className={`w-full flex items-center gap-4 px-4 md:px-6 py-4 hover:bg-gray-50 transition-colors ${
                             selectedConversation?.id === conversation.id ? 'bg-orange-50 border-r-4 border-orange-500' : ''
                           }`}
                         >
@@ -660,25 +810,32 @@ export function Messages() {
                               alt={otherUser.full_name}
                               loading="lazy"
                               decoding="async"
-                              className="w-14 h-14 rounded-full object-cover"
+                              className="w-12 md:w-14 h-12 md:h-14 rounded-full object-cover"
                             />
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                            <div className="absolute -bottom-1 -right-1 w-3 md:w-4 h-3 md:h-4 bg-green-500 border-2 border-white rounded-full"></div>
                           </div>
                           <div className="flex-1 text-left min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-semibold text-gray-900 truncate">{otherUser.full_name}</h3>
-                              {conversation.last_message_at && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  {formatDate(conversation.last_message_at)}
-                                </span>
-                              )}
+                              <h3 className="font-semibold text-gray-900 truncate text-sm md:text-base">{otherUser.full_name}</h3>
+                              <div className="flex items-center gap-2 ml-2">
+                                {conversation.last_message_at && (
+                                  <span className="text-xs text-gray-500">
+                                    {formatDate(conversation.last_message_at)}
+                                  </span>
+                                )}
+                                {conversation.unread_count && conversation.unread_count > 0 && (
+                                  <div className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+                                    {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-600 truncate">
+                            <p className="text-xs md:text-sm text-gray-600 truncate">
                               {conversation.last_message_text ? 
                                 (conversation.last_message_text.length > 35 ? 
                                   conversation.last_message_text.substring(0, 35) + '...' : 
                                   conversation.last_message_text
-                                ) : t('common.messages.noMessagesYet')
+                                ) : 'Henüz mesaj yok - Konuşmaya başlayın'
                               }
                             </p>
                           </div>
@@ -691,27 +848,27 @@ export function Messages() {
                         <Search size={24} className="text-gray-400" />
                       </div>
                       <p className="text-lg font-medium mb-2">{t('common.messages.noConversations')}</p>
-                      <p className="text-sm text-center">{t('common.messages.startConversation')}</p>
+                      <p className="text-sm text-center px-4">{t('common.messages.startConversation')}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Chat Area */}
-              <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} col-span-12 md:col-span-8 flex-col h-full overflow-hidden bg-gray-50`}>
+              <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 flex-col h-full overflow-hidden bg-gray-50`}>
                 {selectedConversation ? (
                   <>
                     {/* Chat Header */}
                     <div className="p-4 border-b flex items-center justify-between sticky top-0 bg-white z-10 shadow-sm">
-                      <button
-                        onClick={() => setSelectedConversation(null)}
-                        className="md:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                      </button>
                       <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => setSelectedConversation(null)}
+                          className="md:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                          </svg>
+                        </button>
                         <div className="relative">
                           <img
                             src={getOtherParticipant(selectedConversation)?.avatar}
@@ -756,7 +913,11 @@ export function Messages() {
                     </div>
 
                     {/* Messages */}
-                    <div className={`flex-1 ${messages.length > 0 ? 'overflow-y-auto' : 'overflow-y-hidden'} p-4 bg-gray-50`} id="messages-container">
+                    <div
+                      className={`flex-1 ${messages.length > 0 ? 'overflow-y-auto' : 'overflow-y-hidden'} p-4 bg-gray-50`}
+                      id="messages-container"
+                      style={isMobileLayout ? { paddingBottom: mobileMessagesPadding, scrollPaddingBottom: mobileMessagesPadding } : undefined}
+                    >
                       {isLoadingMessages ? (
                         <div className="flex items-center justify-center h-full">
                           <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
@@ -871,7 +1032,11 @@ export function Messages() {
                     </div>
 
                     {/* Message Input */}
-                    <form onSubmit={handleSendMessage} className="p-2 md:p-4 border-t bg-white sticky bottom-0 left-0 right-0 z-10 shadow-[0_-1px_6px_rgba(0,0,0,0.06)]">
+                    <form
+                      onSubmit={handleSendMessage}
+                      className="p-2 md:p-4 border-t bg-white sticky bottom-0 left-0 right-0 z-10 shadow-[0_-1px_6px_rgba(0,0,0,0.06)] safe-bottom"
+                      style={isMobileLayout ? { paddingBottom: mobileInputPadding } : undefined}
+                    >
                       <div className="flex items-end gap-3">
                         <button type="button" className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -896,6 +1061,7 @@ export function Messages() {
                             placeholder={t('common.messages.typeMessage')}
                             autoFocus
                             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"
+                            style={isMobileLayout ? { minHeight: '54px' } : undefined}
                           />
                           <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
@@ -923,7 +1089,8 @@ export function Messages() {
           </div>
         </div>
       </div>
-      
+
+
       {/* Silme Onay Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

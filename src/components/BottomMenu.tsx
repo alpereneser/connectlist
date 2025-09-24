@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { House, ChatCircle, Plus, Bell, User, UserPlus } from '@phosphor-icons/react';
+import { House, ChatCircle, Plus, Bell, User, SignIn } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import { Film, Tv, Book, Users2, Video, Gamepad2, MapPin, Music } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -211,11 +211,11 @@ export const BottomMenu: React.FC<BottomMenuProps> = ({ hidden = false }) => {
     <button
       onClick={() => {
         triggerHaptic('light');
-        navigate('/auth/register');
+        navigate('/auth/login');
       }}
-      className={`p-2 rounded-full hover:bg-gray-100 ${isActive('/auth/register') ? 'text-orange-500' : 'text-gray-600'}`}
+      className={`p-2 rounded-full hover:bg-gray-100 ${isActive('/auth/login') ? 'text-orange-500' : 'text-gray-600'}`}
     >
-      <UserPlus weight={isActive('/auth/register') ? 'fill' : 'regular'} size={24} />
+      <SignIn weight={isActive('/auth/login') ? 'fill' : 'regular'} size={24} />
     </button>
   );
 

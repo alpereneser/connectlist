@@ -1,6 +1,64 @@
+@import './styles/touch-targets.css';
+@import './styles/bottom-sheet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Touch Target Standardization */
+
+/* Mobil Avatar Editor Optimizasyonları */
+@layer components {
+  /* Range slider mobil optimizasyonu */
+  input[type="range"].touch-manipulation {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    border-radius: 6px;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+  }
+
+  input[type="range"].touch-manipulation::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f97316;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  input[type="range"].touch-manipulation::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f97316;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Canvas touch optimizasyonu */
+  .avatar-editor-canvas {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobil buton optimizasyonu */
+  .mobile-touch-button {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
 
 /* PWA ve Mobile First CSS Düzenlemeleri */
 
@@ -259,6 +317,13 @@
   .search-input-focused {
     transform: translateY(-50px);
     transition: transform 0.3s ease;
+  }
+}
+
+@media (max-width: 767px) {
+  .min-h-screen {
+    min-height: 100svh;
+    min-height: 100dvh;
   }
 }
 

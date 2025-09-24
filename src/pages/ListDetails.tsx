@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 import { Helmet } from 'react-helmet-async';
-import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Plus, Send, MapPin, Music, ArrowLeft } from 'lucide-react';
+import { Film, Tv, Book, Users2, Youtube, Gamepad2, Heart, Share2, Pencil, Check, Trash2, X, Plus, Send, MapPin, Music, ArrowLeft, MessageCircle } from 'lucide-react';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { ListItem, List, User, Comment, Like } from '../types/supabase';
 import { turkishToEnglish } from '../lib/utils';
@@ -671,6 +671,10 @@ export default function ListDetails() {
     
     // Silme onayı için öğe ID'sini ayarla
     setShowItemDeleteConfirm(itemId);
+  };
+
+  const handleCommentClick = () => {
+    setShowCommentModal(true);
   };
 
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -1344,9 +1348,9 @@ export default function ListDetails() {
               </div>
             </div>
             
-            {/* Yorum Bölümü - Items alanının hemen altında */}
+            {/* Yorum Bölümü - Items alanının hemen altında - Sadece desktop'ta göster */}
             {!isEditing && (
-              <div className="px-3 md:px-6 py-2 md:py-4 border-t border-gray-200">
+              <div className="hidden md:block px-3 md:px-6 py-2 md:py-4 border-t border-gray-200">
                 <h3 className="text-sm md:text-lg font-semibold mb-2 md:mb-4">{t('listPreview.listDetails.comments.title')} ({comments.length})</h3>
                 
                 {/* Yorum Giriş Formu */}
@@ -1507,7 +1511,14 @@ export default function ListDetails() {
                   <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} />
                   <span>{safeData.list?.likes_count || 0}</span>
                 </button>
-                {/* Yorum butonu gizlendi */}
+                {/* Comment butonu - mobilde modal açar, desktop'ta scroll yapar */}
+                <button
+                  onClick={handleCommentClick}
+                  className="flex items-center gap-2 text-gray-600 hover:text-purple-500"
+                >
+                  <MessageCircle size={20} />
+                  <span>{comments.length}</span>
+                </button>
                 <button
                   onClick={handleShare}
                   className="flex items-center gap-2 text-gray-600 hover:text-blue-500"
@@ -1538,6 +1549,7 @@ export default function ListDetails() {
         commentCount={optimisticCommentCount}
         onCommentAdded={fetchComments}
         onCommentDeleted={fetchComments}
+        isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
       />
       
       {showSearchPopup && (

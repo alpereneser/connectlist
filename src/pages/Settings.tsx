@@ -554,7 +554,7 @@ const Settings = () => {
         throw new Error((errorData as any).error || 'Destek talebi gönderilemedi');
       }
 
-      setSuccess(t('settings.support.success'));
+      setSuccess(t('settings.supportForm.success'));
       announceToScreenReader('Destek talebi gönderildi');
       triggerHaptic('medium');
       resetSupport();
@@ -1466,13 +1466,13 @@ const Settings = () => {
 
       {/* Avatar Kırpma Modalı */}
       {showAvatarCropper && selectedAvatarFile && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-lg md:max-w-xl max-h-[92vh] overflow-auto">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">{t('avatar.title', 'Profil Fotoğrafını Düzenle')}</h3>
-              <p className="text-sm text-gray-500 mt-1">{t('avatar.subtitle', 'Fotoğrafınızı istediğiniz gibi kırpın ve boyutlandırın')}</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-white rounded-xl w-full max-w-sm md:max-w-lg max-h-[95vh] md:max-h-[92vh] overflow-auto">
+            <div className="p-3 md:p-4 border-b border-gray-200">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">{t('avatar.title', 'Profil Fotoğrafını Düzenle')}</h3>
+              <p className="text-xs md:text-sm text-gray-500 mt-1">{t('avatar.subtitle', 'Fotoğrafınızı istediğiniz gibi kırpın ve boyutlandırın')}</p>
             </div>
-            <div className="p-4">
+            <div className="p-3 md:p-4">
               <AvatarCropper
                  image={selectedAvatarFile}
                  onSave={handleAvatarSave}

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthPopup } from '../components/AuthPopup';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useRequireAuth } from '../hooks/useRequireAuth';
 import { Pencil, ChatCircle, MapPin, Link as LinkIcon, X, Heart } from '@phosphor-icons/react';
+import { LogOut } from 'lucide-react';
 import { FollowModal } from '../components/FollowModal';
 import { ListPreview } from '../components/ListPreview';
 import { ProfileCategories } from '../components/ProfileCategories';
@@ -94,6 +95,7 @@ export function Profile() {
   const listContainerRef = useRef<HTMLDivElement>(null);
   const mobileListContainerRef = useRef<HTMLDivElement>(null);
   const likedListsContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [currentSessionUserId, setCurrentSessionUserId] = useState<string | null>(null);
   const [mobileViewMode] = useState<'grid' | 'list'>('list');
@@ -240,6 +242,15 @@ export function Profile() {
       console.error('Follow işlemi sırasında beklenmeyen hata:', error);
     } finally {
       setIsLoadingFollow(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
     }
   };
 
@@ -526,14 +537,14 @@ export function Profile() {
     fetchUserLists();
   }, [profile?.id]);
 
-  const loadMoreLists = async () => {
+  const loadMoreLists = useCallback(async () => {
     if (!profile?.id || isLoadingMoreLists || !hasMoreLists) return;
-    
+
     setIsLoadingMoreLists(true);
     try {
       const nextPage = listsCurrentPage + 1;
       const moreLists = await getUserLists(profile.id, nextPage, LISTS_PAGE_SIZE);
-      
+
       setLists(prev => [...prev, ...moreLists]);
       setListsCurrentPage(nextPage);
       setHasMoreLists(moreLists.length === LISTS_PAGE_SIZE);
@@ -542,20 +553,32 @@ export function Profile() {
     } finally {
       setIsLoadingMoreLists(false);
     }
-  };
+  }, [profile?.id, isLoadingMoreLists, hasMoreLists, listsCurrentPage]);
 
-  // Scroll event listener for infinite scroll
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || isLoadingMoreLists) {
-        return;
-      }
-      loadMoreLists();
-    };
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasMoreLists) {
+      return;
+    }
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [listsCurrentPage, hasMoreLists, isLoadingMoreLists, profile?.id]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoadingLists && !isLoadingMoreLists) {
+          loadMoreLists();
+        }
+      },
+      {
+        root: null,
+        rootMargin: '200px 0px',
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [hasMoreLists, isLoadingLists, isLoadingMoreLists, loadMoreLists]);
 
   const filteredLists = activeCategory === 'all'
     ? lists
@@ -719,12 +742,22 @@ export function Profile() {
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   {isCurrentUser ? (
-                    <button
-                      onClick={() => navigate('/settings')}
-                      className="flex-1 py-2 px-4 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      {t('profile.editProfile')}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => navigate('/settings')}
+                        className="flex-1 py-2 px-4 bg-gray-100 text-gray-900 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                      >
+                        {t('profile.editProfile')}
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="py-2 px-4 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                        title={t('profile.signOut')}
+                        aria-label={t('profile.signOut')}
+                      >
+                        <LogOut size={16} />
+                      </button>
+                    </>
                   ) : (
                           <>
                             <button
@@ -801,6 +834,13 @@ export function Profile() {
                       >
                         <Pencil size={24} />
                         <span>{t('profile.editProfile')}</span>
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="md:hidden flex items-center gap-2 px-5 py-3 bg-red-500 rounded-lg text-white hover:bg-red-600"
+                      >
+                        <LogOut size={20} />
+                        <span>{t('profile.signOut')}</span>
                       </button>
                     </div>
                   ) : (
@@ -929,140 +969,32 @@ export function Profile() {
                 </div>
               </div>
             ) : filteredLists.length > 0 ? (
-              <div className={`p-2 ${mobileViewMode === 'grid' ? 'grid grid-cols-2 gap-2' : 'space-y-3'}`}>
+              <div className="p-2 space-y-3">
                 {filteredLists.map((list) => (
-                  <div 
+                  <div
                     key={list.id}
                     id={`list-${list.id}`}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer"
-                    onClick={() => {
-                      setLastViewedListId(list.id);
-                      navigate(`/${list.profiles.username}/list/${list.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
-                    }}
+                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
                   >
-                    {mobileViewMode === 'grid' ? (
-                      /* Grid View - Compact */
-                      <div className="p-3">
-                        {/* Main Preview */}
-                        {list.items.length > 0 && (
-                          <div className="w-full h-32 rounded-xl overflow-hidden bg-gray-100 mb-3 relative">
-                            {list.items[0]?.image_url ? (
-                              <img 
-                                src={list.items[0].image_url} 
-                                alt={list.items[0].title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                                <span className="text-3xl">
-                                  {list.category === 'movies' ? '🎬' : 
-                                   list.category === 'series' ? '📺' : 
-                                   list.category === 'books' ? '📚' : 
-                                   list.category === 'games' ? '🎮' : 
-                                   list.category === 'people' ? '👤' : 
-                                   list.category === 'places' ? '📍' : 
-                                   list.category === 'musics' ? '🎵' : '📋'}
-                                </span>
-                </div>
-                            )}
-                            {list.items.length > 1 && (
-                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                                +{list.items.length - 1}
-                              </div>
-                            )}
-                            <div className="absolute top-2 right-2 flex items-center space-x-1 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-                              <Heart size={12} />
-                              <span>{list.likes_count || 0}</span>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Title & Info */}
-                        <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 leading-tight">
-                          {list.title}
-                        </h3>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{list.items.length} öğe</span>
-                          <span>{new Date(list.created_at).toLocaleDateString('tr-TR', { 
-                            day: 'numeric', 
-                            month: 'short' 
-                          })}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      /* List View - Detailed */
-                      <div className="p-4">
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                              <span className="text-xl">
-                                {list.category === 'movies' ? '🎬' : 
-                                 list.category === 'series' ? '📺' : 
-                                 list.category === 'books' ? '📚' : 
-                                 list.category === 'games' ? '🎮' : 
-                                 list.category === 'people' ? '👤' : 
-                                 list.category === 'places' ? '📍' : 
-                                 list.category === 'musics' ? '🎵' : '📋'}
-                              </span>
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">
-                                {list.title}
-                              </h3>
-                              <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                <span>{list.items.length} öğe</span>
-                                <span>•</span>
-                                <span>{new Date(list.created_at).toLocaleDateString('tr-TR', { 
-                                  day: 'numeric', 
-                                  month: 'short' 
-                                })}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center space-x-1 text-gray-400">
-                            <Heart size={18} />
-                            <span className="text-sm">{list.likes_count || 0}</span>
-                          </div>
-                        </div>
-                        
-                        {/* Description */}
-                        {list.description && (
-                          <p className="text-sm text-gray-600 mb-5 line-clamp-2 leading-relaxed">
-                            {list.description}
-                          </p>
-                        )}
-                        
-                        {/* Preview Items - Büyük ve kaydırılabilir */}
-                        {list.items.length > 0 && (
-                          <div className="flex space-x-4 overflow-x-auto scrollbar-hide pb-2">
-                            {list.items.map((item, index) => (
-                              <div key={index} className="flex-shrink-0">
-                                <div className="w-28 h-36 rounded-xl overflow-hidden bg-gray-100 mb-3 shadow-sm">
-                                  {item.image_url ? (
-                                    <img 
-                                      src={item.image_url} 
-                                      alt={item.title}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                                      <span className="text-2xl text-gray-400">?</span>
-                                    </div>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-700 text-center line-clamp-2 w-28 leading-tight font-medium">
-                                  {item.title}
-                                </p>
-                              </div>
-                            ))}
-              </div>
-            )}
-            
-                        {/* Footer kaldırıldı: profil sayfasında liste sahibi ve ikonlar gereksiz */}
-                      </div>
-                    )}
+                    <ListPreview
+                      list={{
+                        id: list.id,
+                        title: list.title,
+                        description: list.description,
+                        category: list.category,
+                        created_at: list.created_at,
+                        likes_count: list.likes_count ?? 0,
+                        items_count: list.items_count ?? 0,
+                        user_id: list.user_id,
+                        profiles: list.profiles
+                      }}
+                      items={list.items}
+                      onListClick={() => setLastViewedListId(list.id)}
+                      currentUserId={currentSessionUserId || ''}
+                      isOwnProfile={isCurrentUser}
+                      hideAuthor={true}
+                      hideActions={false}
+                    />
                   </div>
                 ))}
               </div>
@@ -1134,6 +1066,8 @@ export function Profile() {
                     }}
                     items={list.items}
                     onListClick={() => setLastViewedListId(list.id)}
+                    currentUserId={currentSessionUserId || ''}
+                    isOwnProfile={isCurrentUser}
                     hideAuthor={true}
                     hideActions={false}
                   />
@@ -1163,7 +1097,9 @@ export function Profile() {
               </div>
             )}
           </div>
-          
+
+          <div ref={loadMoreRef} className="h-px w-full" aria-hidden="true" />
+
           {/* Reklam Alanı */}
           <div className="mt-6">
             {/* Reklam alanı kaldırıldı */}
@@ -1222,6 +1158,7 @@ export function Profile() {
                         items={list.items}
                         currentUserId={currentSessionUserId || ''}
                         isOwnProfile={isCurrentUser}
+                        hideActions={false}
                       />
                     </div>
                   ))}

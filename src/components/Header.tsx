@@ -581,7 +581,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                     navigate(-1);
                     announceToScreenReader('Önceki sayfaya gidiliyor');
                   }} 
-                  className="p-2 mr-1 text-gray-500 hover:text-gray-700 focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150 rounded-full"
+                  className="icon-btn mr-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   aria-label="Önceki sayfaya git"
                   title="Geri"
                   tabIndex={0}
@@ -601,7 +601,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
               <img 
                 src="https://ynbwiarxodetyirhmcbp.supabase.co/storage/v1/object/public/images/connectlist-beta-logo.png?t=1" 
                 alt="ConnectList logosu" 
-                className={`${isMobile ? 'w-[130px] h-[15px]' : 'w-[145px] h-[17px] md:w-[193px] md:h-[22px]'}`}
+                className={`${isMobile ? 'w-[162px] h-[19px]' : 'w-[145px] h-[17px] md:w-[193px] md:h-[22px]'}`}
                 role="img"
                 onClick={(e) => {
                   e.preventDefault();
@@ -693,7 +693,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                     <button
                       type="button"
                       onClick={toggleListening}
-                      className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors ${
+                      className={`icon-btn absolute inset-y-0 right-0 mr-1 transition-colors ${
                         isListening
                           ? 'text-red-500 hover:text-red-600'
                           : 'text-gray-400 hover:text-orange-500'
@@ -731,7 +731,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                   {/* Messages */}
                   <Link
                     to="/messages"
-                    className="relative p-2 text-gray-600 hover:text-orange-500 rounded-full hover:bg-gray-100 hidden md:flex focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150 cursor-pointer"
+                    className="relative p-2 text-gray-600 hover:text-orange-500 hover:bg-gray-100 rounded-lg transition-colors hidden md:flex items-center justify-center"
                     aria-label={hasUnreadMessages ? "Mesajlar - okunmamış mesaj var" : "Mesajlar"}
                     title="Mesajlar"
                     tabIndex={0}
@@ -762,7 +762,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                             : `Bildirimler açıldı. ${notificationCount} okunmamış bildirim`
                         );
                       }}
-                      className="relative p-2 text-gray-600 hover:text-orange-500 rounded-full hover:bg-gray-100 focus:outline-none active:bg-gray-200 active:scale-95 transition-all duration-150"
+                      className="relative p-2 text-gray-600 hover:text-orange-500 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
                       aria-label={`Bildirimler ${showNotifications ? 'kapat' : 'aç'}. ${notificationCount} okunmamış bildirim`}
                       aria-expanded={showNotifications}
                       aria-haspopup="true"
@@ -819,7 +819,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                             : 'Profil menüsü açıldı'
                         );
                       }}
-                      className="flex items-center space-x-3 focus:outline-none active:bg-gray-100 active:scale-95 transition-all duration-150 rounded-lg p-1"
+                      className="btn-touch flex items-center space-x-3 hover:bg-gray-100 rounded-lg"
                       disabled={isLoading}
                       aria-label={`Profil menüsü ${isDropdownOpen ? 'kapat' : 'aç'}. ${profile?.full_name || 'Kullanıcı'}`}
                       aria-expanded={isDropdownOpen}
@@ -866,7 +866,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                       >
                         <Link
                           to={`/profile/${profile?.username}`}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 active:bg-gray-200 active:scale-[0.98] transition-all duration-150"
+                          className="list-item-touch block text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                           tabIndex={0}
                           onClick={() => {
@@ -879,7 +879,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                         </Link>
                         <Link
                           to="/settings"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 active:bg-gray-200 active:scale-[0.98] transition-all duration-150"
+                          className="list-item-touch block text-sm text-gray-700 hover:bg-gray-100"
                           role="menuitem"
                           tabIndex={0}
                           onClick={() => {
@@ -896,7 +896,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                             setIsDropdownOpen(false);
                             handleSignOut();
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 focus:outline-none focus:bg-red-50 active:bg-red-100 active:scale-[0.98] transition-all duration-150 border-t border-gray-100 mt-1"
+                          className="list-item-touch block w-full text-left text-sm text-gray-700 hover:bg-red-50 border-t border-gray-100 mt-1"
                           role="menuitem"
                           tabIndex={0}
                         >
@@ -911,7 +911,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                 <div className="flex items-center space-x-3" role="group" aria-label="Kimlik doğrulama">
                   <Link
                       to="/auth/login"
-                      className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 focus:outline-none active:bg-gray-100 active:scale-95 transition-all duration-150 rounded-lg"
+                      className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                       aria-label="Giriş yap"
                       tabIndex={0}
                       onClick={() => {
@@ -923,7 +923,7 @@ export function Header({ onLogoClick }: HeaderProps = {}) {
                   </Link>
                   <Link
                       to="/auth/register"
-                      className="px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 focus:outline-none active:bg-orange-700 active:scale-95 transition-all duration-150 shadow-sm hover:shadow-md"
+                      className="px-3 py-2 text-sm font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm hover:shadow-md transition-colors"
                       aria-label="Kayıt ol"
                       tabIndex={0}
                       onClick={() => {

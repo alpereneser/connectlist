@@ -30,15 +30,27 @@ async function checkEmailPreference(userId: string, preferenceKey: string): Prom
       .eq('user_id', userId)
       .single();
       
-    if (error || !data) {
-      console.error('E-posta tercihi kontrol edilirken hata:', error);
-      return false;
+    if (error) {
+      console.error('Email tercihleri alınırken hata:', error);
+      // Hata durumunda varsayılan olarak true döndür (kullanıcı deneyimini bozmamak için)
+      return true;
     }
     
-    return (data as any)?.[preferenceKey] === true;
+    // Eğer tercih bulunamazsa varsayılan olarak true döndür
+    if (!data) {
+      return true;
+    }
+
+    // data tipini güvenli şekilde kontrol et ve unknown üzerinden eriş
+    if (typeof data !== 'object' || data === null) {
+      return true;
+    }
+    const value = (data as Record<string, unknown>)[preferenceKey];
+    return value === true;
   } catch (error) {
-    console.error('E-posta tercihi kontrol edilirken beklenmeyen hata:', error);
-    return false;
+    console.error('Email tercihleri kontrol edilirken beklenmeyen hata:', error);
+    // Hata durumunda varsayılan olarak true döndür
+    return true;
   }
 }
 
@@ -278,12 +290,11 @@ export async function triggerMessageNotification(messageId: string) {
   try {
     // Mesaj bilgilerini al
     const { data: messageData, error: messageError } = await supabase
-      .from('decrypted_messages') // Şifresi çözülmüş mesajlar tablosunu kullanıyoruz
+      .from('decrypted_messages')
       .select(`
         id, 
         conversation_id, 
         sender_id, 
-        receiver_id, 
         text, 
         created_at
       `)
@@ -295,16 +306,34 @@ export async function triggerMessageNotification(messageId: string) {
       return { success: false, reason: 'message_not_found' };
     }
     
+    // Conversation participants'tan alıcıyı bul
+    const { data: participants, error: participantsError } = await supabase
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', messageData.conversation_id);
+      
+    if (participantsError || !participants) {
+      console.error('Conversation participants alınamadı:', participantsError);
+      return { success: false, reason: 'participants_not_found' };
+    }
+    
+    // Gönderen dışındaki participant'ı bul (alıcı)
+    const receiverId = participants.find(p => p.user_id !== messageData.sender_id)?.user_id;
+    if (!receiverId) {
+      console.error('Alıcı bulunamadı');
+      return { success: false, reason: 'receiver_not_found' };
+    }
+    
     // Alıcının bildirim tercihini kontrol et
-    const shouldSendEmail = await checkEmailPreference(messageData.receiver_id, 'new_message');
+    const shouldSendEmail = await checkEmailPreference(receiverId, 'new_message');
     if (!shouldSendEmail) {
-      console.log('Kullanıcı mesaj bildirimlerini almak istemiyor:', messageData.receiver_id);
+      console.log('Kullanıcı mesaj bildirimlerini almak istemiyor:', receiverId);
       return { success: false, reason: 'preference_disabled' };
     }
     
     // Gönderen ve alıcı kullanıcıların bilgilerini al
     const sender = await getUserInfo(messageData.sender_id);
-    const recipient = await getUserInfo(messageData.receiver_id);
+    const recipient = await getUserInfo(receiverId);
     
     if (!sender || !recipient) {
       console.error('Kullanıcı bilgileri alınamadı');

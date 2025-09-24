@@ -12,6 +12,7 @@ interface EmailPreferences {
   user_id: string;
   new_follower: boolean;
   list_item_added: boolean;
+  list_liked: boolean;
   new_comment: boolean;
   comment_reply: boolean;
   new_message: boolean;
@@ -38,12 +39,50 @@ export function EmailPreferences({ userId }: EmailPreferencesProps) {
           .select('*')
           .eq('user_id', userId)
           .single();
-          
+        
         if (error) {
-          console.error('Tercihler yüklenirken hata oluştu:', error);
-          setError(t('settings.emailPreferences.loadError'));
-        } else {
-          setPreferences(data);
+          const isNotFound = error.code === 'PGRST116' || error.code === 'PGRST102' || error.details?.includes('No rows found');
+          if (isNotFound) {
+            const defaultPreferences: Omit<EmailPreferences, 'id' | 'created_at' | 'updated_at'> & Partial<Pick<EmailPreferences, 'id' | 'created_at' | 'updated_at'>> = {
+              user_id: userId,
+              new_follower: true,
+              list_item_added: true,
+              list_liked: true,
+              new_comment: true,
+              comment_reply: true,
+              new_message: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            const { data: inserted, error: insertError } = await supabase
+              .from('user_email_preferences')
+              .insert(defaultPreferences)
+              .select()
+              .single();
+
+            if (insertError) {
+              console.error('Varsayılan tercihler oluşturulurken hata oluştu:', insertError);
+              setError(t('settings.emailPreferences.loadError'));
+            } else if (inserted) {
+              setPreferences(inserted as EmailPreferences);
+            }
+          } else {
+            console.error('Tercihler yüklenirken hata oluştu:', error);
+            setError(t('settings.emailPreferences.loadError'));
+          }
+        } else if (data) {
+          // Eksik alan varsa true'ya tamamla
+          const normalised: EmailPreferences = {
+            ...data,
+            new_follower: data.new_follower ?? true,
+            list_item_added: data.list_item_added ?? true,
+            list_liked: data.list_liked ?? true,
+            new_comment: data.new_comment ?? true,
+            comment_reply: data.comment_reply ?? true,
+            new_message: data.new_message ?? true,
+          };
+          setPreferences(normalised);
         }
       } catch (err) {
         console.error('Beklenmeyen hata:', err);
@@ -145,6 +184,14 @@ export function EmailPreferences({ userId }: EmailPreferencesProps) {
           checked={preferences.list_item_added}
           onChange={(value) => updatePreference('list_item_added', value)}
           loading={updating === 'list_item_added'}
+        />
+        
+        <PreferenceItem
+          title={t('settings.emailPreferences.listLiked')}
+          description={t('settings.emailPreferences.listLikedDesc')}
+          checked={preferences.list_liked}
+          onChange={(value) => updatePreference('list_liked', value)}
+          loading={updating === 'list_liked'}
         />
         
         <PreferenceItem

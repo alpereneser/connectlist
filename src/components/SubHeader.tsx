@@ -117,7 +117,7 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
           <div className={`flex w-full items-center ${isMobile ? 'gap-3' : 'gap-6'}`}>
             <div
               id="tab-container"
-              className={`flex flex-1 items-center ${isMobile ? 'overflow-x-auto scrollbar-hide gap-3' : 'flex-wrap gap-6'} ${isScrolling ? 'scroll-smooth' : ''} min-h-[40px]`}
+              className={`flex flex-1 items-center ${isMobile ? 'overflow-x-auto scrollbar-hide justify-evenly px-2' : 'flex-wrap gap-6'} ${isScrolling ? 'scroll-smooth' : ''} min-h-[40px]`}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
               onScroll={handleScroll}
@@ -133,13 +133,12 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                     data-tab={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     className={`
-                      relative flex items-center gap-2 whitespace-nowrap
-                      ${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-3 text-sm'}
+                      relative flex ${isMobile ? 'flex-col items-center gap-1' : 'items-center gap-2'} whitespace-nowrap
+                      ${isMobile ? 'px-1 py-2 text-xs flex-1' : 'px-3 py-3 text-sm'}
                       font-medium transition-all duration-200
                       border-b-2
                       ${isActive ? 'border-orange-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-200'}
                       focus:outline-none active:bg-gray-100 active:scale-95
-                      ${isMobile ? 'flex-shrink-0' : ''}
                     `}
                     role="tab"
                     aria-selected={isActive}
@@ -147,7 +146,7 @@ export function SubHeader({ activeCategory = 'all', onCategoryChange }: SubHeade
                     tabIndex={isActive ? 0 : -1}
                     title={tab.label}
                   >
-                    <Icon className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} weight="regular" aria-label={`${tab.label} ikonu`} />
+                    <Icon className={`${isMobile ? 'h-6 w-6' : 'h-5 w-5'}`} weight="regular" aria-label={`${tab.label} ikonu`} />
                     <span className="leading-none">{tab.label}</span>
                   </button>
                 );

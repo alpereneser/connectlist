@@ -409,9 +409,12 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
   // Yorumları ve yanıtları say
   const totalCommentsCount = comments.reduce((acc, comment) => acc + 1 + (comment.replies ? comment.replies.length : 0), 0);
   const displayCommentCount = commentCount !== undefined ? commentCount : totalCommentsCount;
+  const mobileBottomInset = 'calc(var(--safe-area-inset-bottom) + var(--bottom-menu-height))';
+  const mobileScrollPadding = `calc(${mobileBottomInset} + 120px)`;
+  const mobileFormPadding = mobileBottomInset;
 
   return (
-    <div className={`fixed inset-0 z-50 flex ${isMobile ? 'items-stretch' : 'items-center justify-center'} ${isMobile ? 'bg-white' : 'bg-black bg-opacity-50'} transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`fixed inset-0 z-[70] flex ${isMobile ? 'items-stretch' : 'items-center justify-center'} ${isMobile ? 'bg-white' : 'bg-black bg-opacity-50'} transition-opacity duration-300 ease-in-out ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <div
         ref={modalRef}
         className={`${isMobile ? 'w-full h-full mobile-viewport-stable' : 'bg-white rounded-lg w-full max-w-lg max-h-[80vh]'} flex flex-col transform transition-all duration-300 ease-in-out ${isOpen ? (isMobile ? 'translate-y-0' : 'scale-100 opacity-100') : (isMobile ? 'translate-y-full' : 'scale-95 opacity-0')}`}
@@ -422,9 +425,9 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
           {isMobile && (
             <button
               onClick={onClose}
-              className="text-gray-600 hover:text-gray-800 p-1"
+              className="text-gray-600 hover:text-gray-800 p-2"
             >
-              <X size={24} />
+              <X size={28} />
             </button>
           )}
           <h3 className={`${isMobile ? 'text-lg font-semibold flex-1 text-center' : 'text-xl font-semibold'} text-gray-800`}>
@@ -438,10 +441,14 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
               <X size={20} />
             </button>
           )}
-          {isMobile && <div className="w-8"></div>}
+          {isMobile && <div className="w-12"></div>}
         </div>
         
-        <div ref={commentsContainerRef} className="flex-1 overflow-y-auto p-4">
+        <div
+          ref={commentsContainerRef}
+          className="flex-1 overflow-y-auto p-4"
+          style={isMobile ? { paddingBottom: mobileScrollPadding, scrollPaddingBottom: mobileScrollPadding } : undefined}
+        >
           {error && (
             <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm">
               {error}
@@ -553,78 +560,89 @@ export function CommentModal({ isOpen, onClose, listId, onCommentAdded, onCommen
           )}
         </div>
 
-        <form onSubmit={handleSubmitComment} className={`${isMobile ? 'p-3 safe-bottom sticky bottom-0 bg-white border-t border-gray-200' : 'p-4 border-t border-gray-200 bg-white'}`}>
+        {/* Instagram tarzı mesaj yazma alanı */}
+        <div className={`${isMobile ? 'sticky bottom-0 bg-white border-t border-gray-200 z-[80] safe-bottom' : 'border-t border-gray-200 bg-white'}`}
+             style={isMobile ? { paddingBottom: mobileFormPadding } : undefined}>
           {replyTo && (
-            <div className={`flex items-center justify-between ${isMobile ? 'mb-2 p-2' : 'mb-3 p-3'} bg-gray-50 rounded-lg`}>
-              <span className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                {t('listPreview.commentSection.replyingTo')} <strong>@{replyTo.profiles.username}</strong>
-              </span>
-              <button
-                onClick={() => setReplyTo(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={16} />
-              </button>
+            <div className={`${isMobile ? 'px-3 pt-2 pb-1' : 'px-4 pt-3 pb-2'}`}>
+              <div className={`flex items-center justify-between ${isMobile ? 'p-2' : 'p-3'} bg-gray-50 rounded-lg`}>
+                <span className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                  {t('listPreview.commentSection.replyingTo')} <strong>@{replyTo.profiles.username}</strong>
+                </span>
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           )}
-          <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-4'}`}>
-            <div className="relative flex-shrink-0">
-              <button
-                ref={emojiButtonRef}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!isAuthenticated) {
-                    setShowAuthPopup(true);
-                    return;
-                  }
-                  setShowEmojiPicker(!showEmojiPicker);
-                }}
-                className={`${isMobile ? 'p-1.5' : 'p-2'} text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100`}
-              >
-                <Smile size={isMobile ? 18 : 20} />
-              </button>
-              {showEmojiPicker && (
-                <div ref={emojiPickerRef} className={`absolute ${isMobile ? 'bottom-10 left-0' : 'bottom-12 left-0'} z-50`}>
-                  <EmojiPicker
-                    onEmojiClick={onEmojiClick}
-                    autoFocusSearch={false}
-                    searchDisabled
-                    skinTonesDisabled
-                    lazyLoadEmojis={true}
-                    emojiStyle={"google" as any}
-                    width={isMobile ? 250 : 300}
-                    height={isMobile ? 300 : 400}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                ref={inputRef}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                // Input alanına tıklamada kimlik doğrulama kontrolü kaldırıldı
-                // Kullanıcı zaten oturum açmışsa popup gösterilmeyecek
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+          
+          <form onSubmit={handleSubmitComment} className={`${isMobile ? 'px-3 py-1' : 'px-4 py-3'}`}>
+            <div className="flex items-center gap-3">
+              {/* Emoji butonu */}
+              <div className="relative flex-shrink-0">
+                <button
+                  ref={emojiButtonRef}
+                  type="button"
+                  onClick={(e) => {
                     e.preventDefault();
-                    handleSubmitComment(e);
-                  }
-                }}
-                placeholder={t('listPreview.commentSection.writeComment')}
-                className={`w-full ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} pr-10 border rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-50`}
-              />
-              <button
-                type="submit"
-                disabled={!newComment.trim()}
-                className={`absolute ${isMobile ? 'right-1 top-1 p-1.5' : 'right-2 top-2 p-1.5'} text-orange-500 hover:text-orange-600 disabled:opacity-50 rounded-full`}
-              >
-                <Send size={isMobile ? 16 : 18} />
-              </button>
+                    if (!isAuthenticated) {
+                      setShowAuthPopup(true);
+                      return;
+                    }
+                    setShowEmojiPicker(!showEmojiPicker);
+                  }}
+                  className={`${isMobile ? 'p-2' : 'p-2.5'} text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors`}
+                >
+                  <Smile size={isMobile ? 20 : 22} />
+                </button>
+                {showEmojiPicker && (
+                  <div ref={emojiPickerRef} className={`absolute ${isMobile ? 'bottom-12 left-0' : 'bottom-14 left-0'} z-50`}>
+                    <EmojiPicker
+                      onEmojiClick={onEmojiClick}
+                      autoFocusSearch={false}
+                      searchDisabled
+                      skinTonesDisabled
+                      lazyLoadEmojis={true}
+                      emojiStyle={"google" as any}
+                      width={isMobile ? 250 : 300}
+                      height={isMobile ? 300 : 400}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Mesaj input alanı */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  ref={inputRef}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmitComment(e);
+                    }
+                  }}
+                  placeholder={t('listPreview.listDetails.comments.placeholder')}
+                  className={`w-full ${isMobile ? 'px-4 py-2 text-sm' : 'px-5 py-3'} pr-12 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-50 hover:bg-white transition-colors`}
+                />
+                
+                {/* Gönder butonu */}
+                <button
+                  type="submit"
+                  disabled={!newComment.trim()}
+                  className={`absolute ${isMobile ? 'right-1.5 top-1 p-1.5' : 'right-2 top-2 p-2'} text-orange-500 hover:text-orange-600 disabled:opacity-30 disabled:cursor-not-allowed rounded-full hover:bg-orange-50 transition-all ${newComment.trim() ? 'scale-100' : 'scale-90'}`}
+                >
+                  <Send size={isMobile ? 18 : 20} />
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
         
         {/* Silme Onay Modal */}
         {showDeleteConfirm && (

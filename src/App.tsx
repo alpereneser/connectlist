@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
-import { useState, useRef, useEffect, Suspense, lazy } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from './lib/supabase-browser';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -74,17 +74,95 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
   const navigationType = useNavigationType();
   const location = useLocation();
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const [lastViewedListId, setLastViewedListId] = useLocalStorage<string | null>('lastViewedListId', null);
   const [isMobile, setIsMobile] = useState(false);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const pageRef = useRef(page);
+  const loadingRef = useRef(isLoading);
+  const loadingMoreRef = useRef(isLoadingMore);
+
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
+    loadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    loadingMoreRef.current = isLoadingMore;
+  }, [isLoadingMore]);
+
+  const fetchLists = useCallback(async (options?: { pageOverride?: number; replace?: boolean }) => {
+    if ((loadingRef.current || loadingMoreRef.current) && !options?.replace) {
+      return;
+    }
+
+    const requestedPage = options?.pageOverride ?? pageRef.current;
+    const isReplacing = options?.replace ?? false;
+    const isInitialLoad = requestedPage === 0 || isReplacing;
+
+    if (isInitialLoad) {
+      setIsLoading(true);
+      loadingRef.current = true;
+    } else {
+      setIsLoadingMore(true);
+      loadingMoreRef.current = true;
+    }
+
+    const currentScrollHeight = listContainerRef.current?.scrollHeight || 0;
+    const currentScrollTop = listContainerRef.current?.scrollTop || 0;
+
+    try {
+      const data = await getLists(
+        activeCategory === 'all' ? undefined : activeCategory,
+        requestedPage,
+        10,
+        sortDirection
+      );
+
+      if (data && data.length > 0) {
+        setLists(prevLists => (isInitialLoad ? data : [...prevLists, ...data]));
+        const nextPage = requestedPage + 1;
+        setPage(nextPage);
+        pageRef.current = nextPage;
+        setHasMore(data.length === 10);
+
+        if (isMobile && !isInitialLoad && listContainerRef.current) {
+          requestAnimationFrame(() => {
+            const newScrollHeight = listContainerRef.current?.scrollHeight || 0;
+            const heightDifference = newScrollHeight - currentScrollHeight;
+            if (listContainerRef.current) {
+              listContainerRef.current.scrollTop = currentScrollTop + heightDifference;
+            }
+          });
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error fetching lists:', error);
+      setHasMore(false);
+    } finally {
+      if (isInitialLoad) {
+        setIsLoading(false);
+        loadingRef.current = false;
+      } else {
+        setIsLoadingMore(false);
+        loadingMoreRef.current = false;
+      }
+    }
+  }, [activeCategory, sortDirection, isMobile]);
 
   // Pull-to-refresh hook
   const handleRefresh = async () => {
     setLists([]);
-    setPage(0);
     setHasMore(true);
-    await fetchLists();
+    setPage(0);
+    pageRef.current = 0;
+    await fetchLists({ pageOverride: 0, replace: true });
   };
 
   const pullToRefresh = usePullToRefresh({
@@ -128,24 +206,26 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
         setIsLoading(true);
         setLists([]);
         setPage(0);
+        pageRef.current = 0;
         setHasMore(true);
         scrollToTop();
         // State'i temizle
         window.history.replaceState({}, '', location.pathname);
         // Listeleri yeniden yükle
-        fetchLists();
+        fetchLists({ pageOverride: 0, replace: true });
       }
     }
-  }, [location.state]);
+  }, [location.state, fetchLists]);
 
   useEffect(() => {
     setLists([]);
     setPage(0);
+    pageRef.current = 0;
     setHasMore(true);
     const saved = sessionStorage.getItem('scroll:returnTo');
     const shouldRestore = navigationType === 'POP' && !!saved;
     if (!shouldRestore) { scrollToTop(); }
-    fetchLists().then(() => {
+    fetchLists({ pageOverride: 0, replace: true }).then(() => {
       if (shouldRestore && saved) {
         try { const { path, y } = JSON.parse(saved); if (path === window.location.pathname) { window.scrollTo({ top: y, behavior: 'auto' }); } } catch (e) {}
         sessionStorage.removeItem('scroll:returnTo');
@@ -166,7 +246,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     return () => {
       // Cleanup function
     };
-  }, [activeCategory, isMobile, sortDirection]);
+  }, [activeCategory, isMobile, sortDirection, fetchLists]);
   
   // Supabase realtime aboneliği ile yeni listeleri gerçek zamanlı olarak izle
   useEffect(() => {
@@ -221,68 +301,30 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
     };
   }, [activeCategory, sortDirection]);
 
-  const fetchLists = async () => {
-    if (isLoadingMore) return;
-
-    const isInitialLoad = page === 0;
-    if (isInitialLoad) {
-      setIsLoading(true);
-    } else {
-      setIsLoadingMore(true);
-    }
-
-    try {
-      const data = await getLists(
-        activeCategory === 'all' ? undefined : activeCategory,
-        page,
-        10,
-        sortDirection
-      );
-
-      if (data && data.length > 0) {
-        const currentScrollHeight = listContainerRef.current?.scrollHeight || 0;
-        const currentScrollTop = listContainerRef.current?.scrollTop || 0;
-        
-        setLists(prevLists => isInitialLoad ? data : [...prevLists, ...data]);
-        setPage(prevPage => prevPage + 1);
-        setHasMore(data.length === 10);
-        
-        // Mobilde yeni içerik yüklendiğinde scroll pozisyonunu koru
-        if (isMobile && !isInitialLoad && listContainerRef.current) {
-          requestAnimationFrame(() => {
-            const newScrollHeight = listContainerRef.current?.scrollHeight || 0;
-            const heightDifference = newScrollHeight - currentScrollHeight;
-            if (listContainerRef.current) {
-              listContainerRef.current.scrollTop = currentScrollTop + heightDifference;
-            }
-          });
-        }
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error('Error fetching lists:', error);
-      setHasMore(false);
-    } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-    }
-  };
-
-  // Scroll event handler for infinite loading
-  const handleScroll = () => {
-    if (isLoadingMore || !hasMore) return;
-
-    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) {
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || !hasMore) {
       return;
     }
-    fetchLists();
-  };
 
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoadingMore, hasMore, page, activeCategory]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+          fetchLists();
+        }
+      },
+      {
+        root: isMobile ? listContainerRef.current : null,
+        rootMargin: '200px 0px',
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [fetchLists, hasMore, isLoading, isLoadingMore, isMobile]);
 
   // Tüm cihazlar için standart liste görünümü
   return (
@@ -341,6 +383,7 @@ function Dashboard({ activeCategory, setActiveCategory, lists, setLists, isLoadi
                 </a>
               </div>
             )}
+            <div ref={loadMoreRef} className="h-px w-full" aria-hidden="true" />
           </div>
         )}
       </div>
@@ -423,6 +466,7 @@ function App() {
   const isMessagesPage = location.pathname === '/messages';
   const isMessageDetailPage = location.pathname.startsWith('/messages/') && location.pathname !== '/messages';
   const isCreateListPage = location.pathname.startsWith('/create-list');
+  const isProfilePage = location.pathname.startsWith('/profile');
   const isMobile = window.innerWidth < 768;
   const isHomePage = location.pathname === '/';
 
@@ -435,7 +479,7 @@ function App() {
       return 'pt-0'; // No padding for CreateList page since it has its own Header
     }
 
-    if (isNotificationsPage) {
+    if (isNotificationsPage || isProfilePage) {
       return 'pt-[calc(var(--safe-area-inset-top)+var(--header-height))]';
     }
 
@@ -476,8 +520,8 @@ function App() {
           />
         )}
         
-        {/* SubHeader: Auth, MobileSearch, CreateList ve mobil Search sayfalarında gizle */}
-        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isMessagesPage && !isNotificationsPage && !isCreateListPage && !(isSearchPage && isMobile) && isHomePage && (
+        {/* SubHeader: Auth, MobileSearch, CreateList, Profile ve mobil Search sayfalarında gizle */}
+        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isMessagesPage && !isNotificationsPage && !isCreateListPage && !isProfilePage && !(isSearchPage && isMobile) && isHomePage && (
           <SubHeader 
             activeCategory={activeCategory}
             onCategoryChange={(category) => {
@@ -490,7 +534,7 @@ function App() {
             }}
           />
         )}
-        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isNotificationsPage && !isCreateListPage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
+        {!isAuthPage && !isMobileSearchPage && !isMessageDetailPage && !isMessagesPage && !isNotificationsPage && !isCreateListPage && !isProfilePage && !(isSearchPage && isMobile) && !isHomePage && <SubHeader />}
         
         {/* Main content area with conditional padding */}
         <main className={`flex-grow w-full ${getMainPaddingTop()}`}>
@@ -538,6 +582,14 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated!}>
                   <Messages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/messages/@:username"
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated!}>
+                  <MessageDetail />
                 </ProtectedRoute>
               }
             />

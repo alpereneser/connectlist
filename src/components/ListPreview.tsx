@@ -55,6 +55,9 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
   // const [isLoadingLikes, setIsLoadingLikes] = useState(false);
   const { requireAuth, showAuthPopup, setShowAuthPopup, authMessage } = useRequireAuth();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   const [optimisticCommentCount, setOptimisticCommentCount] = useState(0);
   const [optimisticLikesCount, setOptimisticLikesCount] = useState(list.likes_count);
   const { like, unlike, isLiked } = useLikeMutation(list.id);
@@ -148,6 +151,18 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
       subscription.unsubscribe();
     };
   }, [list.id]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        setIsMobileView(window.innerWidth < 768);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLike = async () => {
     if (isLiked) {
@@ -566,30 +581,30 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         </div>
       </div>
 
-      {/* Like ve Comment Butonları - Sadece Mobile */}
+      {/* Like, Comment ve Share Butonları */}
       {!hideActions && (
-        <div className="list-actions md:hidden flex items-center gap-3 px-3 py-2 border-t">
+        <div className="list-actions flex items-center gap-3 px-3 md:px-6 py-2 md:py-3 border-t">
           <button
             onClick={handleLikeClick}
             className={`flex items-center gap-1 text-gray-600 hover:text-red-500 active:scale-95 transition-all ${
               isLiked ? 'text-red-500' : ''
             }`}
           >
-            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-            <span className="text-sm">{optimisticLikesCount}</span>
+            <Heart size={16} className="md:w-5 md:h-5" fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-sm md:text-base">{optimisticLikesCount}</span>
           </button>
           <button
             onClick={handleCommentClick}
             className="flex items-center gap-1 text-gray-600 hover:text-purple-500 active:scale-95 transition-all"
           >
-            <MessageCircle size={16} />
-            <span className="text-sm">{optimisticCommentCount}</span>
+            <MessageCircle size={16} className="md:w-5 md:h-5" />
+            <span className="text-sm md:text-base">{optimisticCommentCount}</span>
           </button>
           <button
             onClick={handleShare}
             className="flex items-center gap-1 text-gray-600 hover:text-blue-500 active:scale-95 transition-all"
           >
-            <Share2 size={16} />
+            <Share2 size={16} className="md:w-5 md:h-5" />
           </button>
         </div>
       )}
@@ -606,7 +621,7 @@ export function ListPreview({ list, items, onListClick, currentUserId, isOwnProf
         listId={list.id}
         onCommentAdded={() => setOptimisticCommentCount(prev => prev + 1)}
         onCommentDeleted={() => setOptimisticCommentCount(prev => prev - 1)}
-        isMobile={window.innerWidth < 768}
+        isMobile={isMobileView}
       />
       
       {/* Likes Modal */}

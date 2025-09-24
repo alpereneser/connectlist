@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Send, ChevronLeft, Trash2, Info, Phone, Video } from 'lucide-react';
+import { Send, Trash2, Info, Phone, Video, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabaseBrowser as supabase } from '../lib/supabase-browser';
 import { markMessagesAsRead, sendMessage } from '../lib/api';
@@ -17,18 +17,22 @@ type Message = {
 };
 
 export function MessageDetail() {
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const { conversationId, username } = useParams<{ conversationId?: string; username?: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<{ full_name: string; username: string; avatar: string } | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [actualConversationId, setActualConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirm, setShowConfirm] = useState<null | 'mine' | 'conversation'>(null);
+  const bottomInset = 'var(--safe-area-inset-bottom)';
+  const inputBarOffset = bottomInset;
+  const messageScrollBottom = `calc(${bottomInset} + 80px)`;
 
   useEffect(() => {
     (async () => {
@@ -41,22 +45,81 @@ export function MessageDetail() {
     })();
   }, [navigate]);
 
+  // Username'den conversation ID'sini bul
   useEffect(() => {
-    if (!conversationId) return;
+    if (username && currentUserId) {
+      const findConversationByUsername = async () => {
+        try {
+          // Önce kullanıcıyı bul
+          const { data: userProfile, error: userError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', username)
+            .single();
+
+          if (userError || !userProfile) {
+            console.error('User not found:', userError);
+            navigate('/messages');
+            return;
+          }
+
+          // Bu kullanıcıyla olan conversation'ı bul
+          const { data: conversations, error: convError } = await supabase
+            .from('conversations')
+            .select(`
+              id,
+              participants:conversation_participants(user_id)
+            `)
+            .order('last_message_at', { ascending: false });
+
+          if (convError) {
+            console.error('Error finding conversation:', convError);
+            return;
+          }
+
+          // İki kullanıcının da katıldığı conversation'ı bul
+          const targetConversation = conversations?.find(conv => {
+            const participantIds = conv.participants.map((p: any) => p.user_id);
+            return participantIds.includes(currentUserId) && participantIds.includes(userProfile.id);
+          });
+
+          if (targetConversation) {
+            setActualConversationId(targetConversation.id);
+          } else {
+            // Conversation yoksa yeni bir tane başlat
+            const { startConversation } = await import('../lib/api');
+            const newConversationId = await startConversation(userProfile.id);
+            setActualConversationId(newConversationId);
+          }
+        } catch (error) {
+          console.error('Error finding conversation:', error);
+          navigate('/messages');
+        }
+      };
+
+      findConversationByUsername();
+    } else if (conversationId) {
+      setActualConversationId(conversationId);
+    }
+  }, [username, conversationId, currentUserId, navigate]);
+
+  useEffect(() => {
+    const activeConversationId = actualConversationId || conversationId;
+    if (!activeConversationId) return;
     let isMounted = true;
 
     const fetchConversation = async () => {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          participants:conversation_participants(
-            user_id,
-            profiles(username, full_name, avatar)
-          )
-        `)
-        .eq('id', conversationId)
-        .single();
+        const { data, error } = await supabase
+          .from('conversations')
+          .select(`
+            id,
+            participants:conversation_participants(
+              user_id,
+              profiles(username, full_name, avatar)
+            )
+          `)
+          .eq('id', activeConversationId)
+          .single();
       if (!error && data) {
         const otherParticipant = data.participants?.find((p: any) => p.user_id !== currentUserId);
         const other = otherParticipant?.profiles as { full_name: string; username: string; avatar: string } | undefined;
@@ -65,68 +128,142 @@ export function MessageDetail() {
     };
 
     const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('decrypted_messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-      if (isMounted && data) setMessages(data as Message[]);
-      await markMessagesAsRead(conversationId);
-      scrollToBottom();
-    };
+        const { data, error } = await supabase
+          .from('decrypted_messages')
+          .select('*')
+          .eq('conversation_id', activeConversationId)
+          .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+      
+      if (isMounted && data) {
+          setMessages(data as Message[]);
+          await markMessagesAsRead(activeConversationId);
+          scrollToBottom();
+        }
+      };
 
-    fetchConversation();
-    fetchMessages();
+      fetchConversation();
+      fetchMessages();
 
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+      const channel = supabase
+        .channel(`messages:${activeConversationId}`)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${activeConversationId}` }, (payload) => {
         const msg = payload.new as Message;
         setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg]);
         scrollToBottom();
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
-        const msg = payload.new as Message;
-        setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, ...msg } : m)));
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${activeConversationId}` }, (payload) => {
+          const msg = payload.new as Message;
+          setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, ...msg } : m)));
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'decrypted_messages', filter: `conversation_id=eq.${activeConversationId}` }, (payload) => {
         const msg = payload.old as Partial<Message>;
         if (msg.id) setMessages(prev => prev.filter(m => m.id !== msg.id));
       })
-      .subscribe();
+      .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const otherUsers = Object.keys(state).filter(key => key !== currentUserId);
+          const someoneTyping = otherUsers.some(userId => {
+            const presence = state[userId]?.[0] as any;
+            return presence?.typing === true;
+          });
+          setOtherUserTyping(someoneTyping);
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          const presence = newPresences?.[0] as any;
+          if (key !== currentUserId && presence?.typing) {
+            setOtherUserTyping(true);
+          }
+        })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+        if (key !== currentUserId) {
+          setOtherUserTyping(false);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && currentUserId) {
+          await channel.track({
+            user_id: currentUserId,
+            typing: false,
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
 
     return () => {
       isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [conversationId, currentUserId]);
+  }, [actualConversationId, conversationId, currentUserId]);
 
   const scrollToBottom = () => {
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80);
   };
 
-  const handleTyping = () => {
-    setIsTyping(true);
+  const handleTyping = async () => {
     if (typingTimeout) clearTimeout(typingTimeout);
-    const to = setTimeout(() => setIsTyping(false), 1000);
+    
+    // Typing durumunu diğer kullanıcılara bildir
+    const activeConversationId = actualConversationId || conversationId;
+    const channel = supabase.channel(`messages:${activeConversationId}`);
+    await channel.track({
+      user_id: currentUserId,
+      typing: true,
+      online_at: new Date().toISOString(),
+    });
+    
+    const to = setTimeout(async () => {
+      // Typing durumunu durdur
+      await channel.track({
+        user_id: currentUserId,
+        typing: false,
+        online_at: new Date().toISOString(),
+      });
+    }, 1000);
     setTypingTimeout(to);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const text = newMessage.trim();
-    if (!text || !conversationId) return;
+    const activeConversationId = actualConversationId || conversationId;
+    if (!text || !activeConversationId) return;
 
     const tempId = `temp-${Date.now()}`;
-    setMessages(prev => [...prev, { id: tempId, conversation_id: conversationId, text, created_at: new Date().toISOString(), sender_id: currentUserId || '', is_read: false, is_sending: true }]);
+    const tempMessage = { 
+      id: tempId, 
+      conversation_id: activeConversationId, 
+      text, 
+      created_at: new Date().toISOString(), 
+      sender_id: currentUserId || '', 
+      is_read: false, 
+      is_sending: true 
+    };
+    
+    setMessages(prev => [...prev, tempMessage]);
     setNewMessage('');
     scrollToBottom();
 
     try {
-      const msg = await sendMessage(conversationId, text);
-      setMessages(prev => prev.map(m => (m.id === tempId ? { ...msg, conversation_id: conversationId, is_sending: false } : m)));
+      const msg = await sendMessage(activeConversationId, text);
+      // Gerçek mesajı temp mesajın yerine koy
+      setMessages(prev => prev.map(m => 
+        m.id === tempId 
+          ? { ...msg, conversation_id: activeConversationId, is_sending: false } 
+          : m
+      ));
+      scrollToBottom();
     } catch (err) {
-      setMessages(prev => prev.map(m => (m.id === tempId ? { ...m, is_sending: false, has_error: true } : m)));
+      console.error('Error sending message:', err);
+      setMessages(prev => prev.map(m => 
+        m.id === tempId 
+          ? { ...m, is_sending: false, has_error: true } 
+          : m
+      ));
     }
   };
 
@@ -184,24 +321,28 @@ export function MessageDetail() {
       {/* Modern Header */}
       <div className="fixed left-0 right-0 bg-white border-b border-gray-200 shadow-sm" style={{ top: 'var(--safe-area-inset-top)' }}>
         <div className="h-16 flex items-center px-4 justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Geri">
-              <ChevronLeft size={24} className="text-gray-700" />
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <button
+              onClick={() => navigate('/messages')}
+              className="p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Geri dön"
+            >
+              <ArrowLeft size={20} />
             </button>
             {otherUser && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="relative">
                   <img src={otherUser.avatar} alt={otherUser.full_name} className="w-12 h-12 rounded-full object-cover" />
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
-                <div className="leading-tight">
+                <div className="leading-tight min-w-0">
                   <div className="text-base font-semibold text-gray-900">{otherUser.full_name}</div>
                   <div className="text-sm text-green-500 font-medium">Çevrimiçi</div>
                 </div>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" aria-label="Sesli arama">
               <Phone size={20} />
             </button>
@@ -214,7 +355,7 @@ export function MessageDetail() {
               </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                  <button onClick={() => { setShowMenu(false); setShowConfirm('mine'); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm text-gray-700 flex items-center gap-3">
+                  <button onClick={() => { setShowMenu(false); setShowConfirm('mine'); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm text-gray-700 flex items-center gap-3 min-w-0">
                     <Trash2 size={16} className="text-red-500" />
                     Mesajlarımı Sil
                   </button>
@@ -234,8 +375,10 @@ export function MessageDetail() {
         className="absolute left-0 right-0 bg-white"
         style={{
           top: 'calc(var(--safe-area-inset-top) + 64px)',
-          bottom: 'calc(var(--safe-area-inset-bottom) + 72px)',
-          overflowY: 'auto'
+          bottom: messageScrollBottom,
+          overflowY: 'auto',
+          paddingBottom: '16px',
+          scrollPaddingBottom: '24px'
         }}
       >
         <div className="px-4 py-4">
@@ -297,7 +440,7 @@ export function MessageDetail() {
               <p className="text-sm">İlk mesajı göndererek konuşmayı başlatın</p>
             </div>
           )}
-          {isTyping && (
+          {otherUserTyping && (
             <div className="flex items-start gap-2 mb-2">
               <div className="w-8 mr-2 flex-shrink-0">
                 {otherUser && (
@@ -320,8 +463,8 @@ export function MessageDetail() {
       {/* Instagram-style Input */}
       <form
         onSubmit={handleSendMessage}
-        className="fixed left-0 right-0 bg-white border-t border-gray-200"
-        style={{ bottom: 'var(--safe-area-inset-bottom)' }}
+        className="fixed left-0 right-0 bg-white border-t border-gray-200 safe-bottom"
+        style={{ bottom: inputBarOffset }}
       >
         <div className="px-4 py-3 flex items-end gap-3">
           <button type="button" className="p-3 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
@@ -336,7 +479,7 @@ export function MessageDetail() {
               onChange={(e) => { setNewMessage(e.target.value); handleTyping(); }}
               placeholder="Mesaj yazın..."
               className="w-full px-4 py-3 pr-12 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white border border-transparent focus:border-blue-500 transition-all duration-200 text-sm"
-              style={{ minHeight: '44px', maxHeight: '120px', resize: 'none' }}
+              style={{ minHeight: '54px', maxHeight: '130px', resize: 'none' }}
             />
             <button type="button" className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
